@@ -5,7 +5,7 @@ import { Component } from '@stencil/core';
 
 @Component({
   tag: 'app-root',
-  styleUrl: 'app-root.scss'
+  styleUrl: 'app-root.css'
 })
 export class AppRoot {
 
@@ -13,9 +13,7 @@ export class AppRoot {
     return (
       <ion-app>
         <ion-split-pane>
-
-          <ion-menu>
-          </ion-menu>
+          <app-menu></app-menu>
 
           <ion-nav swipeBackEnabled={false} main></ion-nav>
         </ion-split-pane>

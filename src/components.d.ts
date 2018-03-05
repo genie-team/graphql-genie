@@ -23,6 +23,36 @@ import '@ionic/core';
 
 
 import {
+  AppMenu as AppMenu
+} from './components/app-menu/app-menu';
+
+declare global {
+  interface HTMLAppMenuElement extends AppMenu, HTMLStencilElement {
+  }
+  var HTMLAppMenuElement: {
+    prototype: HTMLAppMenuElement;
+    new (): HTMLAppMenuElement;
+  };
+  interface HTMLElementTagNameMap {
+    "app-menu": HTMLAppMenuElement;
+  }
+  interface ElementTagNameMap {
+    "app-menu": HTMLAppMenuElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "app-menu": JSXElements.AppMenuAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface AppMenuAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   AppRoot as AppRoot
 } from './components/app-root/app-root';
 
@@ -46,6 +76,36 @@ declare global {
   }
   namespace JSXElements {
     export interface AppRootAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageTutorial as PageTutorial
+} from './components/page-tutorial/page-tutorial';
+
+declare global {
+  interface HTMLPageTutorialElement extends PageTutorial, HTMLStencilElement {
+  }
+  var HTMLPageTutorialElement: {
+    prototype: HTMLPageTutorialElement;
+    new (): HTMLPageTutorialElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-tutorial": HTMLPageTutorialElement;
+  }
+  interface ElementTagNameMap {
+    "page-tutorial": HTMLPageTutorialElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-tutorial": JSXElements.PageTutorialAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageTutorialAttributes extends HTMLAttributes {
       
     }
   }
