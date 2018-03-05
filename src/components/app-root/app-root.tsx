@@ -8,14 +8,144 @@ import { Component } from '@stencil/core';
   styleUrl: 'app-root.css'
 })
 export class AppRoot {
+  rootPage: string;
+  loggedIn = false;
 
+  appPages = [
+    {
+      title: 'Schedule',
+      url: 'page-schedule',
+      icon: 'calendar'
+    }, {
+      title: 'Speakers',
+      url: 'page-speaker-list',
+      icon: 'contacts'
+    }, {
+      title: 'Map',
+      url: 'page-map',
+      icon: 'map'
+    }, {
+      title: 'About',
+      url: 'page-about',
+      icon: 'information-circle'
+    }
+  ];
+
+  componentWillLoad() {
+    this.rootPage = 'page-tabs';
+  }
+
+  selectTab(tab: any) {
+    console.log('selecting tab', tab);
+  }
+
+  navigate() {
+
+  }
+
+  logout() {
+
+  }
+
+  openTutorial() {
+
+  }
+
+  // TODO ion-menu should be split out
   render() {
     return (
       <ion-app>
         <ion-split-pane>
-          <app-menu></app-menu>
+          <ion-menu>
+            <ion-header>
+              <ion-toolbar color="primary">
+                <ion-title>Menu</ion-title>
+              </ion-toolbar>
+            </ion-header>
+            <ion-content>
+              <ion-list>
+                <ion-list-header>
+                  Navigate
+                </ion-list-header>
 
-          <ion-nav swipeBackEnabled={false} main></ion-nav>
+                {this.appPages.map(p =>
+                  <ion-menu-toggle autoHide={false}>
+                    <ion-item onClick={this.selectTab.bind(this)}>
+                      <ion-icon slot="start" name={p.icon}></ion-icon>
+                      <ion-label>
+                        {p.title}
+                      </ion-label>
+                    </ion-item>
+                  </ion-menu-toggle>
+                )}
+                </ion-list>
+
+                <ion-list>
+                  <ion-list-header>
+                    Account
+                  </ion-list-header>
+
+                  <ion-menu-toggle autoHide={false}>
+                    {this.loggedIn
+                      ? <ion-item onClick={this.navigate.bind(this)}>
+                          <ion-icon slot="start" name="person"></ion-icon>
+                          <ion-label>
+                            Account
+                          </ion-label>
+                        </ion-item>
+
+                      : <ion-item onClick={this.navigate.bind(this)}>
+                          <ion-icon slot="start" name="log-in"></ion-icon>
+                          <ion-label>
+                            Login
+                          </ion-label>
+                        </ion-item>
+                    }
+                  </ion-menu-toggle>
+
+                  <ion-menu-toggle autoHide={false}>
+                    <ion-item onClick={this.navigate.bind(this)}>
+                      <ion-icon slot="start" name="help"></ion-icon>
+                      <ion-label>
+                        Support
+                      </ion-label>
+                    </ion-item>
+                  </ion-menu-toggle>
+
+                  <ion-menu-toggle autoHide={false}>
+                    {this.loggedIn
+                      ? <ion-item onClick={this.logout.bind(this)}>
+                          <ion-icon slot="start" name="log-out"></ion-icon>
+                          <ion-label>
+                            Logout
+                          </ion-label>
+                        </ion-item>
+
+                      : <ion-item onClick={this.navigate.bind(this)}>
+                          <ion-icon slot="start" name="person-add"></ion-icon>
+                          <ion-label>
+                            Signup
+                          </ion-label>
+                        </ion-item>
+                      }
+                  </ion-menu-toggle>
+              </ion-list>
+
+              <ion-list>
+                <ion-list-header>
+                  Tutorial
+                </ion-list-header>
+                <ion-menu-toggle autoHide={false}>
+                  <ion-item onClick={this.openTutorial.bind(this)}>
+                    <ion-icon slot="start" name="hammer"></ion-icon>
+                    <ion-label>Show Tutorial</ion-label>
+                  </ion-item>
+                </ion-menu-toggle>
+              </ion-list>
+            </ion-content>
+          </ion-menu>
+
+          <ion-nav root={this.rootPage} swipeBackEnabled={false} main></ion-nav>
         </ion-split-pane>
       </ion-app>
     );

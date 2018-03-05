@@ -23,36 +23,6 @@ import '@ionic/core';
 
 
 import {
-  AppMenu as AppMenu
-} from './components/app-menu/app-menu';
-
-declare global {
-  interface HTMLAppMenuElement extends AppMenu, HTMLStencilElement {
-  }
-  var HTMLAppMenuElement: {
-    prototype: HTMLAppMenuElement;
-    new (): HTMLAppMenuElement;
-  };
-  interface HTMLElementTagNameMap {
-    "app-menu": HTMLAppMenuElement;
-  }
-  interface ElementTagNameMap {
-    "app-menu": HTMLAppMenuElement;
-  }
-  namespace JSX {
-    interface IntrinsicElements {
-      "app-menu": JSXElements.AppMenuAttributes;
-    }
-  }
-  namespace JSXElements {
-    export interface AppMenuAttributes extends HTMLAttributes {
-      
-    }
-  }
-}
-
-
-import {
   AppRoot as AppRoot
 } from './components/app-root/app-root';
 
@@ -76,6 +46,156 @@ declare global {
   }
   namespace JSXElements {
     export interface AppRootAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageAbout as PageAbout
+} from './components/page-about/page-about';
+
+declare global {
+  interface HTMLPageAboutElement extends PageAbout, HTMLStencilElement {
+  }
+  var HTMLPageAboutElement: {
+    prototype: HTMLPageAboutElement;
+    new (): HTMLPageAboutElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-about": HTMLPageAboutElement;
+  }
+  interface ElementTagNameMap {
+    "page-about": HTMLPageAboutElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-about": JSXElements.PageAboutAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageAboutAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageMap as PageMap
+} from './components/page-map/page-map';
+
+declare global {
+  interface HTMLPageMapElement extends PageMap, HTMLStencilElement {
+  }
+  var HTMLPageMapElement: {
+    prototype: HTMLPageMapElement;
+    new (): HTMLPageMapElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-map": HTMLPageMapElement;
+  }
+  interface ElementTagNameMap {
+    "page-map": HTMLPageMapElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-map": JSXElements.PageMapAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageMapAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageSchedule as PageSchedule
+} from './components/page-schedule/page-schedule';
+
+declare global {
+  interface HTMLPageScheduleElement extends PageSchedule, HTMLStencilElement {
+  }
+  var HTMLPageScheduleElement: {
+    prototype: HTMLPageScheduleElement;
+    new (): HTMLPageScheduleElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-schedule": HTMLPageScheduleElement;
+  }
+  interface ElementTagNameMap {
+    "page-schedule": HTMLPageScheduleElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-schedule": JSXElements.PageScheduleAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageScheduleAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageSpeakerList as PageSpeakerList
+} from './components/page-speaker-list/page-speaker-list';
+
+declare global {
+  interface HTMLPageSpeakerListElement extends PageSpeakerList, HTMLStencilElement {
+  }
+  var HTMLPageSpeakerListElement: {
+    prototype: HTMLPageSpeakerListElement;
+    new (): HTMLPageSpeakerListElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-speaker-list": HTMLPageSpeakerListElement;
+  }
+  interface ElementTagNameMap {
+    "page-speaker-list": HTMLPageSpeakerListElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-speaker-list": JSXElements.PageSpeakerListAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageSpeakerListAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageTabs as PageTabs
+} from './components/page-tabs/page-tabs';
+
+declare global {
+  interface HTMLPageTabsElement extends PageTabs, HTMLStencilElement {
+  }
+  var HTMLPageTabsElement: {
+    prototype: HTMLPageTabsElement;
+    new (): HTMLPageTabsElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-tabs": HTMLPageTabsElement;
+  }
+  interface ElementTagNameMap {
+    "page-tabs": HTMLPageTabsElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-tabs": JSXElements.PageTabsAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageTabsAttributes extends HTMLAttributes {
       
     }
   }
