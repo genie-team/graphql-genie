@@ -19,10 +19,13 @@
     "@stencil/router": "latest"
   },
   "devDependencies": {
+    "@ionic/core": "^0.1.3",
     "@stencil/dev-server": "latest",
+    "@stencil/sass": "0.0.3",
     "@stencil/utils": "latest",
     "@types/jest": "^21.1.1",
-    "jest": "^21.2.1"
+    "jest": "^21.2.1",
+    "tslint-ionic-rules": "0.0.14"
   },
   "repository": {
     "type": "git",
