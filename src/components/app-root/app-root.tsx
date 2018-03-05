@@ -35,12 +35,12 @@ export class AppRoot {
     this.rootPage = 'page-tabs';
   }
 
-  selectTab(tab: any) {
-    console.log('selecting tab', tab);
+  selectTab(index: number, url: string) {
+    console.log('selecting tab', index, url);
   }
 
-  navigate() {
-
+  navigate(url: string) {
+    console.log('navigate to', url);
   }
 
   logout() {
@@ -68,9 +68,9 @@ export class AppRoot {
                   Navigate
                 </ion-list-header>
 
-                {this.appPages.map(p =>
+                {this.appPages.map((p, i) =>
                   <ion-menu-toggle autoHide={false}>
-                    <ion-item onClick={this.selectTab.bind(this)}>
+                    <ion-item onClick={() => this.selectTab(i, p.url)}>
                       <ion-icon slot="start" name={p.icon}></ion-icon>
                       <ion-label>
                         {p.title}
@@ -87,14 +87,14 @@ export class AppRoot {
 
                   <ion-menu-toggle autoHide={false}>
                     {this.loggedIn
-                      ? <ion-item onClick={this.navigate.bind(this)}>
+                      ? <ion-item onClick={() => this.navigate('page-account')}>
                           <ion-icon slot="start" name="person"></ion-icon>
                           <ion-label>
                             Account
                           </ion-label>
                         </ion-item>
 
-                      : <ion-item onClick={this.navigate.bind(this)}>
+                      : <ion-item onClick={() => this.navigate('page-login')}>
                           <ion-icon slot="start" name="log-in"></ion-icon>
                           <ion-label>
                             Login
@@ -104,7 +104,7 @@ export class AppRoot {
                   </ion-menu-toggle>
 
                   <ion-menu-toggle autoHide={false}>
-                    <ion-item onClick={this.navigate.bind(this)}>
+                    <ion-item onClick={() => this.navigate('page-support')}>
                       <ion-icon slot="start" name="help"></ion-icon>
                       <ion-label>
                         Support
@@ -114,14 +114,14 @@ export class AppRoot {
 
                   <ion-menu-toggle autoHide={false}>
                     {this.loggedIn
-                      ? <ion-item onClick={this.logout.bind(this)}>
+                      ? <ion-item onClick={() => this.logout()}>
                           <ion-icon slot="start" name="log-out"></ion-icon>
                           <ion-label>
                             Logout
                           </ion-label>
                         </ion-item>
 
-                      : <ion-item onClick={this.navigate.bind(this)}>
+                      : <ion-item onClick={() => this.navigate('page-signup')}>
                           <ion-icon slot="start" name="person-add"></ion-icon>
                           <ion-label>
                             Signup
@@ -136,7 +136,7 @@ export class AppRoot {
                   Tutorial
                 </ion-list-header>
                 <ion-menu-toggle autoHide={false}>
-                  <ion-item onClick={this.openTutorial.bind(this)}>
+                  <ion-item onClick={() => this.openTutorial()}>
                     <ion-icon slot="start" name="hammer"></ion-icon>
                     <ion-label>Show Tutorial</ion-label>
                   </ion-item>

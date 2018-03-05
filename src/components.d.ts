@@ -53,6 +53,36 @@ declare global {
 
 
 import {
+  PageAboutPopover as PageAboutPopover
+} from './components/page-about-popover/page-about-popover';
+
+declare global {
+  interface HTMLPageAboutPopoverElement extends PageAboutPopover, HTMLStencilElement {
+  }
+  var HTMLPageAboutPopoverElement: {
+    prototype: HTMLPageAboutPopoverElement;
+    new (): HTMLPageAboutPopoverElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-about-popover": HTMLPageAboutPopoverElement;
+  }
+  interface ElementTagNameMap {
+    "page-about-popover": HTMLPageAboutPopoverElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-about-popover": JSXElements.PageAboutPopoverAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageAboutPopoverAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageAbout as PageAbout
 } from './components/page-about/page-about';
 
