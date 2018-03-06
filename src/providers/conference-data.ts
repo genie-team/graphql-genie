@@ -120,7 +120,7 @@ class ConferenceDataController {
   }
 
   async getSpeakers() {
-    const data = await this.load()
+    const data = await this.load();
     return data.speakers.sort((a: any, b: any) => {
       const aName = a.name.split(' ').pop();
       const bName = b.name.split(' ').pop();
