@@ -1,34 +1,25 @@
 import { UserData } from './user-data';
 
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/observable/of';
 
-
-export class ConferenceData {
+class ConferenceDataController {
   data: any;
 
   constructor(public user: UserData) { }
 
-  load(): any {
+  async load() {
     if (this.data) {
-      return Observable.of(this.data);
+      return this.data
     } else {
-      return fetch('assets/data/data.json').then(rsp => {
-        return rsp.text().then(txt => {
-          console.log('theme server response:', txt);
-        });
-      }).catch(err => {
-        console.log(err);
-      });
-      // .map(this.processData, this);
+      const rsp = await fetch('assets/data/data.json')
+      const json = await rsp.json();
+      return this.processData(json)
     }
   }
 
   processData(data: any) {
     // just some good 'ol JS fun with objects and arrays
     // build up the data by linking speakers to sessions
-    this.data = data.json();
+    this.data = data;
 
     this.data.tracks = [];
 
@@ -64,36 +55,33 @@ export class ConferenceData {
     return this.data;
   }
 
-  getTimeline(dayIndex: number, queryText = '', excludeTracks: any[] = [], segment = 'all') {
-    return this.load().map((data: any) => {
-      const day = data.schedule[dayIndex];
-      day.shownSessions = 0;
+  async getTimeline(dayIndex: number, queryText = '', excludeTracks: any[] = [], segment = 'all') {
+    const data = await this.load();
+    const day = data.schedule[dayIndex];
+    day.shownSessions = 0;
 
-      queryText = queryText.toLowerCase().replace(/,|\.|-/g, ' ');
-      const queryWords = queryText.split(' ').filter(w => !!w.trim().length);
+    queryText = queryText.toLowerCase().replace(/,|\.|-/g, ' ');
+    const queryWords = queryText.split(' ').filter(w => !!w.trim().length);
 
-      day.groups.forEach((group: any) => {
-        group.hide = true;
+    day.groups.forEach((group: any) => {
+      group.hide = true;
 
-        group.sessions.forEach((session: any) => {
-          // check if this session should show or not
-          this.filterSession(session, queryWords, excludeTracks, segment);
+      group.sessions.forEach((session: any) => {
+        // check if this session should show or not
+        this.filterSession(session, queryWords, excludeTracks, segment);
 
-          if (!session.hide) {
-            // if this session is not hidden then this group should show
-            group.hide = false;
-            day.shownSessions++;
-          }
-        });
-
+        if (!session.hide) {
+          // if this session is not hidden then this group should show
+          group.hide = false;
+          day.shownSessions++;
+        }
       });
 
-      return day;
     });
+    return day;
   }
 
   filterSession(session: any, queryWords: string[], excludeTracks: any[], segment: string) {
-
     let matchesQueryText = false;
     if (queryWords.length) {
       // of any query word is in the session name than it passes the query test
@@ -131,26 +119,25 @@ export class ConferenceData {
     session.hide = !(matchesQueryText && matchesTracks && matchesSegment);
   }
 
-  getSpeakers() {
-    return this.load().map((data: any) => {
-      return data.speakers.sort((a: any, b: any) => {
-        const aName = a.name.split(' ').pop();
-        const bName = b.name.split(' ').pop();
-        return aName.localeCompare(bName);
-      });
+  async getSpeakers() {
+    const data = await this.load()
+    return data.speakers.sort((a: any, b: any) => {
+      const aName = a.name.split(' ').pop();
+      const bName = b.name.split(' ').pop();
+      return aName.localeCompare(bName);
     });
   }
 
-  getTracks() {
-    return this.load().map((data: any) => {
-      return data.tracks.sort();
-    });
+  async getTracks() {
+    const data = await this.load();
+    return data.tracks.sort();
   }
 
-  getMap() {
-    return this.load().map((data: any) => {
-      return data.map;
-    });
+  async getMap() {
+    const data = await this.load();
+    return data.map;
   }
 
 }
+
+export const ConferenceData = new ConferenceDataController(new UserData());

@@ -10,15 +10,15 @@ import { PopoverController } from '@ionic/core';
   styleUrl: 'page-about.css',
 })
 export class PageAbout {
+
   @Prop({ connect: 'ion-popover-controller' }) popoverCtrl: PopoverController;
 
-  presentPopover(event: any) {
-    this.popoverCtrl.create({
+  async presentPopover(event: any) {
+    const popover = await this.popoverCtrl.create({
       component: 'page-about-popover',
       ev: event
-    }).then((popover) => {
-      popover.present();
     });
+    popover.present();
   }
 
   render() {
@@ -26,12 +26,12 @@ export class PageAbout {
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-menu-button></ion-menu-button>
+            <ion-menu-button/>
           </ion-buttons>
           <ion-title>About</ion-title>
           <ion-buttons slot="end">
             <ion-button onClick={this.presentPopover.bind(this)}>
-              <ion-icon slot="icon-only" name="more"></ion-icon>
+              <ion-icon slot="icon-only" name="more"/>
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
@@ -71,7 +71,6 @@ export class PageAbout {
           </p>
         </div>
       </ion-content>
-
     ];
   }
 }

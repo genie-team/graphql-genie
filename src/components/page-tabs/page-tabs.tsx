@@ -18,12 +18,8 @@ export class PageTabs {
         <ion-tab title="Speakers" icon="contacts">
           <ion-nav lazy={true} root="page-speaker-list"></ion-nav>
         </ion-tab>
-        <ion-tab title="Map" icon="map">
-          <ion-nav lazy={true} root="page-map"></ion-nav>
-        </ion-tab>
-        <ion-tab title="About" icon="information-circle">
-          <ion-nav lazy={true} root="page-about"></ion-nav>
-        </ion-tab>
+        <ion-tab title="Map" icon="map" component="page-map"/>
+        <ion-tab title="About" icon="information-circle" component="page-about"/>
       </ion-tabs>
     ];
   }

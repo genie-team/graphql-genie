@@ -6,9 +6,9 @@ export class UserData {
   HAS_LOGGED_IN = 'hasLoggedIn';
   HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
 
-  constructor(
-    public storage: Storage
-  ) { }
+  // constructor(
+  //   public storage: Storage
+  // ) { }
 
   hasFavorite(sessionName: string): boolean {
     return (this.favorites.indexOf(sessionName) > -1);
