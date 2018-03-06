@@ -51,10 +51,34 @@ export class AppRoot {
 
   }
 
+  renderRouter() {
+    return (
+    <ion-router>
+      <ion-route component="page-tabs">
+
+        <ion-route component="tab-schedule">
+          <ion-route component="page-schedule"/>
+        </ion-route>
+
+        <ion-route path="/speaker-list" component="tab-speaker">
+          <ion-route component="page-speaker-list"/>
+        </ion-route>
+
+        <ion-route path="/map" component="page-map"/>
+
+        <ion-route path="/about" component="page-about"/>
+      </ion-route>
+
+      <ion-route path="/tutorial" component="page-tutorial"/>
+    </ion-router>
+    );
+  }
+
   // TODO ion-menu should be split out
   render() {
     return (
       <ion-app>
+        {this.renderRouter()}
         <ion-split-pane>
           <ion-menu>
             <ion-header>
@@ -145,7 +169,7 @@ export class AppRoot {
             </ion-content>
           </ion-menu>
 
-          <ion-nav root={this.rootPage} swipeBackEnabled={false} main></ion-nav>
+          <ion-nav swipeBackEnabled={false} main></ion-nav>
         </ion-split-pane>
       </ion-app>
     );
