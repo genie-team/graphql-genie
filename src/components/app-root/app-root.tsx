@@ -3,6 +3,8 @@ import '@stencil/core';
 
 import { Component } from '@stencil/core';
 
+import { UserData } from '../../providers/user-data';
+
 @Component({
   tag: 'app-root',
   styleUrl: 'app-root.css'
@@ -10,6 +12,7 @@ import { Component } from '@stencil/core';
 export class AppRoot {
   rootPage: string;
   loggedIn = false;
+  userData: UserData = new UserData();
 
   appPages = [
     {
@@ -32,7 +35,14 @@ export class AppRoot {
   ];
 
   componentWillLoad() {
-    this.rootPage = 'page-tabs';
+    this.userData.checkHasSeenTutorial()
+      .then((hasSeenTutorial) => {
+        if (hasSeenTutorial) {
+          this.rootPage = 'page-tabs';
+        } else {
+          this.rootPage = 'tutorial-page';
+        }
+      })
   }
 
   logout() {
@@ -46,7 +56,6 @@ export class AppRoot {
     return (
     <ion-router useHash={false}>
       <ion-route component="page-tabs">
-
         <ion-route component="tab-schedule">
           <ion-route component="page-schedule"/>
           <ion-route path="/session/:sessionId" component="page-session"/>

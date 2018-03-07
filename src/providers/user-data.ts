@@ -1,14 +1,9 @@
-// import { Storage } from '@ionic/storage';
-
+import { get, remove, set } from './storage';
 
 export class UserData {
   favorites: string[] = [];
   HAS_LOGGED_IN = 'hasLoggedIn';
   HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
-
-  // constructor(
-  //   public storage: Storage
-  // ) { }
 
   hasFavorite(sessionName: string): boolean {
     return (this.favorites.indexOf(sessionName) > -1);
@@ -25,47 +20,54 @@ export class UserData {
     }
   }
 
-  // login(username: string): Promise<any> {
-  //   return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
-  //     this.setUsername(username);
-  //     return this.events.publish('user:login');
-  //   });
-  // }
+  login(username: string): Promise<void> {
+     return set(this.HAS_LOGGED_IN, true).then(() => {
+       this.setUsername(username);
+       // return this.events.publish('user:login');
+       window.dispatchEvent(new Event('user:login'));
+    });
+  }
 
-  // signup(username: string): Promise<any> {
-  //   return this.storage.set(this.HAS_LOGGED_IN, true).then(() => {
-  //     this.setUsername(username);
-  //     return this.events.publish('user:signup');
-  //   });
-  // }
+  signup(username: string): Promise<void> {
+    return set(this.HAS_LOGGED_IN, true).then(() => {
+      this.setUsername(username);
+      // return this.events.publish('user:signup');
+      window.dispatchEvent(new Event('user:signup'));
+    });
+  }
 
-  // logout(): Promise<any> {
-  //   return this.storage.remove(this.HAS_LOGGED_IN).then(() => {
-  //     return this.storage.remove('username');
-  //   }).then(() => {
-  //     this.events.publish('user:logout');
-  //   });
-  // }
+  logout(): Promise<void> {
+    return remove(this.HAS_LOGGED_IN).then(() => {
+      return remove('username');
+    }).then(() => {
+      // this.events.publish('user:logout');
+      window.dispatchEvent(new Event('user:logout'));
+    });
+  }
 
-  // setUsername(username: string): Promise<any> {
-  //   return this.storage.set('username', username);
-  // }
+  setUsername(username: string): Promise<void> {
+    return set('username', username);
+  }
 
-  // getUsername(): Promise<string> {
-  //   return this.storage.get('username').then((value) => {
-  //     return value;
-  //   });
-  // }
+  getUsername(): Promise<string> {
+    return get('username').then((value) => {
+      return value;
+    });
+  }
 
-  // isLoggedIn(): Promise<boolean> {
-  //   return this.storage.get(this.HAS_LOGGED_IN).then((value) => {
-  //     return value === true;
-  //   });
-  // }
+  isLoggedIn(): Promise<boolean> {
+    return get(this.HAS_LOGGED_IN).then((value) => {
+      return value === 'true';
+    });
+  }
 
-  // checkHasSeenTutorial(): Promise<string> {
-  //   return this.storage.get(this.HAS_SEEN_TUTORIAL).then((value) => {
-  //     return value;
-  //   });
-  // }
+  hasSeenTutorial(value): Promise<void> {
+    return set(this.HAS_SEEN_TUTORIAL, value);
+  }
+
+  checkHasSeenTutorial(): Promise<string> {
+    return get(this.HAS_SEEN_TUTORIAL).then((value) => {
+      return value;
+    });
+  }
 }
