@@ -14,19 +14,19 @@ export class AppRoot {
   appPages = [
     {
       title: 'Schedule',
-      url: 'page-schedule',
+      url: '#/',
       icon: 'calendar'
     }, {
       title: 'Speakers',
-      url: 'page-speaker-list',
+      url: '#/speaker-list',
       icon: 'contacts'
     }, {
       title: 'Map',
-      url: 'page-map',
+      url: '#/map',
       icon: 'map'
     }, {
       title: 'About',
-      url: 'page-about',
+      url: '#/about',
       icon: 'information-circle'
     }
   ];
@@ -92,9 +92,9 @@ export class AppRoot {
                   Navigate
                 </ion-list-header>
 
-                {this.appPages.map((p, i) =>
+                {this.appPages.map((p) =>
                   <ion-menu-toggle autoHide={false}>
-                    <ion-item onClick={() => this.selectTab(i, p.url)}>
+                    <ion-item href={p.url}>
                       <ion-icon slot="start" name={p.icon}></ion-icon>
                       <ion-label>
                         {p.title}
@@ -111,14 +111,14 @@ export class AppRoot {
 
                   <ion-menu-toggle autoHide={false}>
                     {this.loggedIn
-                      ? <ion-item onClick={() => this.navigate('page-account')}>
+                      ? <ion-item onClick={() => this.navigate('page-account')} tappable>
                           <ion-icon slot="start" name="person"></ion-icon>
                           <ion-label>
                             Account
                           </ion-label>
                         </ion-item>
 
-                      : <ion-item onClick={() => this.navigate('page-login')}>
+                      : <ion-item onClick={() => this.navigate('page-login')} tappable>
                           <ion-icon slot="start" name="log-in"></ion-icon>
                           <ion-label>
                             Login
@@ -128,7 +128,7 @@ export class AppRoot {
                   </ion-menu-toggle>
 
                   <ion-menu-toggle autoHide={false}>
-                    <ion-item onClick={() => this.navigate('page-support')}>
+                    <ion-item onClick={() => this.navigate('page-support')} tappable>
                       <ion-icon slot="start" name="help"></ion-icon>
                       <ion-label>
                         Support
@@ -138,14 +138,14 @@ export class AppRoot {
 
                   <ion-menu-toggle autoHide={false}>
                     {this.loggedIn
-                      ? <ion-item onClick={() => this.logout()}>
+                      ? <ion-item onClick={() => this.logout()} tappable>
                           <ion-icon slot="start" name="log-out"></ion-icon>
                           <ion-label>
                             Logout
                           </ion-label>
                         </ion-item>
 
-                      : <ion-item onClick={() => this.navigate('page-signup')}>
+                      : <ion-item onClick={() => this.navigate('page-signup')} tappable>
                           <ion-icon slot="start" name="person-add"></ion-icon>
                           <ion-label>
                             Signup
@@ -160,7 +160,7 @@ export class AppRoot {
                   Tutorial
                 </ion-list-header>
                 <ion-menu-toggle autoHide={false}>
-                  <ion-item onClick={() => this.openTutorial()}>
+                  <ion-item onClick={() => this.openTutorial()} tappable>
                     <ion-icon slot="start" name="hammer"></ion-icon>
                     <ion-label>Show Tutorial</ion-label>
                   </ion-item>
