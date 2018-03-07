@@ -1,7 +1,8 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element, Listen, State } from '@stencil/core';
+import { LoadingController, ModalController } from '@ionic/core';
+import { Component, Element, Listen, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -14,6 +15,7 @@ export class PageSchedule {
   excludeTracks: any = [];
   dayIndex = 0;
   scheduleList: HTMLIonListElement;
+  fab: HTMLIonFabElement;
 
   @Element() el: HTMLElement;
 
@@ -25,12 +27,18 @@ export class PageSchedule {
 
   @State() queryText = '';
 
+  @Prop({ connect: 'ion-loading-controller' }) loadingCtrl: LoadingController;
+
+  @Prop({ connect: 'ion-modal-controller' }) modalCtrl: ModalController;
+
+
   componentWillLoad() {
     this.updateSchedule();
   }
 
   componentDidLoad() {
     this.scheduleList = this.el.querySelector('#scheduleList');
+    this.fab = this.el.querySelector('#socialFab');
   }
 
   @Listen('ionChange')
@@ -45,6 +53,19 @@ export class PageSchedule {
     this.updateSchedule();
   }
 
+  @Listen('ionModalDidDismiss')
+  modalDidDismiss(data: any) {
+    if (data) {
+      this.excludeTracks = data;
+      this.updateSchedule();
+    }
+  }
+
+  @Listen('ionLoadingWillDismiss')
+  loadingWillDismiss() {
+    this.fab.close();
+  }
+
   async updateSchedule() {
     // Close any open sliding items when the schedule updates
     if (this.scheduleList) {
@@ -56,8 +77,13 @@ export class PageSchedule {
     this.groups = data.groups;
   }
 
-  presentFilter() {
-    console.log('presentFilter');
+  async presentFilter() {
+    const modal = await this.modalCtrl.create({
+      component: 'page-schedule-filter',
+      data: { excludedTracks: this.excludeTracks }
+    });
+
+    modal.present();
   }
 
   addFavorite(session: any) {
@@ -72,19 +98,25 @@ export class PageSchedule {
     console.log('goToSessionDetail', session);
   }
 
-  openSocial(social: string) {
-    console.log('openSocial', social);
+  async openSocial(social: string) {
+    const loading = await this.loadingCtrl.create({
+      content: `Posting to ${social}`,
+      duration: (Math.random() * 1000) + 500
+    });
+
+    loading.present();
   }
 
-  toggleList(event: any) {
-    console.log('toggleList', event);
+  toggleList() {
+    const fabButton = this.fab.querySelector('ion-fab-button');
+    fabButton.activated = !fabButton.activated;
+
+    const fabList = this.fab.querySelector('ion-fab-list');
+    fabList.activated = !fabList.activated;
   }
 
 
   render() {
-    // TODO fab bottom end
-    console.log('groups in render', this.groups);
-
     return [
       <ion-header>
         <ion-toolbar color="primary">
@@ -156,12 +188,12 @@ export class PageSchedule {
           No Sessions Found
         </ion-list-header>
 
-        <ion-fab slot="fixed">
-          <ion-fab-button onClick={this.toggleList.bind(this)}>
+        <ion-fab id="socialFab" vertical="bottom" horizontal="end" slot="fixed">
+          <ion-fab-button onClick={() => this.toggleList()}>
             <ion-icon name="share"></ion-icon>
           </ion-fab-button>
 
-          <ion-fab-list>
+          <ion-fab-list side="top">
             <ion-fab-button color="vimeo" onClick={() => this.openSocial('Vimeo')}>
               <ion-icon name="logo-vimeo"></ion-icon>
             </ion-fab-button>

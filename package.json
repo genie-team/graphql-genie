@@ -15,7 +15,7 @@
     "test.watch": "jest --watch"
   },
   "devDependencies": {
-    "@ionic/core": "0.1.4-0",
+    "@ionic/core": "^0.1.4-2",
     "@stencil/core": "^0.6.18",
     "@stencil/dev-server": "latest",
     "@stencil/router": "latest",

@@ -143,6 +143,36 @@ declare global {
 
 
 import {
+  PageScheduleFilter as PageScheduleFilter
+} from './components/page-schedule-filter/page-schedule-filter';
+
+declare global {
+  interface HTMLPageScheduleFilterElement extends PageScheduleFilter, HTMLStencilElement {
+  }
+  var HTMLPageScheduleFilterElement: {
+    prototype: HTMLPageScheduleFilterElement;
+    new (): HTMLPageScheduleFilterElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-schedule-filter": HTMLPageScheduleFilterElement;
+  }
+  interface ElementTagNameMap {
+    "page-schedule-filter": HTMLPageScheduleFilterElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-schedule-filter": JSXElements.PageScheduleFilterAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageScheduleFilterAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageSchedule as PageSchedule
 } from './components/page-schedule/page-schedule';
 
