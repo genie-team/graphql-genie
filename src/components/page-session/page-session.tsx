@@ -7,7 +7,7 @@ import { ConferenceData } from '../../providers/conference-data';
 })
 export class PageSession {
 
-  private session: any
+  private session: any;
   @Prop() sessionId: string;
 
   async componentWillLoad() {
@@ -19,7 +19,7 @@ export class PageSession {
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-back-button></ion-back-button>
+            <ion-back-button defaultHref="/"/>
           </ion-buttons>
           <ion-title>{this.session.name}</ion-title>
         </ion-toolbar>
