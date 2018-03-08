@@ -15,7 +15,6 @@ export class PageSpeakerList {
 
   async componentWillLoad() {
     this.speakers = await ConferenceData.getSpeakers();
-    console.log('will load with speakers', this.speakers);
   }
 
   goToSessionDetail(session: any) {
@@ -40,8 +39,6 @@ export class PageSpeakerList {
 
 
   render() {
-    console.log("in render with", this.speakers);
-
     return [
       <ion-header>
         <ion-toolbar color="primary">
@@ -72,7 +69,7 @@ export class PageSpeakerList {
                     <ion-card-content>
                       <ion-list>
                         {speaker.sessions.map(session =>
-                          <ion-item onClick={() => this.goToSessionDetail(session)}>
+                          <ion-item href={`/session/${session.id}`}>
                             <h3>{session.name}</h3>
                           </ion-item>
                         )}
