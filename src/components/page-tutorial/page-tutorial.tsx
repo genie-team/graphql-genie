@@ -17,7 +17,7 @@ export class PageTutorial {
   render() {
     return [
       <ion-header>
-        <ion-toolbar>
+        <ion-toolbar class="tutorial-transparent">
           <ion-buttons slot="end">
             <ion-button href="/schedule">Skip</ion-button>
           </ion-buttons>
@@ -30,13 +30,10 @@ export class PageTutorial {
           <ion-slide>
             <img src="assets/img/ica-slidebox-img-1.png" class="slide-image" />
             <h2 class="slide-title">
-              Welcome to
-              <b>ICA</b>
+              Welcome to the <b>ICA</b>
             </h2>
             <p>
-              The
-              <b>ionic conference app</b> is a practical preview of the ionic framework in action, and a demonstration of proper code
-              use.
+              The <b>ionic conference app</b> is a practical preview of the ionic framework in action, and a demonstration of proper code use.
             </p>
           </ion-slide>
 
