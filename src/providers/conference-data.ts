@@ -1,10 +1,10 @@
-import { UserData } from './user-data';
+import { UserData, UserDataController } from './user-data';
 
 
 class ConferenceDataController {
   data: any;
 
-  constructor(public user: UserData) { }
+  constructor(public user: UserDataController) { }
 
   async load() {
     if (this.data) {
@@ -154,4 +154,4 @@ class ConferenceDataController {
 
 }
 
-export const ConferenceData = new ConferenceDataController(new UserData());
+export const ConferenceData = new ConferenceDataController(UserData);

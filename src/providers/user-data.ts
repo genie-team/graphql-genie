@@ -1,9 +1,10 @@
 import { get, remove, set } from './storage';
 
-export class UserData {
-  favorites: string[] = [];
-  HAS_LOGGED_IN = 'hasLoggedIn';
-  HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
+const HAS_LOGGED_IN = 'hasLoggedIn';
+const HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
+
+export class UserDataController {
+  private favorites: string[] = [];
 
   hasFavorite(sessionName: string): boolean {
     return (this.favorites.indexOf(sessionName) > -1);
@@ -21,7 +22,7 @@ export class UserData {
   }
 
   login(username: string): Promise<void> {
-     return set(this.HAS_LOGGED_IN, true).then(() => {
+     return set(HAS_LOGGED_IN, true).then(() => {
        this.setUsername(username);
        // return this.events.publish('user:login');
        window.dispatchEvent(new Event('user:login'));
@@ -29,7 +30,7 @@ export class UserData {
   }
 
   signup(username: string): Promise<void> {
-    return set(this.HAS_LOGGED_IN, true).then(() => {
+    return set(HAS_LOGGED_IN, true).then(() => {
       this.setUsername(username);
       // return this.events.publish('user:signup');
       window.dispatchEvent(new Event('user:signup'));
@@ -37,7 +38,7 @@ export class UserData {
   }
 
   logout(): Promise<void> {
-    return remove(this.HAS_LOGGED_IN).then(() => {
+    return remove(HAS_LOGGED_IN).then(() => {
       return remove('username');
     }).then(() => {
       // this.events.publish('user:logout');
@@ -56,18 +57,18 @@ export class UserData {
   }
 
   isLoggedIn(): Promise<boolean> {
-    return get(this.HAS_LOGGED_IN).then((value) => {
+    return get(HAS_LOGGED_IN).then((value) => {
       return value === 'true';
     });
   }
 
-  hasSeenTutorial(value): Promise<void> {
-    return set(this.HAS_SEEN_TUTORIAL, value);
+  hasSeenTutorial(value: boolean): Promise<void> {
+    return set(HAS_SEEN_TUTORIAL, value);
   }
 
-  checkHasSeenTutorial(): Promise<string> {
-    return get(this.HAS_SEEN_TUTORIAL).then((value) => {
-      return value;
-    });
+  checkHasSeenTutorial(): Promise<boolean> {
+    return get(HAS_SEEN_TUTORIAL).then((value) => !!value);
   }
 }
+
+export const UserData = new UserDataController();

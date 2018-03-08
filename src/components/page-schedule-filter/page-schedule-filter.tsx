@@ -1,7 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element, State, Listen } from '@stencil/core';
+import { Component, Element, Listen, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 

@@ -1,8 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component } from '@stencil/core';
-
+import { Component, Element } from '@stencil/core';
 import { UserData } from '../../providers/user-data';
 
 @Component({
@@ -10,9 +9,9 @@ import { UserData } from '../../providers/user-data';
   styleUrl: 'app-root.css'
 })
 export class AppRoot {
-  rootPage: string;
   loggedIn = false;
-  userData: UserData = new UserData();
+
+  @Element() el: HTMLElement;
 
   appPages = [
     {
@@ -34,29 +33,21 @@ export class AppRoot {
     }
   ];
 
-  componentWillLoad() {
-    this.userData.checkHasSeenTutorial()
-      .then((hasSeenTutorial) => {
-        if (hasSeenTutorial) {
-          this.rootPage = 'page-tabs';
-        } else {
-          this.rootPage = 'tutorial-page';
-        }
-      })
+  async componentDidLoad() {
+    const hasSeenTutorial = await UserData.checkHasSeenTutorial();
+    const component = hasSeenTutorial ? 'page-tabs' : 'page-tutorial';
+    this.el.querySelector('ion-nav').push(component);
   }
 
   logout() {
-    console.log('logout');
+    UserData.logout();
   }
 
-  openTutorial() {
-    console.log('tutorial');
-  }
   renderRouter() {
     return (
     <ion-router useHash={false}>
       <ion-route component="page-tabs">
-        <ion-route component="tab-schedule">
+        <ion-route path="/schedule" component="tab-schedule">
           <ion-route component="page-schedule"/>
           <ion-route path="/session/:sessionId" component="page-session"/>
         </ion-route>
@@ -162,7 +153,7 @@ export class AppRoot {
                   Tutorial
                 </ion-list-header>
                 <ion-menu-toggle autoHide={false}>
-                  <ion-item onClick={() => this.openTutorial()} tappable>
+                  <ion-item href="tutorial">
                     <ion-icon slot="start" name="hammer"></ion-icon>
                     <ion-label>Show Tutorial</ion-label>
                   </ion-item>
@@ -171,7 +162,7 @@ export class AppRoot {
             </ion-content>
           </ion-menu>
 
-          <ion-nav swipeBackEnabled={false} main></ion-nav>
+          <ion-nav swipeBackEnabled={false} main/>
         </ion-split-pane>
       </ion-app>
     );
