@@ -294,6 +294,36 @@ declare global {
 
 
 import {
+  PageSupport as PageSupport
+} from './components/page-support/page-support';
+
+declare global {
+  interface HTMLPageSupportElement extends PageSupport, HTMLStencilElement {
+  }
+  var HTMLPageSupportElement: {
+    prototype: HTMLPageSupportElement;
+    new (): HTMLPageSupportElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-support": HTMLPageSupportElement;
+  }
+  interface ElementTagNameMap {
+    "page-support": HTMLPageSupportElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-support": JSXElements.PageSupportAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageSupportAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageTabs as PageTabs
 } from './components/page-tabs/page-tabs';
 
