@@ -1,8 +1,10 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { ActionSheetController } from '@ionic/core';
+import { ActionSheetController, Config } from '@ionic/core';
 import { Component, Prop } from '@stencil/core';
+
+import { InAppBrowser } from '@ionic-native/in-app-browser';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -16,6 +18,8 @@ export class PageSpeakerList {
 
   @Prop({ connect: 'ion-action-sheet-controller' }) actionSheetCtrl: ActionSheetController;
 
+  @Prop({ context: 'config' }) config: Config;
+
   async componentWillLoad() {
     this.speakers = await ConferenceData.getSpeakers();
   }
@@ -26,11 +30,14 @@ export class PageSpeakerList {
 
   goToSpeakerTwitter(speaker: any) {
     console.log('goToSpeakerTwitter', speaker);
+
+    InAppBrowser.create(
+      `https://twitter.com/${speaker.twitter}`,
+      '_blank'
+    );
   }
 
   async openSpeakerShare(speaker: any) {
-    console.log('open speaker', speaker);
-
     const actionSheet = await this.actionSheetCtrl.create({
       title: 'Share ' + speaker.name,
       buttons: [{
@@ -56,8 +63,30 @@ export class PageSpeakerList {
     actionSheet.present();
   }
 
-  openContact(speaker: any) {
-    console.log('openContact', speaker);
+  async openContact(speaker: any) {
+    const mode = this.config.get('mode');
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      title: 'Contact ' + speaker.name,
+      buttons: [
+        {
+          text: `Email ( ${speaker.email} )`,
+          icon: mode !== 'ios' ? 'mail' : null,
+          handler: () => {
+            window.open('mailto:' + speaker.email);
+          }
+        },
+        {
+          text: `Call ( ${speaker.phone} )`,
+          icon: mode !== 'ios' ? 'call' : null,
+          handler: () => {
+            window.open('tel:' + speaker.phone);
+          }
+        }
+      ]
+    });
+
+    actionSheet.present();
   }
 
 

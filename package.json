@@ -50,6 +50,8 @@
     ]
   },
   "dependencies": {
+    "@ionic-native/core": "^5.0.0-beta.6",
+    "@ionic-native/in-app-browser": "^5.0.0-beta.6",
     "rxjs": "^5.5.6"
   }
 }
