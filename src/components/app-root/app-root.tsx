@@ -63,6 +63,8 @@ export class AppRoot {
       </ion-route>
 
       <ion-route path="/tutorial" component="page-tutorial"/>
+
+      <ion-route path="/login" component="page-login"/>
     </ion-router>
     );
   }

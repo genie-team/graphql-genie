@@ -113,6 +113,36 @@ declare global {
 
 
 import {
+  PageLogin as PageLogin
+} from './components/page-login/page-login';
+
+declare global {
+  interface HTMLPageLoginElement extends PageLogin, HTMLStencilElement {
+  }
+  var HTMLPageLoginElement: {
+    prototype: HTMLPageLoginElement;
+    new (): HTMLPageLoginElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-login": HTMLPageLoginElement;
+  }
+  interface ElementTagNameMap {
+    "page-login": HTMLPageLoginElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-login": JSXElements.PageLoginAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageLoginAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageMap as PageMap
 } from './components/page-map/page-map';
 
