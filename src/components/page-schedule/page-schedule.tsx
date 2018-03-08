@@ -5,6 +5,8 @@ import { Component, Element, Listen, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
+import { UserData } from '../../providers/user-data';
+
 
 @Component({
   tag: 'page-schedule',
@@ -25,6 +27,8 @@ export class PageSchedule {
   @State() segment = 'all';
 
   @State() queryText = '';
+
+  @Prop({ connect: 'ion-alert-controller' }) alertCtrl: HTMLIonAlertControllerElement;
 
   @Prop({ connect: 'ion-loading-controller' }) loadingCtrl: HTMLIonLoadingControllerElement;
 
@@ -84,12 +88,56 @@ export class PageSchedule {
     await modal.present();
   }
 
-  addFavorite(session: any) {
-    console.log('addFavorite', session);
+  async addFavorite(session: any) {
+    if (UserData.hasFavorite(session.name)) {
+      // oops, this session has already been favorited, prompt to remove it
+      this.removeFavorite(session, 'Favorite already added');
+    } else {
+      // remember this session as a user favorite
+      UserData.addFavorite(session.name);
+
+      // create an alert instance
+      const alert = await this.alertCtrl.create({
+        title: 'Favorite Added',
+        buttons: [{
+          text: 'OK',
+          handler: () => {
+            // close the sliding item
+            this.scheduleList.closeSlidingItems();
+          }
+        }]
+      });
+
+      // now present the alert
+      alert.present();
+    }
   }
 
-  removeFavorite(session: any, title: string) {
-    console.log('removeFavorite', session, title);
+  async removeFavorite(session: any, title: string) {
+    const alert = await this.alertCtrl.create({
+      title: title,
+      message: 'Would you like to remove this session from your favorites?',
+      buttons: [
+        {
+          text: 'Cancel',
+          handler: () => {
+            // they clicked the cancel button, do not remove the session
+            // close the sliding item and hide the option buttons
+            this.scheduleList.closeSlidingItems();
+          }
+        },
+        {
+          text: 'Remove',
+          handler: () => {
+            // they want to remove this session from their favorites
+            UserData.removeFavorite(session.name);
+            this.updateSchedule();
+          }
+        }
+      ]
+    });
+    // now present the alert on top of all other content
+    alert.present();
   }
 
   async openSocial(social: string) {
