@@ -1,8 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { ModalController } from '@ionic/core';
-import { Component, Element, Prop, State } from '@stencil/core';
+import { Component, Element, State, Listen } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -12,11 +11,9 @@ import { ConferenceData } from '../../providers/conference-data';
   styleUrl: 'page-schedule-filter.css',
 })
 export class PageScheduleFilter {
-  @Element() el: any;
+  @Element() el: HTMLElement;
 
   @State() tracks: Array<{name: string, isChecked: boolean}> = [];
-
-  @Prop({ connect: 'ion-modal-controller' }) modalCtrl: ModalController;
 
   async componentWillLoad() {
     // passed in array of track names that should be excluded (unchecked)
@@ -33,10 +30,9 @@ export class PageScheduleFilter {
     });
   }
 
-  // TODO modal dismiss is broken
   dismiss(data?: any) {
     // dismiss this modal and pass back data
-    this.modalCtrl.dismiss(data);
+    (this.el.closest('ion-modal') as any).dismiss(data);
   }
 
   applyFilters() {
@@ -50,10 +46,14 @@ export class PageScheduleFilter {
     this.tracks.forEach(track => {
       track.isChecked = true;
     });
-
-    this.el.forceUpdate();
+    (this.el as any).forceUpdate();
   }
 
+  @Listen('ionChange')
+  onToggleChanged(ev: CustomEvent) {
+    const track = this.tracks.find(({name}) => name === (ev.target as any).name);
+    track.isChecked = (ev.target as any).checked;
+  }
 
   render() {
     return [
@@ -81,7 +81,7 @@ export class PageScheduleFilter {
             <ion-item class={{[`item-track-${track.name.toLowerCase()}`]: true, 'item-track': true}}>
               <span slot="start" class="dot"></span>
               <ion-label>{track.name}</ion-label>
-              <ion-toggle checked={track.isChecked} color="success"></ion-toggle>
+              <ion-toggle checked={track.isChecked} color="success" name={track.name}></ion-toggle>
             </ion-item>
           )}
         </ion-list>

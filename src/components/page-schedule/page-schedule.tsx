@@ -1,7 +1,6 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { LoadingController, ModalController } from '@ionic/core';
 import { Component, Element, Listen, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
@@ -27,9 +26,9 @@ export class PageSchedule {
 
   @State() queryText = '';
 
-  @Prop({ connect: 'ion-loading-controller' }) loadingCtrl: LoadingController;
+  @Prop({ connect: 'ion-loading-controller' }) loadingCtrl: HTMLIonLoadingControllerElement;
 
-  @Prop({ connect: 'ion-modal-controller' }) modalCtrl: ModalController;
+  @Prop({ connect: 'ion-modal-controller' }) modalCtrl: HTMLIonModalControllerElement;
 
 
   componentWillLoad() {
@@ -53,15 +52,15 @@ export class PageSchedule {
     this.updateSchedule();
   }
 
-  @Listen('ionModalDidDismiss')
-  modalDidDismiss(data: any) {
-    if (data) {
-      this.excludeTracks = data;
+  @Listen('body:ionModalDidDismiss')
+  modalDidDismiss(event: CustomEvent) {
+    if (event) {
+      this.excludeTracks = event.detail.data;
       this.updateSchedule();
     }
   }
 
-  @Listen('ionLoadingWillDismiss')
+  @Listen('body:ionLoadingWillDismiss')
   loadingWillDismiss() {
     this.fab.close();
   }
@@ -82,8 +81,7 @@ export class PageSchedule {
       component: 'page-schedule-filter',
       data: { excludedTracks: this.excludeTracks }
     });
-
-    modal.present();
+    await modal.present();
   }
 
   addFavorite(session: any) {
