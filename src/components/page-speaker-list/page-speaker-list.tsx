@@ -1,7 +1,8 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component } from '@stencil/core';
+import { ActionSheetController } from '@ionic/core';
+import { Component, Prop } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -13,12 +14,10 @@ import { ConferenceData } from '../../providers/conference-data';
 export class PageSpeakerList {
   speakers: any[] = [];
 
+  @Prop({ connect: 'ion-action-sheet-controller' }) actionSheetCtrl: ActionSheetController;
+
   async componentWillLoad() {
     this.speakers = await ConferenceData.getSpeakers();
-  }
-
-  goToSessionDetail(session: any) {
-    console.log('goToSessionDetail', session);
   }
 
   goToSpeakerDetail(speaker: any) {
@@ -29,8 +28,32 @@ export class PageSpeakerList {
     console.log('goToSpeakerTwitter', speaker);
   }
 
-  openSpeakerShare(speaker: any) {
-    console.log('openSpeakerShare', speaker);
+  async openSpeakerShare(speaker: any) {
+    console.log('open speaker', speaker);
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      title: 'Share ' + speaker.name,
+      buttons: [{
+        text: 'Copy Link',
+        handler: () => {
+          console.log('Copy link clicked on https://twitter.com/' + speaker.twitter);
+          if ( (window as any)['cordova'] && (window as any)['cordova'].plugins.clipboard) {
+            (window as any)['cordova'].plugins.clipboard.copy(
+              'https://twitter.com/' + speaker.twitter
+            );
+          }
+        }
+      },
+      {
+        text: 'Share via ...'
+      },
+      {
+        text: 'Cancel',
+        role: 'cancel'
+      }]
+    });
+
+    actionSheet.present();
   }
 
   openContact(speaker: any) {
@@ -89,7 +112,7 @@ export class PageSpeakerList {
                       </ion-col>
                       <ion-col col-auto text-center>
                         <ion-button fill="clear" size="small" color="primary" onClick={() => this.openSpeakerShare(speaker)}>
-                          <ion-icon name='share-alt' slot="start"></ion-icon>
+                          <ion-icon name="share-alt" slot="start"></ion-icon>
                           Share
                         </ion-button>
                       </ion-col>
