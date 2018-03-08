@@ -1,7 +1,6 @@
 .speaker-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .speaker-card ion-card-header {

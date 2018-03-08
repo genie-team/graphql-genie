@@ -2,7 +2,7 @@ import '@ionic/core';
 import '@stencil/core';
 
 import { ModalController } from '@ionic/core';
-import { Component, Prop, State } from '@stencil/core';
+import { Component, Element, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -12,6 +12,8 @@ import { ConferenceData } from '../../providers/conference-data';
   styleUrl: 'page-schedule-filter.css',
 })
 export class PageScheduleFilter {
+  @Element() el: any;
+
   @State() tracks: Array<{name: string, isChecked: boolean}> = [];
 
   @Prop({ connect: 'ion-modal-controller' }) modalCtrl: ModalController;
@@ -43,11 +45,13 @@ export class PageScheduleFilter {
     this.dismiss(excludedTrackNames);
   }
 
+  // reset all of the toggles to be checked
   resetFilters() {
-    // reset all of the toggles to be checked
     this.tracks.forEach(track => {
       track.isChecked = true;
     });
+
+    this.el.forceUpdate();
   }
 
 
@@ -83,8 +87,10 @@ export class PageScheduleFilter {
         </ion-list>
 
         <ion-list>
-          <ion-item onClick={() => this.resetFilters()} detail-none class="reset-filters">
-            Reset All Filters
+          <ion-item onClick={() => this.resetFilters()} detail-none>
+            <ion-label color="danger">
+              Reset All Filters
+            </ion-label>
           </ion-item>
         </ion-list>
       </ion-content>
