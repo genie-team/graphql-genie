@@ -74,7 +74,7 @@ export class PageScheduleFilter {
           <ion-list-header>Tracks</ion-list-header>
 
           {this.tracks.map(track =>
-            <ion-item class={{[`item-track-${track.name.toLowerCase()}`]: true, "item-track": true}}>
+            <ion-item class={{[`item-track-${track.name.toLowerCase()}`]: true, 'item-track': true}}>
               <span slot="start" class="dot"></span>
               <ion-label>{track.name}</ion-label>
               <ion-toggle checked={track.isChecked} color="success"></ion-toggle>

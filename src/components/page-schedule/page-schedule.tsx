@@ -158,7 +158,7 @@ export class PageSchedule {
                   <ion-label>
                     <h3>{session.name}</h3>
                     <p>
-                      {session.timeStart} &mdash; {session.timeEnd}: {session.location}
+                      {session.timeStart} &ndash; {session.timeEnd} &mdash; {session.location}
                     </p>
                   </ion-label>
                 </ion-item>

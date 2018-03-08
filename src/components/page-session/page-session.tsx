@@ -14,6 +14,10 @@ export class PageSession {
     this.session = await ConferenceData.getSession(this.sessionId);
   }
 
+  sessionClick(item: string) {
+    console.log('Clicked', item);
+  }
+
   render() {
     return [
       <ion-header>
@@ -21,33 +25,53 @@ export class PageSession {
           <ion-buttons slot="start">
             <ion-back-button defaultHref="/"/>
           </ion-buttons>
-          <ion-title>{this.session.name}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button>
+              <ion-icon slot="icon-only" name="star"></ion-icon>
+            </ion-button>
+            <ion-button>
+              <ion-icon slot="icon-only" name="share"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>,
 
       <ion-content>
-        <ion-list>
-          <ion-item>
-            <ion-label>Name</ion-label>
-            <ion-note slot="end">{this.session.name}</ion-note>
-          </ion-item>
-          <ion-item>
-            <ion-label>Time start</ion-label>
-            <ion-note slot="end">{this.session.timeStart}</ion-note>
-          </ion-item>
-          <ion-item>
-            <ion-label>Time end</ion-label>
-            <ion-note slot="end">{this.session.timeEnd}</ion-note>
-          </ion-item>
-          <ion-item>
-            <ion-label>Location</ion-label>
-            <ion-note slot="end">{this.session.location}</ion-note>
-          </ion-item>
-        </ion-list>
+        <div padding>
+          {this.session.tracks.map(track =>
+            <span class={{[`session-track-${track.toLowerCase()}`]: true}}>
+              { track }
+            </span>
+          )}
+          <div>Session {this.sessionId}</div>
+
+          <h1>{this.session.name}</h1>
+
+          <p>{this.session.description}</p>
+
+          <ion-text color="medium">
+            {this.session.timeStart} &ndash; {this.session.timeEnd}<br/>
+            {this.session.location}
+          </ion-text>
+        </div>
 
         <ion-list>
-          <ion-list-header>Tracks</ion-list-header>
-          {this.session.tracks.map(t => <ion-item>{t}</ion-item>)}
+          <ion-item onClick={() => this.sessionClick('watch')}>
+            <ion-label color="primary">Watch</ion-label>
+          </ion-item>
+          <ion-item onClick={() => this.sessionClick('add to calendar')}>
+            <ion-label color="primary">Add to Calendar</ion-label>
+          </ion-item>
+          <ion-item onClick={() => this.sessionClick('mark as unwatched')}>
+            <ion-label color="primary">Mark as Unwatched</ion-label>
+          </ion-item>
+          <ion-item onClick={() => this.sessionClick('download video')}>
+            <ion-label color="primary">Download Video</ion-label>
+            <ion-icon slot="end" color="primary" size="small" name="cloud-download"></ion-icon>
+          </ion-item>
+          <ion-item onClick={() => this.sessionClick('leave feedback')}>
+            <ion-label color="primary">Leave Feedback</ion-label>
+          </ion-item>
         </ion-list>
       </ion-content>
     ];
