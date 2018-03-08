@@ -8,11 +8,11 @@ class ConferenceDataController {
 
   async load() {
     if (this.data) {
-      return this.data
+      return this.data;
     } else {
-      const rsp = await fetch('assets/data/data.json')
+      const rsp = await fetch('/assets/data/data.json');
       const json = await rsp.json();
-      return this.processData(json)
+      return this.processData(json);
     }
   }
 
@@ -79,6 +79,20 @@ class ConferenceDataController {
 
     });
     return day;
+  }
+
+  async getSession(sessionId: string) {
+    const data = await this.load();
+    for (const days of data.schedule) {
+      for (const group of days.groups) {
+        for (const session of group.sessions) {
+          if (session.id === sessionId) {
+            return session;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   filterSession(session: any, queryWords: string[], excludeTracks: any[], segment: string) {

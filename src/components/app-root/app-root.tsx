@@ -49,6 +49,7 @@ export class AppRoot {
 
         <ion-route component="tab-schedule">
           <ion-route component="page-schedule"/>
+          <ion-route path="/session/:sessionId" component="page-session"/>
         </ion-route>
 
         <ion-route path="/speaker-list" component="tab-speaker">

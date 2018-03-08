@@ -94,10 +94,6 @@ export class PageSchedule {
     console.log('removeFavorite', session, title);
   }
 
-  goToSessionDetail(session: any) {
-    console.log('goToSessionDetail', session);
-  }
-
   async openSocial(social: string) {
     const loading = await this.loadingCtrl.create({
       content: `Posting to ${social}`,
@@ -157,8 +153,8 @@ export class PageSchedule {
               </ion-item-divider>
 
               {group.sessions.map(session =>
-              <ion-item-sliding class={{[`item-sliding-track-${session.tracks[0].toLowerCase()}`]: true, "item-sliding-track": true}} hidden={session.hide}>
-                <ion-item onClick={() => this.goToSessionDetail(session)}>
+              <ion-item-sliding class={{[`item-sliding-track-${session.tracks[0].toLowerCase()}`]: true, 'item-sliding-track': true}} hidden={session.hide}>
+                <ion-item href={`/session/${session.id}`}>
                   <ion-label>
                     <h3>{session.name}</h3>
                     <p>

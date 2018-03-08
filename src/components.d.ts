@@ -203,6 +203,36 @@ declare global {
 
 
 import {
+  PageSession as PageSession
+} from './components/page-session/page-session';
+
+declare global {
+  interface HTMLPageSessionElement extends PageSession, HTMLStencilElement {
+  }
+  var HTMLPageSessionElement: {
+    prototype: HTMLPageSessionElement;
+    new (): HTMLPageSessionElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-session": HTMLPageSessionElement;
+  }
+  interface ElementTagNameMap {
+    "page-session": HTMLPageSessionElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-session": JSXElements.PageSessionAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageSessionAttributes extends HTMLAttributes {
+      sessionId?: string;
+    }
+  }
+}
+
+
+import {
   PageSpeakerList as PageSpeakerList
 } from './components/page-speaker-list/page-speaker-list';
 
