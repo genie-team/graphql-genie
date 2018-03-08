@@ -9,6 +9,7 @@ export class PageSession {
 
   private session: any;
   @Prop() sessionId: string;
+  @Prop() goback = '/';
 
   async componentWillLoad() {
     this.session = await ConferenceData.getSession(this.sessionId);
@@ -23,7 +24,7 @@ export class PageSession {
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-back-button defaultHref="/"/>
+            <ion-back-button defaultHref={this.goback}/>
           </ion-buttons>
           <ion-buttons slot="end">
             <ion-button>

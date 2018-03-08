@@ -54,6 +54,7 @@ export class AppRoot {
 
         <ion-route path="/speaker-list" component="tab-speaker">
           <ion-route component="page-speaker-list"/>
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}} />
         </ion-route>
 
         <ion-route path="/map" component="page-map"/>

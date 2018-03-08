@@ -69,7 +69,7 @@ export class PageSpeakerList {
                     <ion-card-content>
                       <ion-list>
                         {speaker.sessions.map(session =>
-                          <ion-item href={`/session/${session.id}`}>
+                          <ion-item href={`/speaker-list/session/${session.id}`}>
                             <h3>{session.name}</h3>
                           </ion-item>
                         )}
@@ -95,7 +95,7 @@ export class PageSpeakerList {
                       </ion-col>
                       <ion-col col-auto text-right>
                         <ion-button fill="clear" size="small" color="primary" onClick={() => this.openContact(speaker)}>
-                          <ion-icon name='chatboxes' slot="start"></ion-icon>
+                          <ion-icon name="chatboxes" slot="start"></ion-icon>
                           Contact
                         </ion-button>
                       </ion-col>

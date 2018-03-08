@@ -226,6 +226,7 @@ declare global {
   }
   namespace JSXElements {
     export interface PageSessionAttributes extends HTMLAttributes {
+      goback?: string;
       sessionId?: string;
     }
   }
