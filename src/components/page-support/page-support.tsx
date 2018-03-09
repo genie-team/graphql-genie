@@ -67,9 +67,10 @@ export class PageSupport {
   render() {
     return [
       <ion-header>
-        <ion-toolbar>
+        <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-menu-button></ion-menu-button>
+          <ion-menu-button></ion-menu-button>
+          <ion-back-button/>
           </ion-buttons>
           <ion-title>Support</ion-title>
         </ion-toolbar>
