@@ -112,7 +112,7 @@ export class PageSpeakerList {
                     <ion-card-header>
                       <ion-item
                         detail-none
-                        href={`/speaker-list/speaker/${speaker.id}`}
+                        href={`/speakers/${speaker.id}`}
                       >
                         <ion-avatar slot="start">
                           <img
@@ -128,13 +128,13 @@ export class PageSpeakerList {
                       <ion-list>
                         {speaker.sessions.map(session => (
                           <ion-item
-                            href={`/speaker-list/session/${session.id}`}
+                            href={`/speakers/session/${session.id}`}
                           >
                             <h3>{session.name}</h3>
                           </ion-item>
                         ))}
 
-                        <ion-item href={`/speaker-list/speaker/${speaker.id}`}>
+                        <ion-item href={`/speakers/${speaker.id}`}>
                           <h3>About {speaker.name}</h3>
                         </ion-item>
                       </ion-list>

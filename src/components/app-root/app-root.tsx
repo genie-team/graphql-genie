@@ -10,17 +10,18 @@ import { UserData } from '../../providers/user-data';
 })
 export class AppRoot {
   loggedIn = false;
+  hasSeenTutorial = false;
 
   @Element() el: HTMLElement;
 
   appPages = [
     {
       title: 'Schedule',
-      url: '/',
+      url: '/schedule',
       icon: 'calendar'
     }, {
       title: 'Speakers',
-      url: '/speaker-list',
+      url: '/speakers',
       icon: 'contacts'
     }, {
       title: 'Map',
@@ -33,10 +34,8 @@ export class AppRoot {
     }
   ];
 
-  async componentDidLoad() {
-    const hasSeenTutorial = await UserData.checkHasSeenTutorial();
-    const component = hasSeenTutorial ? 'page-tabs' : 'page-tutorial';
-    this.el.querySelector('ion-nav').push(component);
+  async componentWillLoad() {
+    this.hasSeenTutorial = await UserData.checkHasSeenTutorial();
   }
 
   logout() {
@@ -52,23 +51,19 @@ export class AppRoot {
           <ion-route path="/session/:sessionId" component="page-session" />
         </ion-route>
 
-        <ion-route path="/speaker-list" component="tab-speaker">
+        <ion-route path="/speakers" component="tab-speaker">
           <ion-route component="page-speaker-list"/>
-          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}} />
-          <ion-route path="/speaker/:speakerId" component="page-speaker-detail" params={{goback: 'speaker-list'}} />
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speakers'}} />
+          <ion-route path="/:speakerId" component="page-speaker-detail" />
         </ion-route>
 
         <ion-route path="/map" component="page-map"/>
-
         <ion-route path="/about" component="page-about"/>
       </ion-route>
-
+      <ion-route path="/" redirectTo={this.hasSeenTutorial ? '/schedule' : '/tutorial'}/>
       <ion-route path="/tutorial" component="page-tutorial"/>
-
       <ion-route path="/login" component="page-login"/>
-
       <ion-route path="/signup" component="page-signup"/>
-
       <ion-route path="/support" component="page-support"/>
     </ion-router>
     );
