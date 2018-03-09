@@ -39,25 +39,26 @@ export class PageSession {
           <ion-buttons slot="start">
             <ion-back-button defaultHref={this.goback}/>
           </ion-buttons>
-          <ion-buttons slot="end">
-            <ion-button onClick={() => this.toggleFavorite()}>
-              <ion-icon slot="icon-only" name="star" class={this.isFavorite ? 'session-is-favorite' : ''}></ion-icon>
-            </ion-button>
-            <ion-button>
-              <ion-icon slot="icon-only" name="share"></ion-icon>
-            </ion-button>
-          </ion-buttons>
         </ion-toolbar>
       </ion-header>,
 
       <ion-content>
         <div padding>
-          {this.session.tracks.map(track =>
-            <span class={{[`session-track-${track.toLowerCase()}`]: true}}>
-              { track }
-            </span>
-          )}
-          <div>Session {this.sessionId}</div>
+          <ion-grid no-padding>
+            <ion-row>
+              <ion-col col-6>
+                {this.session.tracks.map(track =>
+                  <span class={{[`session-track-${track.toLowerCase()}`]: true}}>
+                    { track }
+                  </span>
+                )}
+                <div>Session {this.sessionId}</div>
+              </ion-col>
+              <ion-col col-6 text-right>
+                <ion-icon onClick={() => this.toggleFavorite()} name={this.isFavorite ? 'heart' : 'heart-empty'} color={this.isFavorite ? 'danger' : ''} size="large"></ion-icon>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
 
           <h1>{this.session.name}</h1>
 
