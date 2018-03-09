@@ -1,7 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element } from '@stencil/core';
+import { Component, Element, State } from '@stencil/core';
 import { UserData } from '../../providers/user-data';
 
 @Component({
@@ -9,7 +9,7 @@ import { UserData } from '../../providers/user-data';
   styleUrl: 'app-root.css'
 })
 export class AppRoot {
-  loggedIn = false;
+  @State() loggedIn = false;
 
   @Element() el: HTMLElement;
 
@@ -34,13 +34,27 @@ export class AppRoot {
   ];
 
   async componentDidLoad() {
+    this.checkLoginStatus();
+
     const hasSeenTutorial = await UserData.checkHasSeenTutorial();
     const component = hasSeenTutorial ? 'page-tabs' : 'page-tutorial';
     this.el.querySelector('ion-nav').push(component);
   }
 
+  checkLoginStatus() {
+    return UserData.isLoggedIn().then(loggedIn => {
+      return this.updateLoggedInStatus(loggedIn);
+    });
+  }
+
   logout() {
-    UserData.logout();
+    return UserData.logout().then(() => {
+      return this.updateLoggedInStatus(false);
+    });
+  }
+
+  updateLoggedInStatus(loggedIn: boolean) {
+    this.loggedIn = loggedIn;
   }
 
   renderRouter() {

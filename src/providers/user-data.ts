@@ -58,7 +58,7 @@ export class UserDataController {
 
   isLoggedIn(): Promise<boolean> {
     return get(HAS_LOGGED_IN).then((value) => {
-      return value === 'true';
+      return value === true;
     });
   }
 
