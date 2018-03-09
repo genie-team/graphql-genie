@@ -10,16 +10,19 @@ import { ConferenceData } from '../../providers/conference-data';
 })
 export class PageSpeakerDetail {
   private speaker: any;
+
   @Prop() speakerId: string;
+
   async componentWillLoad() {
     this.speaker = await ConferenceData.getSpeaker(this.speakerId);
   }
+
   render() {
     return [
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-back-button />
+            <ion-back-button></ion-back-button>
           </ion-buttons>
           <ion-title>{this.speaker.name}</ion-title>
         </ion-toolbar>
@@ -30,16 +33,18 @@ export class PageSpeakerDetail {
             <ion-col col-10 push-1 col-sm-6 push-sm-3>
               <ion-card>
                 <ion-card-content>
-                  <img src={this.speaker.profilePic} alt={this.speaker.name} />
+                  <img src={this.speaker.profilePic} alt={this.speaker.name}/>
+
                   <ion-button fill="clear" size="small" color="twitter">
-                    <ion-icon slot="icon-only" name="logo-twitter" />
+                    <ion-icon slot="icon-only" name="logo-twitter"></ion-icon>
                   </ion-button>
                   <ion-button fill="clear" size="small" color="github">
-                    <ion-icon slot="icon-only" name="logo-github" />
+                    <ion-icon slot="icon-only" name="logo-github"></ion-icon>
                   </ion-button>
                   <ion-button fill="clear" size="small" color="instagram">
-                    <ion-icon slot="icon-only" name="logo-instagram" />
+                    <ion-icon slot="icon-only" name="logo-instagram"></ion-icon>
                   </ion-button>
+
                   <p>{this.speaker.about}</p>
                 </ion-card-content>
               </ion-card>

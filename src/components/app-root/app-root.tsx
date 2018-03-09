@@ -62,28 +62,28 @@ export class AppRoot {
     <ion-router useHash={false}>
       <ion-route component="page-tabs">
         <ion-route path="/schedule" component="tab-schedule">
-          <ion-route component="page-schedule"/>
-          <ion-route path="/session/:sessionId" component="page-session" />
+          <ion-route component="page-schedule"></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" ></ion-route>
         </ion-route>
 
         <ion-route path="/speaker-list" component="tab-speaker">
-          <ion-route component="page-speaker-list"/>
-          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}} />
-          <ion-route path="/speaker/:speakerId" component="page-speaker-detail" params={{goback: 'speaker-list'}} />
+          <ion-route component="page-speaker-list"></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}}></ion-route>
+          <ion-route path="/speaker/:speakerId" component="page-speaker-detail" params={{goback: 'speaker-list'}}></ion-route>
         </ion-route>
 
-        <ion-route path="/map" component="page-map"/>
+        <ion-route path="/map" component="page-map"></ion-route>
 
-        <ion-route path="/about" component="page-about"/>
+        <ion-route path="/about" component="page-about"></ion-route>
       </ion-route>
 
-      <ion-route path="/tutorial" component="page-tutorial"/>
+      <ion-route path="/tutorial" component="page-tutorial"></ion-route>
 
-      <ion-route path="/login" component="page-login"/>
+      <ion-route path="/login" component="page-login"></ion-route>
 
-      <ion-route path="/signup" component="page-signup"/>
+      <ion-route path="/signup" component="page-signup"></ion-route>
 
-      <ion-route path="/support" component="page-support"/>
+      <ion-route path="/support" component="page-support"></ion-route>
     </ion-router>
     );
   }
@@ -183,7 +183,7 @@ export class AppRoot {
             </ion-content>
           </ion-menu>
 
-          <ion-nav swipeBackEnabled={false} main/>
+          <ion-nav swipeBackEnabled={false} main></ion-nav>
         </ion-split-pane>
       </ion-app>
     );

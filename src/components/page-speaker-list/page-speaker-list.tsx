@@ -96,7 +96,7 @@ export class PageSpeakerList {
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-menu-button />
+            <ion-menu-button></ion-menu-button>
           </ion-buttons>
           <ion-title>Speakers</ion-title>
         </ion-toolbar>
@@ -110,15 +110,9 @@ export class PageSpeakerList {
                 <ion-col col-12 col-md-6 align-self-stretch>
                   <ion-card class="speaker-card">
                     <ion-card-header>
-                      <ion-item
-                        detail-none
-                        href={`/speaker-list/speaker/${speaker.id}`}
-                      >
+                      <ion-item detail-none href={`/speaker-list/speaker/${speaker.id}`}>
                         <ion-avatar slot="start">
-                          <img
-                            src={speaker.profilePic}
-                            alt="Speaker profile pic"
-                          />
+                          <img src={speaker.profilePic} alt="Speaker profile pic"/>
                         </ion-avatar>
                         {speaker.name}
                       </ion-item>
@@ -127,9 +121,7 @@ export class PageSpeakerList {
                     <ion-card-content>
                       <ion-list>
                         {speaker.sessions.map(session => (
-                          <ion-item
-                            href={`/speaker-list/session/${session.id}`}
-                          >
+                          <ion-item href={`/speaker-list/session/${session.id}`}>
                             <h3>{session.name}</h3>
                           </ion-item>
                         ))}
@@ -146,9 +138,8 @@ export class PageSpeakerList {
                           fill="clear"
                           size="small"
                           color="primary"
-                          onClick={() => this.goToSpeakerTwitter(speaker)}
-                        >
-                          <ion-icon name="logo-twitter" slot="start" />
+                          onClick={() => this.goToSpeakerTwitter(speaker)}>
+                          <ion-icon name="logo-twitter" slot="start"></ion-icon>
                           Tweet
                         </ion-button>
                       </ion-col>
@@ -157,9 +148,8 @@ export class PageSpeakerList {
                           fill="clear"
                           size="small"
                           color="primary"
-                          onClick={() => this.openSpeakerShare(speaker)}
-                        >
-                          <ion-icon name="share-alt" slot="start" />
+                          onClick={() => this.openSpeakerShare(speaker)}>
+                          <ion-icon name="share-alt" slot="start"></ion-icon>
                           Share
                         </ion-button>
                       </ion-col>
@@ -168,9 +158,8 @@ export class PageSpeakerList {
                           fill="clear"
                           size="small"
                           color="primary"
-                          onClick={() => this.openContact(speaker)}
-                        >
-                          <ion-icon name="chatboxes" slot="start" />
+                          onClick={() => this.openContact(speaker)}>
+                          <ion-icon name="chatboxes" slot="start"></ion-icon>
                           Contact
                         </ion-button>
                       </ion-col>

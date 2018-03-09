@@ -13,13 +13,13 @@ export class PageTabs {
     return [
       <ion-tabs>
         <ion-tab title="Schedule" icon="calendar" name="tab-schedule">
-          <ion-nav/>
+          <ion-nav></ion-nav>
         </ion-tab>
         <ion-tab title="Speakers" icon="contacts" name="tab-speaker">
-          <ion-nav/>
+          <ion-nav></ion-nav>
         </ion-tab>
-        <ion-tab title="Map" icon="map" component="page-map"/>
-        <ion-tab title="About" icon="information-circle" component="page-about"/>
+        <ion-tab title="Map" icon="map" component="page-map"></ion-tab>
+        <ion-tab title="About" icon="information-circle" component="page-about"></ion-tab>
       </ion-tabs>
     ];
   }
