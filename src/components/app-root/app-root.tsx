@@ -1,7 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element } from '@stencil/core';
+import { Component, Element, State } from '@stencil/core';
 import { UserData } from '../../providers/user-data';
 
 @Component({
@@ -9,7 +9,7 @@ import { UserData } from '../../providers/user-data';
   styleUrl: 'app-root.css'
 })
 export class AppRoot {
-  loggedIn = false;
+  @State() loggedIn = false;
   hasSeenTutorial = false;
 
   @Element() el: HTMLElement;
@@ -37,9 +37,24 @@ export class AppRoot {
   async componentWillLoad() {
     this.hasSeenTutorial = await UserData.checkHasSeenTutorial();
   }
+async componentDidLoad() {
+this.checkLoginStatus();
+}
+
+  checkLoginStatus() {
+    return UserData.isLoggedIn().then(loggedIn => {
+      return this.updateLoggedInStatus(loggedIn);
+    });
+  }
 
   logout() {
-    UserData.logout();
+    return UserData.logout().then(() => {
+      return this.updateLoggedInStatus(false);
+    });
+  }
+
+  updateLoggedInStatus(loggedIn: boolean) {
+    this.loggedIn = loggedIn;
   }
 
   renderRouter() {
@@ -47,24 +62,29 @@ export class AppRoot {
     <ion-router useHash={false}>
       <ion-route component="page-tabs">
         <ion-route path="/schedule" component="tab-schedule">
-          <ion-route component="page-schedule"/>
-          <ion-route path="/session/:sessionId" component="page-session" />
+          <ion-route component="page-schedule"></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" ></ion-route>
         </ion-route>
 
         <ion-route path="/speakers" component="tab-speaker">
-          <ion-route component="page-speaker-list"/>
-          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speakers'}} />
-          <ion-route path="/:speakerId" component="page-speaker-detail" />
+          <ion-route component="page-speaker-list"></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}}></ion-route>
+          <ion-route path="/:speakerId" component="page-speaker-detail"></ion-route>
         </ion-route>
 
-        <ion-route path="/map" component="page-map"/>
-        <ion-route path="/about" component="page-about"/>
+        <ion-route path="/map" component="page-map"></ion-route>
+
+        <ion-route path="/about" component="page-about"></ion-route>
       </ion-route>
-      <ion-route path="/" redirectTo={this.hasSeenTutorial ? '/schedule' : '/tutorial'}/>
-      <ion-route path="/tutorial" component="page-tutorial"/>
-      <ion-route path="/login" component="page-login"/>
-      <ion-route path="/signup" component="page-signup"/>
-      <ion-route path="/support" component="page-support"/>
+
+<ion-route path="/" redirectTo={this.hasSeenTutorial ? '/schedule' : '/tutorial'}/>
+      <ion-route path="/tutorial" component="page-tutorial"></ion-route>
+
+      <ion-route path="/login" component="page-login"></ion-route>
+
+      <ion-route path="/signup" component="page-signup"></ion-route>
+
+      <ion-route path="/support" component="page-support"></ion-route>
     </ion-router>
     );
   }
@@ -164,7 +184,7 @@ export class AppRoot {
             </ion-content>
           </ion-menu>
 
-          <ion-nav swipeBackEnabled={false} main/>
+          <ion-nav swipeBackEnabled={false} main></ion-nav>
         </ion-split-pane>
       </ion-app>
     );

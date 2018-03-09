@@ -77,8 +77,16 @@ class ConferenceDataController {
         }
       });
 
+      this.mapFavorites(group.sessions);
+
     });
     return day;
+  }
+
+  mapFavorites(sessions) {
+    sessions.map(session => {
+      session.isFavorite = this.user.hasFavorite(session.name);
+    });
   }
 
   async getSession(sessionId: string) {

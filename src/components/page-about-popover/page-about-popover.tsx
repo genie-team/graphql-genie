@@ -1,24 +1,27 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element } from '@stencil/core';
+import { Component, Element, Prop } from '@stencil/core';
+import { NavControllerBase } from '@ionic/core';
 
 @Component({
   tag: 'page-about-popover',
-  styleUrl: 'page-about-popover.css',
+  styleUrl: 'page-about-popover.css'
 })
 export class PageAboutPopover {
   @Element() el: HTMLElement;
+
+  @Prop({ connect: 'ion-nav' })
+  nav: NavControllerBase;
 
   close(url: string) {
     window.open(url, '_blank');
     this.dismiss();
   }
 
-  // TODO this should navigate to support as a root
-  // need to discuss this with the team
-  support() {
-    console.log('navigate to support');
+  async support() {
+    const nav: NavControllerBase = await (this.nav as any).componentOnReady();
+    nav.setRoot('page-support', null, { animate: true, direction: 'forward' });
     this.dismiss();
   }
 
@@ -29,7 +32,7 @@ export class PageAboutPopover {
   render() {
     return [
       <ion-list>
-        <ion-item onClick={() => this.close('http://ionicframework.com/docs/getting-started')}>
+        <ion-item onClick={() => this.close('http://ionicframework.com/docs/getting-started')} >
           <ion-label>Learn Ionic</ion-label>
         </ion-item>
         <ion-item onClick={() => this.close('http://ionicframework.com/docs/')}>
@@ -48,7 +51,6 @@ export class PageAboutPopover {
           <ion-label>Dismiss</ion-label>
         </ion-item>
       </ion-list>
-
     ];
   }
 }

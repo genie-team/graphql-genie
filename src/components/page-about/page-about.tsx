@@ -26,12 +26,12 @@ export class PageAbout {
       <ion-header>
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
-            <ion-menu-button/>
+            <ion-menu-button></ion-menu-button>
           </ion-buttons>
           <ion-title>About</ion-title>
           <ion-buttons slot="end">
             <ion-button onClick={this.presentPopover.bind(this)}>
-              <ion-icon slot="icon-only" name="more"/>
+              <ion-icon slot="icon-only" name="more"></ion-icon>
             </ion-button>
           </ion-buttons>
         </ion-toolbar>

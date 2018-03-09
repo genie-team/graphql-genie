@@ -78,6 +78,8 @@ export class PageSchedule {
     const data = await ConferenceData.getTimeline(this.dayIndex, this.queryText, this.excludeTracks, this.segment);
     this.shownSessions = data.shownSessions;
     this.groups = data.groups;
+
+    (this.el as any).forceUpdate();
   }
 
   async presentFilter() {
@@ -104,6 +106,7 @@ export class PageSchedule {
           handler: () => {
             // close the sliding item
             this.scheduleList.closeSlidingItems();
+            this.updateSchedule();
           }
         }]
       });
@@ -209,7 +212,7 @@ export class PageSchedule {
                   </ion-label>
                 </ion-item>
                 <ion-item-options>
-                  {this.segment === 'all'
+                  {session.isFavorite === false
                     ? <ion-item-option color="favorite" onClick={() => this.addFavorite(session)}>
                         Favorite
                       </ion-item-option>
