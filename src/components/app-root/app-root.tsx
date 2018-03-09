@@ -49,12 +49,13 @@ export class AppRoot {
       <ion-route component="page-tabs">
         <ion-route path="/schedule" component="tab-schedule">
           <ion-route component="page-schedule"/>
-          <ion-route path="/session/:sessionId" component="page-session"/>
+          <ion-route path="/session/:sessionId" component="page-session" />
         </ion-route>
 
         <ion-route path="/speaker-list" component="tab-speaker">
           <ion-route component="page-speaker-list"/>
           <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}} />
+          <ion-route path="/speaker/:speakerId" component="page-speaker-detail" params={{goback: 'speaker-list'}} />
         </ion-route>
 
         <ion-route path="/map" component="page-map"/>

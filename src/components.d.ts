@@ -20,6 +20,7 @@ declare global {
 
 import 'ionicons';
 import '@ionic/core';
+import '@stencil/router';
 
 
 import {
@@ -258,6 +259,36 @@ declare global {
     export interface PageSessionAttributes extends HTMLAttributes {
       goback?: string;
       sessionId?: string;
+    }
+  }
+}
+
+
+import {
+  PageSpeakerDetail as PageSpeakerDetail
+} from './components/page-speaker-detail/page-speaker-detail';
+
+declare global {
+  interface HTMLPageSpeakerDetailElement extends PageSpeakerDetail, HTMLStencilElement {
+  }
+  var HTMLPageSpeakerDetailElement: {
+    prototype: HTMLPageSpeakerDetailElement;
+    new (): HTMLPageSpeakerDetailElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-speaker-detail": HTMLPageSpeakerDetailElement;
+  }
+  interface ElementTagNameMap {
+    "page-speaker-detail": HTMLPageSpeakerDetailElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-speaker-detail": JSXElements.PageSpeakerDetailAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageSpeakerDetailAttributes extends HTMLAttributes {
+      speakerId?: string;
     }
   }
 }

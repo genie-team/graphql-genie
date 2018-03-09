@@ -142,6 +142,14 @@ class ConferenceDataController {
     });
   }
 
+  async getSpeaker(speakerId: string) {
+    const data = await this.load();
+    for (const speaker of data.speakers) {
+      if (speaker.id === speakerId) return speaker;
+    }
+    return null;
+  }
+
   async getTracks() {
     const data = await this.load();
     return data.tracks.sort();

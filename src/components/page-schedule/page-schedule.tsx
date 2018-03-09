@@ -200,7 +200,7 @@ export class PageSchedule {
 
               {group.sessions.map(session =>
               <ion-item-sliding class={{[`item-sliding-track-${session.tracks[0].toLowerCase()}`]: true, 'item-sliding-track': true}} hidden={session.hide}>
-                <ion-item href={`/session/${session.id}`}>
+              <ion-item href={`/schedule/session/${session.id}`}>
                   <ion-label>
                     <h3>{session.name}</h3>
                     <p>
