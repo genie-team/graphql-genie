@@ -78,6 +78,8 @@ export class PageSchedule {
     const data = await ConferenceData.getTimeline(this.dayIndex, this.queryText, this.excludeTracks, this.segment);
     this.shownSessions = data.shownSessions;
     this.groups = data.groups;
+
+    (this.el as any).forceUpdate();
   }
 
   async presentFilter() {
