@@ -1,5 +1,6 @@
-import { Component, Prop } from '@stencil/core';
+import { Component, Prop, State } from '@stencil/core';
 import { ConferenceData } from '../../providers/conference-data';
+import { UserData } from '../../providers/user-data';
 
 @Component({
   tag: 'page-session',
@@ -8,15 +9,27 @@ import { ConferenceData } from '../../providers/conference-data';
 export class PageSession {
 
   private session: any;
+  @State() isFavorite: boolean;
   @Prop() sessionId: string;
   @Prop() goback = '/';
 
   async componentWillLoad() {
     this.session = await ConferenceData.getSession(this.sessionId);
+    this.isFavorite = UserData.hasFavorite(this.session.name);
   }
 
   sessionClick(item: string) {
     console.log('Clicked', item);
+  }
+
+  toggleFavorite() {
+    if (UserData.hasFavorite(this.session.name)) {
+      UserData.removeFavorite(this.session.name);
+      this.isFavorite = false;
+    } else {
+      UserData.addFavorite(this.session.name);
+      this.isFavorite = true;
+    }
   }
 
   render() {
@@ -27,8 +40,8 @@ export class PageSession {
             <ion-back-button defaultHref={this.goback}/>
           </ion-buttons>
           <ion-buttons slot="end">
-            <ion-button>
-              <ion-icon slot="icon-only" name="star"></ion-icon>
+            <ion-button onClick={() => this.toggleFavorite()}>
+              <ion-icon slot="icon-only" name="star" class={this.isFavorite ? 'session-is-favorite' : ''}></ion-icon>
             </ion-button>
             <ion-button>
               <ion-icon slot="icon-only" name="share"></ion-icon>
