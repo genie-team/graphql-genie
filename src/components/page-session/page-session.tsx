@@ -71,20 +71,20 @@ export class PageSession {
         </div>
 
         <ion-list>
-          <ion-item onClick={() => this.sessionClick('watch')}>
+          <ion-item onClick={() => this.sessionClick('watch')} tappable>
             <ion-label color="primary">Watch</ion-label>
           </ion-item>
-          <ion-item onClick={() => this.sessionClick('add to calendar')}>
+          <ion-item onClick={() => this.sessionClick('add to calendar')} tappable>
             <ion-label color="primary">Add to Calendar</ion-label>
           </ion-item>
-          <ion-item onClick={() => this.sessionClick('mark as unwatched')}>
+          <ion-item onClick={() => this.sessionClick('mark as unwatched')} tappable>
             <ion-label color="primary">Mark as Unwatched</ion-label>
           </ion-item>
-          <ion-item onClick={() => this.sessionClick('download video')}>
+          <ion-item onClick={() => this.sessionClick('download video')} tappable>
             <ion-label color="primary">Download Video</ion-label>
             <ion-icon slot="end" color="primary" size="small" name="cloud-download"></ion-icon>
           </ion-item>
-          <ion-item onClick={() => this.sessionClick('leave feedback')}>
+          <ion-item onClick={() => this.sessionClick('leave feedback')} tappable>
             <ion-label color="primary">Leave Feedback</ion-label>
           </ion-item>
         </ion-list>

@@ -77,13 +77,10 @@ this.checkLoginStatus();
         <ion-route path="/about" component="page-about"></ion-route>
       </ion-route>
 
-<ion-route path="/" redirectTo={this.hasSeenTutorial ? '/schedule' : '/tutorial'}/>
+      <ion-route path="/" redirectTo={this.hasSeenTutorial ? '/schedule' : '/tutorial'}/>
       <ion-route path="/tutorial" component="page-tutorial"></ion-route>
-
       <ion-route path="/login" component="page-login"></ion-route>
-
       <ion-route path="/signup" component="page-signup"></ion-route>
-
       <ion-route path="/support" component="page-support"></ion-route>
     </ion-router>
     );
