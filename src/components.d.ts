@@ -20,7 +20,6 @@ declare global {
 
 import 'ionicons';
 import '@ionic/core';
-import '@stencil/router';
 
 
 import {
@@ -259,6 +258,36 @@ declare global {
     export interface PageSessionAttributes extends HTMLAttributes {
       goback?: string;
       sessionId?: string;
+    }
+  }
+}
+
+
+import {
+  PageSignup as PageSignup
+} from './components/page-signup/page-signup';
+
+declare global {
+  interface HTMLPageSignupElement extends PageSignup, HTMLStencilElement {
+  }
+  var HTMLPageSignupElement: {
+    prototype: HTMLPageSignupElement;
+    new (): HTMLPageSignupElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-signup": HTMLPageSignupElement;
+  }
+  interface ElementTagNameMap {
+    "page-signup": HTMLPageSignupElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-signup": JSXElements.PageSignupAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageSignupAttributes extends HTMLAttributes {
+      
     }
   }
 }
