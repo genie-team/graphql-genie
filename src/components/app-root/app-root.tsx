@@ -63,12 +63,12 @@ this.checkLoginStatus();
       <ion-route component="page-tabs">
         <ion-route path="/schedule" component="tab-schedule">
           <ion-route component="page-schedule"></ion-route>
-          <ion-route path="/session/:sessionId" component="page-session" ></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: '/schedule'}}></ion-route>
         </ion-route>
 
         <ion-route path="/speakers" component="tab-speaker">
           <ion-route component="page-speaker-list"></ion-route>
-          <ion-route path="/session/:sessionId" component="page-session" params={{goback: 'speaker-list'}}></ion-route>
+          <ion-route path="/session/:sessionId" component="page-session" params={{goback: '/speakers'}}></ion-route>
           <ion-route path="/:speakerId" component="page-speaker-detail"></ion-route>
         </ion-route>
 
