@@ -1,7 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Prop } from '@stencil/core';
+import { Component, Prop, State } from '@stencil/core';
 
 
 @Component({
@@ -9,17 +9,17 @@ import { Component, Prop } from '@stencil/core';
   styleUrl: 'page-support.css',
 })
 export class PageSupport {
-  supportMessage = '';
-  supportQuestion = {
-    valid: false
+  @State() supportQuestion = {
+    valid: false,
+    value: null
   };
-  submitted = false;
+  @State() submitted = false;
 
   @Prop({ connect: 'ion-alert-controller' }) alertCtrl: HTMLIonAlertControllerElement;
 
   @Prop({ connect: 'ion-toast-controller' }) toastCtrl: HTMLIonToastControllerElement;
 
-  async componentDidEnter() {
+  async componentDidLoad() {
     const toast = await this.toastCtrl.create({
       message: 'This does not actually send a support request.',
       duration: 3000
@@ -27,11 +27,43 @@ export class PageSupport {
     toast.present();
   }
 
-  async submit() {
+  handleSupportQuestion(ev) {
+    this.validateQuestion();
+    this.supportQuestion = {
+      ...this.supportQuestion,
+      value: ev.target.value
+    };
+  }
+
+  validateQuestion() {
+    if (this.supportQuestion.value && this.supportQuestion.value.length > 0) {
+      this.supportQuestion.valid = true;
+
+      this.supportQuestion = {
+        ...this.supportQuestion,
+        valid: true
+      };
+
+      return;
+    }
+
+    this.supportQuestion = {
+      ...this.supportQuestion,
+      valid: false
+    };
+  }
+
+  async submit(e) {
+    e.preventDefault();
+    this.validateQuestion();
     this.submitted = true;
 
     if (this.supportQuestion.valid) {
-      this.supportMessage = '';
+      this.supportQuestion = {
+        ...this.supportQuestion,
+        value: ''
+      };
+
       this.submitted = false;
 
       const toast = await this.toastCtrl.create({
@@ -46,7 +78,7 @@ export class PageSupport {
   // without submitting first, ask if they meant to leave the page
   ionViewCanLeave() {
     // If the support message is empty we should just navigate
-    if (!this.supportMessage || this.supportMessage.trim().length === 0) {
+    if (!this.supportQuestion.value || this.supportQuestion.value.trim().length === 0) {
       return true;
     }
 
@@ -85,7 +117,7 @@ export class PageSupport {
           <ion-list no-lines>
             <ion-item>
               <ion-label stacked color="primary">Enter your support message below</ion-label>
-              <ion-textarea name="supportQuestion" rows={6} required></ion-textarea>
+              <ion-textarea  name="supportQuestion" value={this.supportQuestion.value} onInput={(ev) => this.handleSupportQuestion(ev)} rows={6} required></ion-textarea>
             </ion-item>
           </ion-list>
 
@@ -96,7 +128,7 @@ export class PageSupport {
           </ion-text>
 
           <div padding>
-            <ion-button expand="block" type="submit">Submit</ion-button>
+            <ion-button onClick={(e) => this.submit(e)} expand="block" type="submit">Submit</ion-button>
           </div>
         </form>
       </ion-content>
