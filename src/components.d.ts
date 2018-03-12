@@ -113,6 +113,36 @@ declare global {
 
 
 import {
+  PageAccount as PageAccount
+} from './components/page-account/page-account';
+
+declare global {
+  interface HTMLPageAccountElement extends PageAccount, HTMLStencilElement {
+  }
+  var HTMLPageAccountElement: {
+    prototype: HTMLPageAccountElement;
+    new (): HTMLPageAccountElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-account": HTMLPageAccountElement;
+  }
+  interface ElementTagNameMap {
+    "page-account": HTMLPageAccountElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-account": JSXElements.PageAccountAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageAccountAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageLogin as PageLogin
 } from './components/page-login/page-login';
 

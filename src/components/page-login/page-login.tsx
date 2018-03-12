@@ -1,8 +1,8 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, State } from '@stencil/core';
-
+import { Component, Event, EventEmitter, Prop, State } from '@stencil/core';
+import { NavControllerBase } from '@ionic/core';
 import { UserData } from '../../providers/user-data';
 
 
@@ -20,7 +20,8 @@ export class PageLogin {
     value: null
   };
   @State() submitted = false;
-
+  @Prop({connect: 'ion-nav'}) nav;
+  @Event() userDidLogIn: EventEmitter;
   handleUsername(ev) {
     this.validateUsername();
     this.username = {
@@ -72,7 +73,10 @@ export class PageLogin {
     };
   }
 
-  onLogin() {
+  async onLogin(e) {
+    e.preventDefault();
+    const navCtrl: NavControllerBase = await (this.nav as any).componentOnReady();
+
     console.log('Clicked login');
     this.validatePassword();
     this.validateUsername();
@@ -80,13 +84,19 @@ export class PageLogin {
     this.submitted = true;
 
     if (this.password.valid && this.username.valid) {
-      UserData.login(this.username.value);
+      UserData.login(this.username.value)
+      .then(() => {
+        this.userDidLogIn.emit({loginStatus: true});
+        navCtrl.setRoot('page-tabs', null , {animate: true, direction: 'forward'});
+      });
     }
   }
 
-  onSignup() {
+  async onSignup(e) {
+    e.preventDefault();
+    const navCtrl: NavControllerBase = await (this.nav as any).componentOnReady();
     console.log('Clicked signup');
-    document.querySelector('ion-nav').push('page-signup');
+    navCtrl.push('page-signup');
   }
 
   render() {
@@ -133,10 +143,10 @@ export class PageLogin {
 
           <ion-row responsive-sm>
             <ion-col>
-              <ion-button onClick={() => this.onLogin()} type="submit" expand="block">Login</ion-button>
+              <ion-button onClick={(e) => this.onLogin(e)} type="submit" expand="block">Login</ion-button>
             </ion-col>
             <ion-col>
-              <ion-button onClick={() => this.onSignup()} color="light" expand="block">Signup</ion-button>
+              <ion-button onClick={(e) => this.onSignup(e)} color="light" expand="block">Signup</ion-button>
             </ion-col>
           </ion-row>
         </form>

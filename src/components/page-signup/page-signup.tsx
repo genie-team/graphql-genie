@@ -17,7 +17,8 @@ export class PageSignup {
   };
   submitted = false;
 
-  onSignup() {
+  onSignup(e) {
+    e.preventDefault();
     console.log('clicked signup');
   }
 
@@ -64,7 +65,7 @@ export class PageSignup {
           </ion-list>
 
           <div padding>
-            <ion-button onClick={() => this.onSignup()} type="submit" expand="block">Create</ion-button>
+            <ion-button onClick={(e) => this.onSignup(e)} type="submit" expand="block">Create</ion-button>
           </div>
         </form>
 
