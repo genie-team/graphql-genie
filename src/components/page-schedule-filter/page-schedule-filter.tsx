@@ -11,7 +11,7 @@ import { ConferenceData } from '../../providers/conference-data';
   styleUrl: 'page-schedule-filter.css',
 })
 export class PageScheduleFilter {
-  @Element() el: HTMLElement;
+  @Element() el: any;
 
   @State() tracks: Array<{name: string, isChecked: boolean}> = [];
 
@@ -46,7 +46,7 @@ export class PageScheduleFilter {
     this.tracks.forEach(track => {
       track.isChecked = true;
     });
-    (this.el as any).forceUpdate();
+    this.el.forceUpdate();
   }
 
   @Listen('ionChange')

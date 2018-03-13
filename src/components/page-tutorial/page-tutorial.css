@@ -3,10 +3,6 @@ page-tutorial .tutorial-transparent .toolbar-background {
   border-color: transparent;
 }
 
-page-tutorial .slide-zoom {
-  height: 100%;
-}
-
 page-tutorial .swiper-slide {
   display: block;
 }

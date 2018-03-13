@@ -69,7 +69,7 @@ export class PageMap {
 function getGoogleMaps(apiKey: string): Promise<any> {
   const win = window as any;
   const google = win.google;
-  if(google && google.maps) {
+  if (google && google.maps) {
     return Promise.resolve(google.maps);
   }
 
@@ -82,9 +82,9 @@ function getGoogleMaps(apiKey: string): Promise<any> {
     script.onload = () => {
       const win = window as any;
       const google = win.google;
-      if(google && google.maps) {
+      if (google && google.maps) {
         resolve(google.maps);
-      }else{
+      } else {
         reject('google maps not available');
       }
     };

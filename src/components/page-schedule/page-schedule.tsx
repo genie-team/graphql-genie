@@ -18,7 +18,7 @@ export class PageSchedule {
   scheduleList: HTMLIonListElement;
   fab: HTMLIonFabElement;
 
-  @Element() el: HTMLElement;
+  @Element() el: any;
 
   @State() groups: any = [];
 
@@ -79,7 +79,7 @@ export class PageSchedule {
     this.shownSessions = data.shownSessions;
     this.groups = data.groups;
 
-    (this.el as any).forceUpdate();
+    this.el.forceUpdate();
   }
 
   async presentFilter() {
