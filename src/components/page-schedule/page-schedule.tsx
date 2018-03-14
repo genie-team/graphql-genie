@@ -144,6 +144,7 @@ export class PageSchedule {
   }
 
   async openSocial(social: string) {
+    this.toggleList();
     const loading = await this.loadingCtrl.create({
       content: `Posting to ${social}`,
       duration: (Math.random() * 1000) + 500
@@ -159,7 +160,6 @@ export class PageSchedule {
     const fabList = this.fab.querySelector('ion-fab-list');
     fabList.activated = !fabList.activated;
   }
-
 
   render() {
     return [
@@ -195,7 +195,7 @@ export class PageSchedule {
         <ion-list id="scheduleList" hidden={this.shownSessions === 0}>
           {this.groups.map(group =>
             <ion-item-group hidden={group.hide}>
-              <ion-item-divider>
+              <ion-item-divider class="sticky">
                 <ion-label>
                   {group.time}
                 </ion-label>
