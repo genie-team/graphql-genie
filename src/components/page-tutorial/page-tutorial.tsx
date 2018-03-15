@@ -16,10 +16,10 @@ export class PageTutorial {
 
   render() {
     return [
-      <ion-header>
+      <ion-header no-border>
         <ion-toolbar class="tutorial-transparent">
           <ion-buttons slot="end">
-            <ion-button href="/schedule">Skip</ion-button>
+            <ion-button color="primary" href="/schedule">Skip</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>,
