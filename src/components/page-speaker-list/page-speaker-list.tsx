@@ -13,14 +13,11 @@ import { ConferenceData } from '../../providers/conference-data';
 export class PageSpeakerList {
   speakers: any[] = [];
 
-  @Prop({ connect: 'ion-action-sheet-controller' })
-  actionSheetCtrl: ActionSheetController;
+  @Prop({ connect: 'ion-action-sheet-controller' }) actionSheetCtrl: ActionSheetController;
 
-  @Prop({ context: 'config' })
-  config: Config;
+  @Prop({ context: 'config' }) config: Config;
 
-  @Prop({ context: 'router' })
-  router: Config;
+  @Prop({ context: 'router' }) router: Config;
 
   async componentWillLoad() {
     this.speakers = await ConferenceData.getSpeakers();
