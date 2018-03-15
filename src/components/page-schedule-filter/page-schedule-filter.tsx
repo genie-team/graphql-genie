@@ -1,7 +1,8 @@
 import '@ionic/core';
 import '@stencil/core';
 
-import { Component, Element, Listen, State } from '@stencil/core';
+import { Config } from '@ionic/core';
+import { Component, Element, Listen, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
 
@@ -14,6 +15,8 @@ export class PageScheduleFilter {
   @Element() el: any;
 
   @State() tracks: Array<{name: string, isChecked: boolean}> = [];
+
+  @Prop({ context: 'config' }) config: Config;
 
   async componentWillLoad() {
     // passed in array of track names that should be excluded (unchecked)
@@ -56,10 +59,12 @@ export class PageScheduleFilter {
   }
 
   render() {
+    const mode = this.config.get('mode');
+
     return [
       <ion-header>
         <ion-toolbar>
-          <ion-buttons slot="start">
+          <ion-buttons slot={mode === 'md' ? 'end' : 'start'}>
             <ion-button onClick={() => this.dismiss()}>Cancel</ion-button>
           </ion-buttons>
 
