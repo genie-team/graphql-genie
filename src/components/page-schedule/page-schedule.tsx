@@ -1,6 +1,7 @@
 import '@ionic/core';
 import '@stencil/core';
 
+import { Config } from '@ionic/core';
 import { Component, Element, Listen, Prop, State } from '@stencil/core';
 
 import { ConferenceData } from '../../providers/conference-data';
@@ -27,6 +28,8 @@ export class PageSchedule {
   @State() segment = 'all';
 
   @State() queryText = '';
+
+  @Prop({ context: 'config' }) config: Config;
 
   @Prop({ connect: 'ion-alert-controller' }) alertCtrl: HTMLIonAlertControllerElement;
 
@@ -162,14 +165,16 @@ export class PageSchedule {
   }
 
   render() {
+    const mode = this.config.get('mode');
+
     return [
       <ion-header>
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
           </ion-buttons>
 
-          <ion-segment value={this.segment} color="light">
+          <ion-segment value={this.segment} color={mode === 'md' ? 'light' : null}>
             <ion-segment-button value="all">
               All
             </ion-segment-button>
@@ -185,7 +190,7 @@ export class PageSchedule {
           </ion-buttons>
         </ion-toolbar>
 
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-searchbar value={this.queryText} placeholder="Search">
           </ion-searchbar>
         </ion-toolbar>

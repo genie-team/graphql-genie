@@ -99,7 +99,7 @@ export class PageSupport {
   render() {
     return [
       <ion-header>
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
             <ion-back-button></ion-back-button>

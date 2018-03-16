@@ -35,7 +35,7 @@ export class PageSession {
   render() {
     return [
       <ion-header>
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-buttons slot="start">
             <ion-back-button defaultHref={this.goback}></ion-back-button>
           </ion-buttons>

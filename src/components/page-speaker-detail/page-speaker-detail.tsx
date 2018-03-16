@@ -20,7 +20,7 @@ export class PageSpeakerDetail {
   render() {
     return [
       <ion-header>
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-buttons slot="start">
             <ion-back-button defaultHref="/speakers"></ion-back-button>
           </ion-buttons>

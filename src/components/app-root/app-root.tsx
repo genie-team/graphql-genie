@@ -97,7 +97,7 @@ export class AppRoot {
         <ion-split-pane>
           <ion-menu>
             <ion-header>
-              <ion-toolbar color="primary">
+              <ion-toolbar>
                 <ion-title>Menu</ion-title>
               </ion-toolbar>
             </ion-header>
