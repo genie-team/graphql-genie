@@ -60,7 +60,7 @@ export class PageScheduleFilter {
 
     return [
       <ion-header>
-        <ion-toolbar color="primary">
+        <ion-toolbar>
           <ion-buttons slot={mode === 'md' ? 'end' : 'start'}>
             <ion-button onClick={() => this.dismiss()}>Cancel</ion-button>
           </ion-buttons>
