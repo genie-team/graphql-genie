@@ -4,70 +4,61 @@ const HAS_LOGGED_IN = 'hasLoggedIn';
 const HAS_SEEN_TUTORIAL = 'hasSeenTutorial';
 
 export class UserDataController {
-  private favorites: string[] = [];
+  private favorites = new Set<string>();
 
   hasFavorite(sessionName: string): boolean {
-    return (this.favorites.indexOf(sessionName) > -1);
+    return this.favorites.has(sessionName);
   }
 
   addFavorite(sessionName: string): void {
-    this.favorites.push(sessionName);
+    this.favorites.add(sessionName);
   }
 
   removeFavorite(sessionName: string): void {
-    const index = this.favorites.indexOf(sessionName);
-    if (index > -1) {
-      this.favorites.splice(index, 1);
-    }
+    this.favorites.delete(sessionName);
   }
 
-  login(username: string): Promise<void> {
-     return set(HAS_LOGGED_IN, true).then(() => {
-       this.setUsername(username);
-       // return this.events.publish('user:login');
-       window.dispatchEvent(new Event('user:login'));
-    });
+  async login(username: string): Promise<void> {
+    await set(HAS_LOGGED_IN, true);
+    await this.setUsername(username);
+
+    window.dispatchEvent(new Event('user:login'));
   }
 
-  signup(username: string): Promise<void> {
-    return set(HAS_LOGGED_IN, true).then(() => {
-      this.setUsername(username);
-      // return this.events.publish('user:signup');
-      window.dispatchEvent(new Event('user:signup'));
-    });
+  async signup(username: string): Promise<void> {
+    await set(HAS_LOGGED_IN, true);
+
+    await this.setUsername(username);
+    window.dispatchEvent(new Event('user:signup'));
   }
 
-  logout(): Promise<void> {
-    return remove(HAS_LOGGED_IN).then(() => {
-      return remove('username');
-    }).then(() => {
-      // this.events.publish('user:logout');
-      window.dispatchEvent(new Event('user:logout'));
-    });
+  async logout(): Promise<void> {
+    await remove(HAS_LOGGED_IN);
+    await remove('username');
+
+    window.dispatchEvent(new Event('user:logout'));
   }
 
-  setUsername(username: string): Promise<void> {
-    return set('username', username);
+  async setUsername(username: string): Promise<void> {
+    await set('username', username);
   }
 
-  getUsername(): Promise<string> {
-    return get('username').then((value) => {
-      return value;
-    });
+  async getUsername(): Promise<string> {
+    return await get('username');
   }
 
-  isLoggedIn(): Promise<boolean> {
-    return get(HAS_LOGGED_IN).then((value) => {
-      return value === true;
-    });
+  async isLoggedIn(): Promise<boolean> {
+    const value = await get(HAS_LOGGED_IN);
+    return value === true;
   }
 
-  hasSeenTutorial(value: boolean): Promise<void> {
-    return set(HAS_SEEN_TUTORIAL, value);
+  async hasSeenTutorial(value: boolean): Promise<void> {
+    return await set(HAS_SEEN_TUTORIAL, value);
   }
 
-  checkHasSeenTutorial(): Promise<boolean> {
-    return get(HAS_SEEN_TUTORIAL).then((value) => !!value);
+  async checkHasSeenTutorial(): Promise<boolean> {
+    const value = await get(HAS_SEEN_TUTORIAL);
+    return !value;
   }
 }
 

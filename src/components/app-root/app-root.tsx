@@ -42,8 +42,9 @@ export class AppRoot {
     this.checkLoginStatus();
   }
 
-  checkLoginStatus() {
-    return UserData.isLoggedIn().then(loggedIn => this.loggedIn = loggedIn);
+  async checkLoginStatus() {
+    const loggedIn = this.loggedIn = await UserData.isLoggedIn();
+    return loggedIn;
   }
 
   async logout() {

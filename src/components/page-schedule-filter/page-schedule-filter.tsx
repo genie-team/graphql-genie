@@ -14,7 +14,7 @@ import { ConferenceData } from '../../providers/conference-data';
 export class PageScheduleFilter {
   @Element() el: any;
 
-  @State() tracks: Array<{name: string, isChecked: boolean}> = [];
+  @State() tracks: Array<{name: string, isChecked: boolean}>;
 
   @Prop({ context: 'config' }) config: Config;
 
@@ -23,14 +23,11 @@ export class PageScheduleFilter {
     // TODO = this.navParams.data.excludedTracks;
     const excludedTrackNames = [];
 
-    await ConferenceData.getTracks().then((trackNames: string[]) => {
-      trackNames.forEach(trackName => {
-        this.tracks.push({
-          name: trackName,
-          isChecked: (excludedTrackNames.indexOf(trackName) === -1)
-        });
-      });
-    });
+    const trackNames = await ConferenceData.getTracks();
+    this.tracks = trackNames.map(trackName => ({
+      name: trackName,
+      isChecked: (excludedTrackNames.indexOf(trackName) === -1)
+    }));
   }
 
   dismiss(data?: any) {

@@ -84,11 +84,10 @@ export class PageLogin {
     this.submitted = true;
 
     if (this.password.valid && this.username.valid) {
-      UserData.login(this.username.value)
-      .then(() => {
-        this.userDidLogIn.emit({loginStatus: true});
-        navCtrl.setRoot('page-tabs', null , {animate: true, direction: 'forward'});
-      });
+      await UserData.login(this.username.value);
+
+      this.userDidLogIn.emit({loginStatus: true});
+      navCtrl.setRoot('page-tabs', null , {animate: true, direction: 'forward'});
     }
   }
 
