@@ -377,7 +377,7 @@ export default class QueryBuilder {
 		});
 
 		const scalarTypes = await Promise.all(createScalarsPromises);
-		const scalarIdMap = _.zipObject(_.map(scalarTypes, 'data.createGraphQLScalarType.name'), _.map(scalarTypes, 'data.createGraphQLScalarType.id'));
+		const scalarIdMap = _.keyBy(_.map(scalarTypes, 'data.createGraphQLScalarType'), 'name');
 		console.log(scalarIdMap);
 
 
