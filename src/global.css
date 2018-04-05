@@ -16,13 +16,13 @@
  */
 
 :root {
-  --ion-color-primary:                 #3880ff;
+  --ion-color-primary:                 #00286e;
   --ion-color-secondary:               #0cd1e8;
   --ion-color-tertiary:                #7044ff;
   --ion-color-success:                 #10dc60;
   --ion-color-warning:                 #ffce00;
   --ion-color-danger:                  #f04141;
-  --ion-color-light:                   #f4f5f8;
+  --ion-color-light:                   #b5c7ff;
   --ion-color-medium:                  #989aa2;
   --ion-color-dark:                    #222428;
 
@@ -44,5 +44,27 @@
 
   /* Material Design Toolbar Variables */
   --ion-toolbar-md-background-color:   var(--ion-color-primary);
-  --ion-toolbar-md-text-color:         #fff;
+	--ion-toolbar-md-text-color:         #fff;
+	--split-pane-md-side-max-width: 17%;
+}
+
+
+.danger-alert .alert-head{
+	color: var(--ion-color-danger);
+}
+
+.danger-alert .danger-button{
+	color: var(--ion-color-danger);
+}
+
+.color-primary {
+	color: var(--ion-color-primary);
+}
+
+.color-warning {
+	color: var(--ion-color-warning);
+}
+
+.color-danger {
+	color: var(--ion-color-danger);
 }

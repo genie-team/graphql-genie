@@ -21,7 +21,9 @@
     "@stencil/router": "latest",
     "@stencil/sass": "0.0.3",
     "@stencil/utils": "latest",
+    "@types/graphql": "^0.12.7",
     "@types/jest": "^21.1.1",
+    "@types/lodash": "^4.14.105",
     "jest": "^21.2.1",
     "tslint": "^5.9.1",
     "tslint-ionic-rules": "0.0.14"
@@ -52,6 +54,15 @@
   "dependencies": {
     "@ionic-native/core": "^5.0.0-beta.6",
     "@ionic-native/in-app-browser": "^5.0.0-beta.6",
+    "apollo-cache-inmemory": "^1.1.12",
+    "apollo-client": "^2.2.8",
+    "apollo-link-schema": "^1.0.6",
+    "fortune": "^5.4.2",
+    "graphql": "^0.13.2",
+    "graphql-tag": "^2.8.0",
+    "graphql-tools": "^2.23.1",
+    "lodash": "^4.17.5",
+    "pluralize": "^7.0.0",
     "rxjs": "^5.5.6"
   }
 }

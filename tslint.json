@@ -1,6 +1,7 @@
 {
   "extends": "tslint-ionic-rules",
   "rules": {
-    "no-import-side-effect": false
+	"no-import-side-effect": false,
+	"indent": [true, "tabs", 4]
   }
 }

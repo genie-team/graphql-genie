@@ -143,6 +143,36 @@ declare global {
 
 
 import {
+  PageSignup as PageAddTypeModal
+} from './components/page-add-type-modal/page-add-type-modal';
+
+declare global {
+  interface HTMLPageAddTypeModalElement extends PageAddTypeModal, HTMLStencilElement {
+  }
+  var HTMLPageAddTypeModalElement: {
+    prototype: HTMLPageAddTypeModalElement;
+    new (): HTMLPageAddTypeModalElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-add-type-modal": HTMLPageAddTypeModalElement;
+  }
+  interface ElementTagNameMap {
+    "page-add-type-modal": HTMLPageAddTypeModalElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-add-type-modal": JSXElements.PageAddTypeModalAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageAddTypeModalAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
   PageLogin as PageLogin
 } from './components/page-login/page-login';
 
@@ -467,6 +497,36 @@ declare global {
   }
   namespace JSXElements {
     export interface PageTutorialAttributes extends HTMLAttributes {
+      
+    }
+  }
+}
+
+
+import {
+  PageSchedule as PageTypes
+} from './components/page-types/page-types';
+
+declare global {
+  interface HTMLPageTypesElement extends PageTypes, HTMLStencilElement {
+  }
+  var HTMLPageTypesElement: {
+    prototype: HTMLPageTypesElement;
+    new (): HTMLPageTypesElement;
+  };
+  interface HTMLElementTagNameMap {
+    "page-types": HTMLPageTypesElement;
+  }
+  interface ElementTagNameMap {
+    "page-types": HTMLPageTypesElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      "page-types": JSXElements.PageTypesAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface PageTypesAttributes extends HTMLAttributes {
       
     }
   }
