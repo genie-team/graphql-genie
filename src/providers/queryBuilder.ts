@@ -3,11 +3,12 @@ import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
 import pluralize from 'pluralize';
+
 import {
 	GraphQLFieldResolver, GraphQLID, GraphQLInputObjectType, GraphQLInputType,
 	GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLResolveInfo,
 	GraphQLSchema, GraphQLString, GraphQLUnionType, IntrospectionObjectType,
-	IntrospectionType, graphql, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType
+	IntrospectionType, Kind, SelectionNode, graphql, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType
 } from 'graphql';
 import { printType } from 'graphql';
 import _ from 'lodash';
@@ -123,23 +124,124 @@ export default class QueryBuilder {
 		return accum;
 	}
 
+	private createResolver = async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string) => {
+		// iterate over all the non-id arguments and recursively create new types
+		const nonIdArgs = _.pickBy(_args, (__, key) => {
+			return key !== '_typename' && !_.endsWith(key, 'Id') && !_.endsWith(key, 'Ids');
+		});
+		if (_.isEmpty(nonIdArgs)) {
+			throw new Error(`Bad Mutation\n You sent in an input argument with no new data, you probably want to use the key ${key}Id(s) instead of ${key} with only Id arguments`);
+		}
+		const argPromises = [];
+		for (const argName in nonIdArgs) {
+			const arg = _args[argName];
+			if (_.isArray(arg)) {
+				_.each(arg, currArgObj => {
+					if (_.isObject(currArgObj) && currArgObj._typename) {
+						argPromises.push(this.createResolver(_root, currArgObj, _context, _info, argName));
+						_args[argName] = [];
+					}
+				});
+			} else if (_.isObject(arg) && arg._typename) {
+				argPromises.push(this.createResolver(_root, arg, _context, _info, argName));
+				_args[argName] = undefined;
+			}
+		}
+		// wait for all the new types to be created
+		const createdTypes = await Promise.all(argPromises);
+
+		// setup the arguments to use the new types
+		for (const createdType of createdTypes) {
+			const key = createdType.key;
+			const id = createdType.id;
+			if (_.isArray(_args[key])) {
+				if (_.isArray(id)) {
+					_args[key] = _args[key].concat(id);
+				} else {
+					_args[key].push(id);
+				}
+			} else {
+				_args[key] = id;
+			}
+		}
+
+		// now merge in the existing ids passed in
+		const idArgs = _.pickBy(_args, (__, key) => {
+			return _.endsWith(key, 'Id') || _.endsWith(key, 'Ids');
+		});
+		for (const argName in idArgs) {
+			const arg = idArgs[argName];
+			if (_.isArray(arg)) {
+				const actualArgName = argName.replace('Ids', '');
+				_args[actualArgName] = arg.concat(_args[actualArgName]);
+			} else {
+				const actualArgName = argName.replace('Id', '');
+				if (_args[actualArgName]) {
+					throw new Error(`Bad mutation\n Input argument contained multiple values for non array field with ${argName} and ${actualArgName}`);
+				}
+				_args[actualArgName] = arg;
+			}
+		}
+		let id;
+		// if everything was an id no need to create anything new
+		const created = await this.graphQLFortune.create(_args._typename, _args);
+		id = _.isArray(created) ? _.map(created, 'id') : created.id;
+
+		// if key this is recursed else it's the final value
+		if (key) {
+			return {key: key, id: id, created: created};
+		} else {
+			return created;
+		}
+	}
+
 	private generateCreate = (type: IntrospectionObjectType) => {
 		const args = this.generateCreateArgs(type);
 		this.mutationRootObjectTypeConfig.fields[`create${type.name}`] = {
 			type: type.name,
 			args: args
 		};
-
-		this.newMutationResolvers.set(`create${type.name}`, (
-			_root: any,
-			_args: { [key: string]: any },
-			_context: any,
-			_info: GraphQLResolveInfo,
-		): any => {
-			console.log(_args);
-			return this.graphQLFortune.create(_args._typename, _args);
-		});
+		this.newMutationResolvers.set(`create${type.name}`, this.createResolver);
+		// this.newMutationResolvers.set(`create${type.name}`, (
+		// 	_root: any,
+		// 	_args: { [key: string]: any },
+		// 	_context: any,
+		// 	_info: GraphQLResolveInfo,
+		// ): any => {
+		// 	console.log(_args);
+		// 	return this.graphQLFortune.create(_args._typename, _args);
+		// });
 	}
+
+	private computeIncludes = (selection: SelectionNode, type: string, depth?: Array<any>) => {
+		const includes = [];
+		switch (selection.kind) {
+			case Kind.FIELD:
+			const link = this.graphQLFortune.getLink(type, selection.name.value);
+			if (link) {
+				type = link;
+				const include = depth ? [depth, selection.name.value] : [selection.name.value];
+				depth = include;
+				includes.push(include);
+			}
+				if (selection.selectionSet && (selection.selectionSet.selections.length > 0)) {
+					includes.push((selection.selectionSet.selections.map(selectionNode => {
+						return _.flatten(this.computeIncludes(selectionNode, type, depth));
+					})));
+				}
+				break;
+
+			case Kind.INLINE_FRAGMENT:
+				break;
+
+			case Kind.FRAGMENT_SPREAD:
+				break;
+
+
+		}
+		return includes;
+
+}
 
 	private generateGetSingle = (type: IntrospectionObjectType) => {
 
@@ -154,6 +256,9 @@ export default class QueryBuilder {
 			_context: any,
 			_info: GraphQLResolveInfo,
 		): any => {
+			const selections = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
+			console.info('selections');
+			console.info(selections);
 			return this.graphQLFortune.find(type.name, [_args['id']]);
 		});
 
@@ -322,6 +427,22 @@ export default class QueryBuilder {
 		// // 	resolverMap.Query[name] = resolve;
 		// // }
 		console.log(this.schema);
+		const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
+		resolversMap.set('args', (
+			_root: any,
+			_args: { [key: string]: any },
+			_context: any,
+			_info: GraphQLResolveInfo,
+		): any => {
+			const selections = this.computeIncludes(_info.operation.selectionSet.selections[0], 'GraphQLDirective');
+			console.info('selections');
+			console.info(selections);
+			console.log(_root);
+			console.log(_args);
+			console.log(_context);
+			console.log(_info);
+		});
+		addResolvers('GraphQLDirective', resolversMap);
 		const client = new ApolloClient({
 			link: new SchemaLink({ schema: this.schema }),
 			cache: this.cache,
@@ -395,7 +516,7 @@ export default class QueryBuilder {
 				args: [{
 					name: 'if',
 					description: 'Skipped when true.',
-					type: {GraphQLScalarTypeInputId: scalarIdMap['Boolean'].id}
+					typeId: scalarIdMap['Boolean'].id
 				}]
 			},
 			{
@@ -405,7 +526,7 @@ export default class QueryBuilder {
 				args: [{
 					name: 'if',
 					description: 'Skipped when true.',
-					type: {GraphQLScalarTypeInputId: scalarIdMap['Boolean'].id}
+					typeId: scalarIdMap['Boolean'].id
 				}]
 			},
 			{
@@ -415,7 +536,7 @@ export default class QueryBuilder {
 				args: [{
 					name: 'reason',
 					description: 'Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formatted in [Markdown](https://daringfireball.net/projects/markdown/).',
-					type: {GraphQLScalarTypeInputId: scalarIdMap['String'].id},
+					typeId: scalarIdMap['String'].id,
 					defaultValue: 'No longer supported'
 				}]
 			}
@@ -424,7 +545,6 @@ export default class QueryBuilder {
 		mutation createGraphQLDirective($name: String!, $description: String, $location: [String], $args: [GraphQLArgumentInput!]) {
 			createGraphQLDirective(name: $name, description: $description, location: $location, args: $args) {
 				id
-				name
 			}
 		}
 	`;
@@ -437,16 +557,16 @@ export default class QueryBuilder {
 
 		await this.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test', _typename: 'GraphQLEnumType' });
 		await this.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test', _typename: 'GraphQLObjectType' });
-		console.info(await client.query({
-			query: gql`
-									query {
-										allGraphQLObjectTypes {
-											name
-										}
-									}
-								`
+		// console.info(await client.query({
+		// 	query: gql`
+		// 							query {
+		// 								allGraphQLObjectTypes {
+		// 									name
+		// 								}
+		// 							}
+		// 						`
 
-		}));
+		// }));
 
 		return client;
 	}
@@ -499,5 +619,23 @@ export default class QueryBuilder {
 //     id
 //     name
 //     description
+//   }
+// }
+
+
+// {
+//   allGraphQLDirectives {
+//     id
+//     name
+//     description
+//     args {
+//       id
+//       type {
+//         ... on GraphQLScalarType {
+//           id
+//         }
+
+//       }
+//     }
 //   }
 // }

@@ -19,11 +19,11 @@ export default class FortuneBuilder {
 		return _.isArray(records) ? results.payload.records : results.payload.records[0];
 	}
 
-	public find = async (graphQLTypeName: string, ids?: [string], options?, meta?) => {
+	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
 		_.set(options, 'match._typename', graphQLTypeName);
-		const results =  await this.store.find(fortuneType, ids, options, meta);
+		const results =  await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn;
 		if (results.payload.records) {
 			// if one id sent in we just want to return the value not an array
@@ -47,6 +47,11 @@ export default class FortuneBuilder {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		const results =  await this.store.delete(fortuneType, ids, include, meta);
 		return results.payload.records;
+	}
+
+	public getLink = (graphQLTypeName: string, field: string): string => {
+		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		return _.get(this.store, `recordTypes.${fortuneType}.${field}.link`);
 	}
 
 	public getStore = () => {
