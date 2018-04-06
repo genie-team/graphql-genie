@@ -48,40 +48,22 @@ interface Node {
 }
 
 interface GraphQLType {
-	name: String!
 	description: String
 	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-
-type GraphQLInput @model {
-	id: ID! @isUnique
-	type: GraphQLInputType!
-	nonNull: Boolean
-	list: Boolean
-	listNonNull: Boolean
-}
-
-type GraphQLOutput @model {
-	id: ID! @isUnique
-	type: GraphQLOutputType!
-	nonNull: Boolean
-	list: Boolean
-	listNonNull: Boolean
 }
 
 type GraphQLInputArgument @model {
 	id: ID! @isUnique
 	name: String!
-	value: GraphQLInput!
+	value: GraphQLInputType!
 	parent: GraphQLDirectiveAttribute @relation(name: "InputArgument")
 }
 
 type GraphQLArgument @model {
 	id: ID! @isUnique
 	name: String!
-  type: GraphQLInput!
-	defaultValue: GraphQLInput
+  type: GraphQLInputType!
+	defaultValue: String
 	description: String
 	parent: GraphQLArgumentParent @relation(name: "Argument")
 }
@@ -90,7 +72,8 @@ union GraphQLArgumentParent = GraphQLDirective | GraphQLField
 
 type GraphQLDirective @model {
 	id: ID! @isUnique
-  name: String!
+	name: String!
+	description: String
 	location: [DirectiveLocation!]!
 	args: [GraphQLArgument] @relation(name: "Argument")
 	schema: GraphQLSchema @relation(name: "DirectiveOnSchema")
@@ -107,7 +90,7 @@ type GraphQLDirectiveAttribute @model {
 type GraphQLField @model {
 	id: ID! @isUnique
 	name: String!
-  type: GraphQLOutput
+  type: GraphQLOutputType
   description: String
 	args: [GraphQLArgument] @relation(name: "Argument")
 	directives: [GraphQLDirectiveAttribute]
@@ -125,6 +108,19 @@ type GraphQLInterfaceType implements GraphQLType @model {
 	mutation: GraphQLSchema @relation(name: "MutationOnSchema")
 }
 
+type GraphQLNonNull implements GraphQLType @model {
+	id: ID! @isUnique
+	description: String
+	schema: GraphQLSchema @relation(name: "TypeOnSchema")
+	ofType: GraphQLType!	
+}
+
+type GraphQLList implements GraphQLType @model {
+	id: ID! @isUnique
+	description: String
+	schema: GraphQLSchema @relation(name: "TypeOnSchema")
+	ofType: GraphQLType!
+}
 
 type GraphQLObjectType implements GraphQLType @model {
 	id: ID! @isUnique
@@ -167,8 +163,8 @@ type GraphQLInputObjectType implements GraphQLType @model {
 	schema: GraphQLSchema @relation(name: "TypeOnSchema")
 }
 
-union GraphQLInputType = GraphQLScalarType | GraphQLEnumType | GraphQLInputObjectType
-union GraphQLOutputType = GraphQLScalarType | GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLEnumType
+union GraphQLInputType = GraphQLScalarType | GraphQLEnumType | GraphQLInputObjectType | GraphQLNonNull | GraphQLList
+union GraphQLOutputType = GraphQLScalarType | GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLEnumType | GraphQLNonNull | GraphQLList
 
 
 type GraphQLSchema @model @display(name: "Schema Root") {

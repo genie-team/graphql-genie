@@ -381,39 +381,54 @@ export default class QueryBuilder {
 		console.log(scalarIdMap);
 
 
-		// const directives = [
-		// 	{
-		// 		name: 'skip',
-		// 		description: 'Directs the executor to skip this field or fragment when the `if` argument is true.',
-		// 		locations: ['FIELD', 'FRAGMENT_SPREAD', 'INLINE_FRAGMENT'],
-		// 		args: [{
-		// 			name: 'if',
-		// 			description: 'Skipped when true.',
-		// 			type: scalars[0]
-		// 		}]
-		// 	},
-		// 	{
-		// 		name: 'include',
-		// 		description: 'Directs the executor to include this field or fragment only when the `if` argument is true.',
-		// 		locations: ['FIELD', 'FRAGMENT_SPREAD', 'INLINE_FRAGMENT'],
-		// 		args: [{
-		// 			name: 'if',
-		// 			description: 'Skipped when true.',
-		// 			type: scalars[0]
-		// 		}]
-		// 	},
-		// 	{
-		// 		name: 'deprecated',
-		// 		description: 'Marks an element of a GraphQL schema as no longer supported.',
-		// 		locations: ['FIELD_DEFINITION', 'ENUM_VALUE'],
-		// 		args: [{
-		// 			name: 'reason',
-		// 			description: 'Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formatted in [Markdown](https://daringfireball.net/projects/markdown/).',
-		// 			type: scalars[3],
-		// 			defaultValue: 'No longer supported'
-		// 		}]
-		// 	}
-		// ];
+		const createDirectivesPromises = [];
+		const directives = [
+			{
+				name: 'skip',
+				description: 'Directs the executor to skip this field or fragment when the `if` argument is true.',
+				location: ['FIELD', 'FRAGMENT_SPREAD', 'INLINE_FRAGMENT'],
+				args: [{
+					name: 'if',
+					description: 'Skipped when true.',
+					type: {GraphQLScalarTypeInputId: scalarIdMap['Boolean'].id}
+				}]
+			},
+			{
+				name: 'include',
+				description: 'Directs the executor to include this field or fragment only when the `if` argument is true.',
+				location: ['FIELD', 'FRAGMENT_SPREAD', 'INLINE_FRAGMENT'],
+				args: [{
+					name: 'if',
+					description: 'Skipped when true.',
+					type: {GraphQLScalarTypeInputId: scalarIdMap['Boolean'].id}
+				}]
+			},
+			{
+				name: 'deprecated',
+				description: 'Marks an element of a GraphQL schema as no longer supported.',
+				location: ['FIELD_DEFINITION', 'ENUM_VALUE'],
+				args: [{
+					name: 'reason',
+					description: 'Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formatted in [Markdown](https://daringfireball.net/projects/markdown/).',
+					type: {GraphQLScalarTypeInputId: scalarIdMap['String'].id},
+					defaultValue: 'No longer supported'
+				}]
+			}
+		];
+		const createGraphQLDirective = gql`
+		mutation createGraphQLDirective($name: String!, $description: String, $location: [String], $args: [GraphQLArgumentInput!]) {
+			createGraphQLDirective(name: $name, description: $description, location: $location, args: $args) {
+				id
+				name
+			}
+		}
+	`;
+		_.each(directives, directive => {
+			createDirectivesPromises.push(client.mutate({
+				mutation: createGraphQLDirective,
+				variables: {name: directive.name, description: directive.description, location: directive.location, args: directive.args}
+			}));
+		});
 
 		await this.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test', _typename: 'GraphQLEnumType' });
 		await this.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test', _typename: 'GraphQLObjectType' });
