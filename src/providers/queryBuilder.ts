@@ -247,6 +247,11 @@ export default class QueryBuilder {
 
 					});
 				}
+				// create _typename input field with default value
+				fields['_typename'] = {
+					type: GraphQLString,
+					defaultValue: type.name
+				};
 				this.newInputObjectTypes.set(name, new GraphQLInputObjectType({
 					name,
 					fields
