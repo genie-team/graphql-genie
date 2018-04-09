@@ -1,38 +1,38 @@
 {
   "name": "ionic-stencil-conference-app",
   "private": true,
+  "browser": "public/maker-graph.umd.js",
   "version": "0.0.1",
   "description": "Stencil App Starter",
   "files": [
     "dist/"
   ],
-  "scripts": {
-    "build": "stencil build",
-    "dev": "sd concurrent \"stencil build --dev --watch\" \"stencil-dev-server\" ",
-    "serve": "stencil-dev-server",
-    "start": "npm run dev",
-    "test": "jest",
-    "test.watch": "jest --watch"
-  },
   "devDependencies": {
-    "@ionic/core": "0.1.4-7",
-    "@stencil/core": "^0.6.18",
-    "@stencil/dev-server": "latest",
-    "@stencil/router": "latest",
-    "@stencil/sass": "0.0.3",
-    "@stencil/utils": "latest",
     "@types/graphql": "^0.12.7",
     "@types/jest": "^21.1.1",
     "@types/lodash": "^4.14.105",
     "jest": "^21.2.1",
+    "rollup": "^0.57.0",
+    "rollup-plugin-commonjs": "^9.1.0",
+    "rollup-plugin-livereload": "^0.6.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-replace": "^2.0.0",
+    "rollup-plugin-serve": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.12.0",
     "tslint": "^5.9.1",
-    "tslint-ionic-rules": "0.0.14"
+    "typescript": "^2.8.1"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "node test/test.js",
+    "pretest": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ionic-team/stencil-app-starter.git"
   },
-  "author": "Ionic Team",
+  "author": "Maker Team",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ionic-team/stencil"
@@ -52,8 +52,6 @@
     ]
   },
   "dependencies": {
-    "@ionic-native/core": "^5.0.0-beta.6",
-    "@ionic-native/in-app-browser": "^5.0.0-beta.6",
     "apollo-cache-inmemory": "^1.1.12",
     "apollo-client": "^2.2.8",
     "apollo-link-schema": "^1.0.6",
@@ -62,7 +60,6 @@
     "graphql-tag": "^2.8.0",
     "graphql-tools": "^2.23.1",
     "lodash": "^4.17.5",
-    "pluralize": "^7.0.0",
-    "rxjs": "^5.5.6"
+    "pluralize": "^7.0.0"
   }
 }

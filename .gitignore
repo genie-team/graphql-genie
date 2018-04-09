@@ -11,7 +11,7 @@ www/
 log.txt
 *.sublime-project
 *.sublime-workspace
-
+*.rpt2_cache
 .idea/
 .vscode/
 .sass-cache/

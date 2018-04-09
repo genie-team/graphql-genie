@@ -12,7 +12,7 @@ import {
 } from 'graphql';
 import { printType } from 'graphql';
 import _ from 'lodash';
-import { addResolvers, addTypeDefsToSchema, getSchema } from '../models/graphQLShema';
+import { addResolvers, addTypeDefsToSchema, getSchema } from './graphQLShema';
 import SchemaInfoBuilder from './schemaInfoBuilder';
 import FortuneBuilder from './fortuneBuilder';
 
