@@ -6,9 +6,9 @@ import pluralize from 'pluralize';
 
 import {
 	GraphQLFieldResolver, GraphQLID, GraphQLInputObjectType, GraphQLInputType,
-	GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLResolveInfo,
-	GraphQLSchema, GraphQLString, GraphQLUnionType, IntrospectionObjectType,
-	IntrospectionType, Kind, SelectionNode, graphql, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType
+	GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType,
+	GraphQLResolveInfo, GraphQLSchema, GraphQLUnionType,
+	IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, graphql, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType
 } from 'graphql';
 import { printType } from 'graphql';
 import _ from 'lodash';
@@ -52,11 +52,11 @@ export default class QueryBuilder {
 
 	private createArgs: Map<string, object> = new Map<string, object>();
 
-	private cache: InMemoryCache;
 
 	private newQueryResolvers: Map<string, GraphQLFieldResolver<any, any>> = new Map<string, GraphQLFieldResolver<any, any>>();
 
 	private newMutationResolvers: Map<string, GraphQLFieldResolver<any, any>> = new Map<string, GraphQLFieldResolver<any, any>>();
+
 
 	schema: GraphQLSchema;
 	schemaInfo: IntrospectionType[];
@@ -66,12 +66,16 @@ export default class QueryBuilder {
 	private graphQLFortune: FortuneBuilder;
 
 	constructor() {
-		this.cache = new InMemoryCache();
 		this.schema = getSchema();
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfoBuilder.getSchemaInfo().then(schemaInfo => {
 			this.schemaInfo = schemaInfo;
-			this.buildQueries();
+			const promises = [];
+			promises.push(this.buildQueries());
+			promises.push(this.buildResolveTypeResolvers());
+			Promise.all(promises).then(() => {
+				this.getClient();
+			});
 			this.graphQLFortune = new FortuneBuilder(schemaInfo);
 		});
 	}
@@ -85,6 +89,29 @@ export default class QueryBuilder {
 	// 	}
 	// 	return obj;
 	// }
+
+	private buildResolveTypeResolvers = async() => {
+		const typesResult = await graphql(this.schema, `{
+			__schema {
+				types{
+					name
+					kind
+				}
+			}
+		}
+		`);
+		const types = typesResult.data.__schema.types;
+		for (const type of types) {
+			if (type.kind && type.kind === 'INTERFACE' || type.kind === 'UNION') {
+				const resolver = (
+					obj: any
+				): any => {
+					return obj.__typename;
+				};
+				addResolvers(type.name, new Map().set('__resolveType', resolver));
+			}
+		}
+	}
 
 	public buildQueries = async () => {
 		console.info(this.schema);
@@ -113,7 +140,7 @@ export default class QueryBuilder {
 		this.schema = addTypeDefsToSchema(newTypes);
 		addResolvers('Query', this.newQueryResolvers);
 		addResolvers('Mutation', this.newMutationResolvers);
-		this.getClient();
+
 	}
 
 	private buildQuery = (type: IntrospectionObjectType) => {
@@ -124,8 +151,24 @@ export default class QueryBuilder {
 		return accum;
 	}
 
-	private createResolver = async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string) => {
+
+	private getReturnType = (type: GraphQLOutputType | GraphQLNonNull<any> | GraphQLList<any>, ): string => {
+		if (isListType(type) || isNonNullType(type)) {
+			return this.getReturnType(type.ofType);
+		} else {
+			return type.name;
+		}
+	}
+
+	private createResolver = async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
 		// iterate over all the non-id arguments and recursively create new types
+
+		if (!returnType) {
+				returnType = _info.returnType;
+		}
+
+		const returnTypeName = this.getReturnType(returnType);
+
 		const nonIdArgs = _.pickBy(_args, (__, key) => {
 			return key !== '_typename' && !_.endsWith(key, 'Id') && !_.endsWith(key, 'Ids');
 		});
@@ -134,16 +177,20 @@ export default class QueryBuilder {
 		}
 		const argPromises = [];
 		for (const argName in nonIdArgs) {
+			let argReturnType: GraphQLOutputType;
+			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
+				argReturnType = returnType.getFields()[argName].type;
+			}
 			const arg = _args[argName];
 			if (_.isArray(arg)) {
 				_.each(arg, currArgObj => {
-					if (_.isObject(currArgObj) && currArgObj._typename) {
-						argPromises.push(this.createResolver(_root, currArgObj, _context, _info, argName));
+					if (_.isObject(currArgObj) && argReturnType) {
+						argPromises.push(this.createResolver(_root, currArgObj, _context, _info, argName, argReturnType));
 						_args[argName] = [];
 					}
 				});
-			} else if (_.isObject(arg) && arg._typename) {
-				argPromises.push(this.createResolver(_root, arg, _context, _info, argName));
+			} else if (_.isObject(arg) && argReturnType) {
+				argPromises.push(this.createResolver(_root, arg, _context, _info, argName, argReturnType));
 				_args[argName] = undefined;
 			}
 		}
@@ -184,7 +231,7 @@ export default class QueryBuilder {
 		}
 		let id;
 		// if everything was an id no need to create anything new
-		const created = await this.graphQLFortune.create(_args._typename, _args);
+		const created = await this.graphQLFortune.create(returnTypeName, _args);
 		id = _.isArray(created) ? _.map(created, 'id') : created.id;
 
 		// if key this is recursed else it's the final value
@@ -214,20 +261,24 @@ export default class QueryBuilder {
 	}
 
 	private computeIncludes = (selection: SelectionNode, type: string, depth?: Array<any>) => {
-		const includes = [];
+		let includes = [];
 		switch (selection.kind) {
 			case Kind.FIELD:
 			const link = this.graphQLFortune.getLink(type, selection.name.value);
 			if (link) {
 				type = link;
-				const include = depth ? [depth, selection.name.value] : [selection.name.value];
+				const include = depth ? [...depth, [selection.name.value]] : [selection.name.value];
 				depth = include;
 				includes.push(include);
 			}
 				if (selection.selectionSet && (selection.selectionSet.selections.length > 0)) {
-					includes.push((selection.selectionSet.selections.map(selectionNode => {
-						return _.flatten(this.computeIncludes(selectionNode, type, depth));
-					})));
+					includes = includes.concat(selection.selectionSet.selections
+						.map(function (selectionNode) {
+						return this.computeIncludes(selectionNode, type, depth);
+				}, this)
+						.reduce(function (selections, selected) {
+							return selections.concat(selected);
+						}, []));
 				}
 				break;
 
@@ -256,10 +307,8 @@ export default class QueryBuilder {
 			_context: any,
 			_info: GraphQLResolveInfo,
 		): any => {
-			const selections = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
-			console.info('selections');
-			console.info(selections);
-			return this.graphQLFortune.find(type.name, [_args['id']]);
+			const includes = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
+			return this.graphQLFortune.find(type.name, [_args['id']], null, includes);
 		});
 
 	}
@@ -277,7 +326,8 @@ export default class QueryBuilder {
 			_context: any,
 			_info: GraphQLResolveInfo,
 		): any => {
-			return this.graphQLFortune.find(type.name);
+			const includes = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
+			return this.graphQLFortune.find(type.name, null, null, includes);
 		});
 	}
 	private generateInputNames = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLNonNull<any> | GraphQLList<any>, ): string => {
@@ -352,11 +402,11 @@ export default class QueryBuilder {
 
 					});
 				}
-				// create _typename input field with default value
-				fields['_typename'] = {
-					type: GraphQLString,
-					defaultValue: type.name
-				};
+				// // create _typename input field with default value
+				// fields['_typename'] = {
+				// 	type: GraphQLString,
+				// 	defaultValue: type.name
+				// };
 				this.newInputObjectTypes.set(name, new GraphQLInputObjectType({
 					name,
 					fields
@@ -397,11 +447,11 @@ export default class QueryBuilder {
 
 			});
 
-			// create _typename input field with default value
-			args['_typename'] = {
-				type: GraphQLString,
-				defaultValue: schemaType.name
-			};
+			// // create _typename input field with default value
+			// args['_typename'] = {
+			// 	type: GraphQLString,
+			// 	defaultValue: schemaType.name
+			// };
 			this.createArgs.set(type.name, args);
 		}
 
@@ -427,25 +477,26 @@ export default class QueryBuilder {
 		// // 	resolverMap.Query[name] = resolve;
 		// // }
 		console.log(this.schema);
-		const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
-		resolversMap.set('args', (
-			_root: any,
-			_args: { [key: string]: any },
-			_context: any,
-			_info: GraphQLResolveInfo,
-		): any => {
-			const selections = this.computeIncludes(_info.operation.selectionSet.selections[0], 'GraphQLDirective');
-			console.info('selections');
-			console.info(selections);
-			console.log(_root);
-			console.log(_args);
-			console.log(_context);
-			console.log(_info);
-		});
-		addResolvers('GraphQLDirective', resolversMap);
+		// const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
+		// resolversMap.set('args', (
+		// 	_root: any,
+		// 	_args: { [key: string]: any },
+		// 	_context: any,
+		// 	_info: GraphQLResolveInfo,
+		// ): any => {
+		// 	const selections = this.computeIncludes(_info.operation.selectionSet.selections[0], 'GraphQLDirective');
+		// 	console.info('selections');
+		// 	console.info(selections);
+		// 	console.info(JSON.stringify(selections));
+		// 	console.log(_root);
+		// 	console.log(_args);
+		// 	console.log(_context);
+		// 	console.log(_info);
+		// });
+		// addResolvers('GraphQLDirective', resolversMap);
 		const client = new ApolloClient({
 			link: new SchemaLink({ schema: this.schema }),
-			cache: this.cache,
+			cache:  new InMemoryCache(),
 			connectToDevTools: true
 		});
 		client.initQueryManager();
@@ -525,7 +576,7 @@ export default class QueryBuilder {
 				location: ['FIELD', 'FRAGMENT_SPREAD', 'INLINE_FRAGMENT'],
 				args: [{
 					name: 'if',
-					description: 'Skipped when true.',
+					description: '"Included when true.',
 					typeId: scalarIdMap['Boolean'].id
 				}]
 			},
@@ -555,8 +606,8 @@ export default class QueryBuilder {
 			}));
 		});
 
-		await this.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test', _typename: 'GraphQLEnumType' });
-		await this.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test', _typename: 'GraphQLObjectType' });
+		await this.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test' });
+		await this.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test' });
 		// console.info(await client.query({
 		// 	query: gql`
 		// 							query {

@@ -13,8 +13,27 @@ export default class FortuneBuilder {
 		this.store = this.buildFortune();
 	}
 
+	private deepReplaceIdWithObj = (replaceMap, masterObj) => {
+		if (!masterObj) {
+			return masterObj;
+		}
+		if (_.isString(masterObj) && replaceMap[masterObj]) {
+			masterObj = replaceMap[masterObj];
+		}
+		if (masterObj && typeof masterObj === 'object') {
+			for (const key in masterObj) {
+				if (key !== 'id') {
+					masterObj[key] = this.deepReplaceIdWithObj(replaceMap, masterObj[key]);
+				}
+			}
+		}
+
+		return masterObj;
+	}
+
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		records['__graphtype'] = graphQLTypeName;
 		const results = await this.store.create(fortuneType, records, include, meta);
 		return _.isArray(records) ? results.payload.records : results.payload.records[0];
 	}
@@ -22,9 +41,22 @@ export default class FortuneBuilder {
 	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
-		_.set(options, 'match._typename', graphQLTypeName);
-		const results =  await this.store.find(fortuneType, ids, options, include, meta);
+		_.set(options, 'match.__graphtype', graphQLTypeName);
+		const results = await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn;
+
+		// handle includes, make them part of the returned data for default resolvers to handle
+		if (results.payload.records && results.payload.include) {
+			const includeIdMap = {};
+			for (const includeType in results.payload.include) {
+				const includeArr = results.payload.include[includeType];
+				for (const include of includeArr) {
+					includeIdMap[include.id] = include;
+				}
+			}
+			this.deepReplaceIdWithObj(includeIdMap, results.payload.records);
+		}
+
 		if (results.payload.records) {
 			// if one id sent in we just want to return the value not an array
 			graphReturn = ids && ids.length === 1 ? results.payload.records[0] : results.payload.records;
@@ -38,14 +70,14 @@ export default class FortuneBuilder {
 
 	public update = async (graphQLTypeName: string, updates, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const results =  await this.store.update(fortuneType, updates, include, meta);
+		const results = await this.store.update(fortuneType, updates, include, meta);
 		return results.payload.records;
 
 	}
 
 	public delete = async (graphQLTypeName: string, ids?: [string], include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const results =  await this.store.delete(fortuneType, ids, include, meta);
+		const results = await this.store.delete(fortuneType, ids, include, meta);
 		return results.payload.records;
 	}
 
@@ -176,9 +208,7 @@ export default class FortuneBuilder {
 
 						fields[field.name] = currType;
 					}
-
-
-
+					fields['__graphtype'] = String;
 				});
 				const fortuneName = this.getFortuneTypeName(name);
 				const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};
@@ -206,7 +236,7 @@ export default class FortuneBuilder {
 
 		});
 		console.info(fortuneConfig);
-		const store = fortune(fortuneConfig, {settings: {enforceLinks: true}});
+		const store = fortune(fortuneConfig, { settings: { enforceLinks: true } });
 		console.info(store);
 		window['store'] = store;
 		return store;

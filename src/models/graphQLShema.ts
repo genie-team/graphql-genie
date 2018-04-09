@@ -112,7 +112,7 @@ type GraphQLNonNull implements GraphQLType @model {
 	id: ID! @isUnique
 	description: String
 	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-	ofType: GraphQLType!	
+	ofType: GraphQLType!
 }
 
 type GraphQLList implements GraphQLType @model {
@@ -183,16 +183,6 @@ type GraphQLSchema @model @display(name: "Schema Root") {
 
 
 
-const resolvers = {
-	GraphQLType: {
-		__resolveType(obj) {
-			console.log('resolve type');
-			console.log(obj);
-			return obj._typename;
-		},
-	},
-};
-
 class DisplayDirective extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field) {
 		this.setDisplay(field);
@@ -248,7 +238,6 @@ export const addTypeDefsToSchema = (typeDefs: string): GraphQLSchema => {
 	}
 	schema = makeExecutableSchema({
 		typeDefs: defaultTypeDefs + typeDefs,
-		resolvers,
 		schemaDirectives: {
 			display: DisplayDirective,
 			relation: RelationDirective
@@ -321,3 +310,19 @@ export const addResolvers = (typeName: string, fieldResolvers: Map<string, Graph
 //   }
 // }
 
+
+// {
+//   allGraphQLDirectives {
+//     id
+//     name
+//     description
+//     args {
+//       id
+//       type {
+//         ... on GraphQLScalarType {
+//           id
+//         }
+//       }
+//     }
+//   }
+// }
