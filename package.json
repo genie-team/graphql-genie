@@ -1,11 +1,11 @@
 {
   "name": "graph-genie",
   "private": true,
-  "browser": "public/graph-genie.umd.js",
+  "browser": "lib/graph-genie.umd.js",
   "version": "0.0.1",
   "description": "Graph Genie",
   "files": [
-    "dist/"
+    "lib/"
   ],
   "devDependencies": {
     "@types/graphql": "^0.12.7",

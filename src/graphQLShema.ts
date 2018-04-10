@@ -3,7 +3,7 @@ import {SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchem
 import _ from 'lodash';
 import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType } from 'graphql';
 
-const defaultTypeDefs = `
+let currTypeDefs = `
 """
 Schema metadata for use in displaying the schema
 """
@@ -233,11 +233,15 @@ class ModelDirective extends SchemaDirectiveVisitor {
 
 
 export const addTypeDefsToSchema = (typeDefs: string): GraphQLSchema => {
+	let newTypeDefs: string;
 	if (!typeDefs || typeDefs.indexOf('Query') < 0) {
-		typeDefs = 'type Query {noop:Int}';
+		newTypeDefs = currTypeDefs + 'type Query {noop:Int}';
+	} else {
+		currTypeDefs += typeDefs;
+		newTypeDefs = currTypeDefs;
 	}
 	schema = makeExecutableSchema({
-		typeDefs: defaultTypeDefs + typeDefs,
+		typeDefs: newTypeDefs,
 		schemaDirectives: {
 			display: DisplayDirective,
 			relation: RelationDirective
@@ -246,6 +250,7 @@ export const addTypeDefsToSchema = (typeDefs: string): GraphQLSchema => {
 	SchemaDirectiveVisitor.visitSchemaDirectives(schema, {
 		model: ModelDirective
 	});
+	
 	return schema;
 };
 

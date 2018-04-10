@@ -2,19 +2,20 @@ import gql from 'graphql-tag';
 import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
-import pluralize from 'pluralize';
 
 import {
-	GraphQLFieldResolver, GraphQLID, GraphQLInputObjectType, GraphQLInputType,
-	GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType,
-	GraphQLResolveInfo, GraphQLSchema, GraphQLUnionType,
-	IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, graphql, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType
-} from 'graphql';
+	GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema, IntrospectionType, graphql, GraphQLInputType, IntrospectionObjectType, } from 'graphql';
 import { printType } from 'graphql';
-import _ from 'lodash';
+import { assign, keyBy, map, each } from 'lodash'
 import { addResolvers, addTypeDefsToSchema, getSchema } from './graphQLShema';
 import SchemaInfoBuilder from './schemaInfoBuilder';
 import FortuneBuilder from './fortuneBuilder';
+import { GenerateGetAll } from './GenerateGetAll';
+import { TypeGenerator } from './TypeGeneratorInterface';
+import { GenerateGetSingle } from './GenerateGetSingle';
+import { GenerateCreate } from './GenerateCreate';
+import { GenerateUpdate } from './GenerateUpdate';
+import { GenerateDelete } from './GenerateDelete';
 
 export default class QueryBuilder {
 	config = {
@@ -23,7 +24,6 @@ export default class QueryBuilder {
 		'generateGetSingle': true,
 		'generateCreate': true,
 		'generateUpdate': true,
-		'generateUpdateOrCreate': true,
 		'generateDelete': true,
 		'generateAddToRelation': true,
 		'generateRemoveFromRelation': true,
@@ -34,29 +34,7 @@ export default class QueryBuilder {
 		'generateCustomQueryFields': true,
 		'includeSubscription': true
 	};
-
-	private queryRootObjectTypeConfig = {
-		name: 'Query',
-		fields: {}
-	};
-
-	private mutationRootObjectTypeConfig = {
-		name: 'Mutation',
-		fields: {}
-	};
-
-	private newInputObjectTypes: Map<string, GraphQLInputType> = new Map<string, GraphQLInputType>();
-
-	private newInputObjectTypeNames: Map<string, string> = new Map<string, string>();
-
-
-	private createArgs: Map<string, object> = new Map<string, object>();
-
-
-	private newQueryResolvers: Map<string, GraphQLFieldResolver<any, any>> = new Map<string, GraphQLFieldResolver<any, any>>();
-
-	private newMutationResolvers: Map<string, GraphQLFieldResolver<any, any>> = new Map<string, GraphQLFieldResolver<any, any>>();
-
+	private generators: Array<TypeGenerator>;
 
 	schema: GraphQLSchema;
 	schemaInfo: IntrospectionType[];
@@ -67,6 +45,7 @@ export default class QueryBuilder {
 
 	constructor() {
 		this.schema = getSchema();
+		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfoBuilder.getSchemaInfo().then(schemaInfo => {
 			this.schemaInfo = schemaInfo;
@@ -123,340 +102,74 @@ export default class QueryBuilder {
 				}
 			}
 		}`);
+
 		const nodeNames = nodesResult.data.__type.possibleTypes;
+		const nodeTypes = [];
 		nodeNames.forEach(result => {
-			this.buildQuery(<IntrospectionObjectType>this.schemaInfo[result.name]);
+			nodeTypes.push(<IntrospectionObjectType>this.schemaInfo[result.name]);
 		});
+		const currInputObjectTypes = new Map<string, GraphQLInputType>();
+		if (this.config.generateGetAll) {
+			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes));
+		}
+		if (this.config.generateGetSingle) {
+			this.generators.push(new GenerateGetSingle(this.graphQLFortune, 'Query', nodeTypes));
+		}
+		if (this.config.generateCreate) {
+			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
+		}
+		if (this.config.generateUpdate) {
+			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
+		}
+		if (this.config.generateDelete) {
+			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes));
+		}
+		
+		
+
 		let newTypes = '';
 
-		for (const [, inputObjectType] of this.newInputObjectTypes) {
+		for(const [, inputObjectType] of currInputObjectTypes) {
 			newTypes += printType(inputObjectType) + '\n';
 		}
 
-		const queryRoot = new GraphQLObjectType(this.queryRootObjectTypeConfig);
-		const mutationRoot = new GraphQLObjectType(this.mutationRootObjectTypeConfig);
-		// console.info(printType(mutationRoot));
-		newTypes += printType(queryRoot) + '\n' + printType(mutationRoot);
+		let fieldsOnObject = new Map<string, {}>();
+		const resolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
+
+		//merge maps and compute new input types
+		for (const generator of this.generators) {
+			for(const [objectName, fields] of generator.getFieldsOnObject()) {
+				fieldsOnObject.set(objectName, assign({}, fieldsOnObject.get(objectName), fields));
+			}
+			
+
+			const generatorResolvers = generator.getResolvers();
+			for(const [name, resolver] of generatorResolvers) {
+				if(!resolvers.has(name)) {
+					resolvers.set(name, new Map<string, GraphQLFieldResolver<any, any>>());
+				}
+				resolvers.set(name, new Map([...resolvers.get(name), ...resolver]));
+			}
+		}
+		
+
+		for(const [objName, fields] of fieldsOnObject) {
+			newTypes += printType(new GraphQLObjectType({name: objName, fields: fields})) + '\n';
+		}
+
 		this.schema = addTypeDefsToSchema(newTypes);
-		addResolvers('Query', this.newQueryResolvers);
-		addResolvers('Mutation', this.newMutationResolvers);
+
+		for(const [name, resolverMap] of resolvers) {
+			addResolvers(name, resolverMap);
+		}		
 
 	}
 
-	private buildQuery = (type: IntrospectionObjectType) => {
-		let accum = '';
-		accum += this.config.generateGetAll ? this.generateGetAll(type) : '';
-		accum += this.config.generateGetSingle ? this.generateGetSingle(type) : '';
-		accum += this.config.generateCreate ? this.generateCreate(type) : '';
-		return accum;
-	}
-
-
-	private getReturnType = (type: GraphQLOutputType | GraphQLNonNull<any> | GraphQLList<any>, ): string => {
-		if (isListType(type) || isNonNullType(type)) {
-			return this.getReturnType(type.ofType);
-		} else {
-			return type.name;
-		}
-	}
-
-	private createResolver = async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
-		// iterate over all the non-id arguments and recursively create new types
-
-		if (!returnType) {
-				returnType = _info.returnType;
-		}
-
-		const returnTypeName = this.getReturnType(returnType);
-
-		const nonIdArgs = _.pickBy(_args, (__, key) => {
-			return key !== '_typename' && !_.endsWith(key, 'Id') && !_.endsWith(key, 'Ids');
-		});
-		if (_.isEmpty(nonIdArgs)) {
-			throw new Error(`Bad Mutation\n You sent in an input argument with no new data, you probably want to use the key ${key}Id(s) instead of ${key} with only Id arguments`);
-		}
-		const argPromises = [];
-		for (const argName in nonIdArgs) {
-			let argReturnType: GraphQLOutputType;
-			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
-				argReturnType = returnType.getFields()[argName].type;
-			}
-			const arg = _args[argName];
-			if (_.isArray(arg)) {
-				_.each(arg, currArgObj => {
-					if (_.isObject(currArgObj) && argReturnType) {
-						argPromises.push(this.createResolver(_root, currArgObj, _context, _info, argName, argReturnType));
-						_args[argName] = [];
-					}
-				});
-			} else if (_.isObject(arg) && argReturnType) {
-				argPromises.push(this.createResolver(_root, arg, _context, _info, argName, argReturnType));
-				_args[argName] = undefined;
-			}
-		}
-		// wait for all the new types to be created
-		const createdTypes = await Promise.all(argPromises);
-
-		// setup the arguments to use the new types
-		for (const createdType of createdTypes) {
-			const key = createdType.key;
-			const id = createdType.id;
-			if (_.isArray(_args[key])) {
-				if (_.isArray(id)) {
-					_args[key] = _args[key].concat(id);
-				} else {
-					_args[key].push(id);
-				}
-			} else {
-				_args[key] = id;
-			}
-		}
-
-		// now merge in the existing ids passed in
-		const idArgs = _.pickBy(_args, (__, key) => {
-			return _.endsWith(key, 'Id') || _.endsWith(key, 'Ids');
-		});
-		for (const argName in idArgs) {
-			const arg = idArgs[argName];
-			if (_.isArray(arg)) {
-				const actualArgName = argName.replace('Ids', '');
-				_args[actualArgName] = arg.concat(_args[actualArgName]);
-			} else {
-				const actualArgName = argName.replace('Id', '');
-				if (_args[actualArgName]) {
-					throw new Error(`Bad mutation\n Input argument contained multiple values for non array field with ${argName} and ${actualArgName}`);
-				}
-				_args[actualArgName] = arg;
-			}
-		}
-		let id;
-		// if everything was an id no need to create anything new
-		const created = await this.graphQLFortune.create(returnTypeName, _args);
-		id = _.isArray(created) ? _.map(created, 'id') : created.id;
-
-		// if key this is recursed else it's the final value
-		if (key) {
-			return {key: key, id: id, created: created};
-		} else {
-			return created;
-		}
-	}
-
-	private generateCreate = (type: IntrospectionObjectType) => {
-		const args = this.generateCreateArgs(type);
-		this.mutationRootObjectTypeConfig.fields[`create${type.name}`] = {
-			type: type.name,
-			args: args
-		};
-		this.newMutationResolvers.set(`create${type.name}`, this.createResolver);
-		// this.newMutationResolvers.set(`create${type.name}`, (
-		// 	_root: any,
-		// 	_args: { [key: string]: any },
-		// 	_context: any,
-		// 	_info: GraphQLResolveInfo,
-		// ): any => {
-		// 	console.log(_args);
-		// 	return this.graphQLFortune.create(_args._typename, _args);
-		// });
-	}
-
-	private computeIncludes = (selection: SelectionNode, type: string, depth?: Array<any>) => {
-		let includes = [];
-		switch (selection.kind) {
-			case Kind.FIELD:
-			const link = this.graphQLFortune.getLink(type, selection.name.value);
-			if (link) {
-				type = link;
-				const include = depth ? [...depth, [selection.name.value]] : [selection.name.value];
-				depth = include;
-				includes.push(include);
-			}
-				if (selection.selectionSet && (selection.selectionSet.selections.length > 0)) {
-					includes = includes.concat(selection.selectionSet.selections
-						.map(function (selectionNode) {
-						return this.computeIncludes(selectionNode, type, depth);
-				}, this)
-						.reduce(function (selections, selected) {
-							return selections.concat(selected);
-						}, []));
-				}
-				break;
-
-			case Kind.INLINE_FRAGMENT:
-				break;
-
-			case Kind.FRAGMENT_SPREAD:
-				break;
-
-
-		}
-		return includes;
-
-}
-
-	private generateGetSingle = (type: IntrospectionObjectType) => {
-
-		this.queryRootObjectTypeConfig.fields[type.name] = {
-			type: type.name,
-			args: { 'id': { type: new GraphQLNonNull<any>(GraphQLID) } }
-		};
-
-		this.newQueryResolvers.set(type.name, (
-			_root: any,
-			_args: { [key: string]: any },
-			_context: any,
-			_info: GraphQLResolveInfo,
-		): any => {
-			const includes = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
-			return this.graphQLFortune.find(type.name, [_args['id']], null, includes);
-		});
-
-	}
-
-	private generateGetAll = (type: IntrospectionObjectType) => {
-		const fieldName = `all${pluralize(type.name)}`;
-
-		this.queryRootObjectTypeConfig.fields[fieldName] = {
-			type: `[${type.name}]`,
-		};
-
-		this.newQueryResolvers.set(fieldName, (
-			_root: any,
-			_args: { [key: string]: any },
-			_context: any,
-			_info: GraphQLResolveInfo,
-		): any => {
-			const includes = this.computeIncludes(_info.operation.selectionSet.selections[0], type.name);
-			return this.graphQLFortune.find(type.name, null, null, includes);
-		});
-	}
-	private generateInputNames = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLNonNull<any> | GraphQLList<any>, ): string => {
-		if (isListType(type) || isNonNullType(type)) {
-			return this.generateInputNames(type.ofType);
-		} else {
-			this.newInputObjectTypeNames.set(
-				type.name,
-				type.name + 'Input');
-			return this.newInputObjectTypeNames.get(type.name);
-		}
-	}
-
-	private getInputName = (name: string): string => {
-		return name + 'Input';
-	}
-
-
-	private generateFieldsForInput(fieldName: string, inputTypes: GraphQLInputType[], defaultValue?: string): object {
-		const fields = {};
-		fields[fieldName] = {
-			type: inputTypes[0],
-			defaultValue: defaultValue
-		};
-		const idName = isListType(inputTypes[1]) ? fieldName + 'Ids' : fieldName + 'Id';
-		fields[idName] = {
-			type: inputTypes[1]
-		};
-		return fields;
-	}
-
-	// We don't need a reference to the actual input type for the field to print correctly so just dummy it to prevent ifninite recursion
-
-	private generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLNonNull<any> | GraphQLList<any>, dummy?: boolean): GraphQLInputType[] => {
-		if (isListType(type)) {
-			return [new GraphQLList(new GraphQLNonNull(this.generateInputs(type.ofType, dummy)[0])), new GraphQLList(new GraphQLNonNull(this.generateInputs(type.ofType, dummy)[1]))];
-		} else if (isNonNullType(type)) {
-			return [this.generateInputs(type.ofType, dummy)[0], this.generateInputs(type.ofType, dummy)[1]];
-		} else {
-			const fields = {};
-			const name = this.getInputName(type.name);
-			if (!dummy && !this.newInputObjectTypes.has(name)) {
-				if (isUnionType(type)) {
-					_.each(type.getTypes(), unionType => {
-						_.merge(fields, this.generateFieldsForInput(
-							this.getInputName(unionType.name),
-							this.generateInputs(unionType, true)));
-
-						if (!dummy) {
-							this.generateInputs(unionType);
-						}
-					});
-				} else if (isObjectType(type)) {
-					_.each(type.getFields(), field => {
-						if (field.name !== 'id') {
-							_.merge(fields, this.generateFieldsForInput(
-								field.name,
-								isInputType(field.type) ? [field.type, GraphQLID] : this.generateInputs(field.type, true)));
-						}
-					});
-				} else if (isInterfaceType(type)) {
-					_.each(this.schemaInfo[type.name].possibleTypes, (possibleType) => {
-						const schemaType = this.schema.getType(possibleType.name);
-
-						_.merge(fields, this.generateFieldsForInput(
-							possibleType.name,
-							isInputType(schemaType) ? [schemaType, GraphQLID] : this.generateInputs(schemaType, true)));
-
-						if (!isInputType(schemaType) && !dummy) {
-							this.generateInputs(schemaType);
-						}
-
-					});
-				}
-				// // create _typename input field with default value
-				// fields['_typename'] = {
-				// 	type: GraphQLString,
-				// 	defaultValue: type.name
-				// };
-				this.newInputObjectTypes.set(name, new GraphQLInputObjectType({
-					name,
-					fields
-				}));
-				// console.info(printType(this.newInputObjectTypes.get(name)));
-			} else if (dummy) {
-				return [new GraphQLInputObjectType({
-					name: name,
-					fields: {}
-				}), GraphQLID];
-			}
-			return [this.newInputObjectTypes.get(name), GraphQLID];
-		}
-	}
 
 
 
-	private generateCreateArgs = (type: IntrospectionObjectType): object => {
-		if (!this.createArgs.has(type.name)) {
-			const args = {};
-			const schemaType = <GraphQLObjectType>this.schema.getType(type.name);
-			_.each(schemaType.getFields(), field => {
-				if (field.name !== 'id') {
-					if (isInputType(field.type)) {
-						args[field.name] = {
-							type: field.type,
-							defaultValue: _.get(type.fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')
-						};
-					} else {
-						// console.info('generate input for', field.type);
-						_.merge(args, this.generateFieldsForInput(
-							field.name,
-							this.generateInputs(field.type)));
 
-						// console.info(args.get(field.name));
-					}
-				}
 
-			});
-
-			// // create _typename input field with default value
-			// args['_typename'] = {
-			// 	type: GraphQLString,
-			// 	defaultValue: schemaType.name
-			// };
-			this.createArgs.set(type.name, args);
-		}
-
-		return this.createArgs.get(type.name);
-	}
 	// const state = { testings: [] };
 	public getClient = async (): Promise<ApolloClient<any>> => {
 		// const resolverMap = {
@@ -546,7 +259,7 @@ export default class QueryBuilder {
 		}
 	`;
 
-		_.each(scalars, scalar => {
+		each(scalars, scalar => {
 			createScalarsPromises.push(client.mutate({
 				mutation: createGraphQLScalarType,
 				variables: {name: scalar.name, description: scalar.description}
@@ -554,7 +267,7 @@ export default class QueryBuilder {
 		});
 
 		const scalarTypes = await Promise.all(createScalarsPromises);
-		const scalarIdMap = _.keyBy(_.map(scalarTypes, 'data.createGraphQLScalarType'), 'name');
+		const scalarIdMap = keyBy(map(scalarTypes, 'data.createGraphQLScalarType'), 'name');
 		console.log(scalarIdMap);
 
 
@@ -599,7 +312,7 @@ export default class QueryBuilder {
 			}
 		}
 	`;
-		_.each(directives, directive => {
+		each(directives, directive => {
 			createDirectivesPromises.push(client.mutate({
 				mutation: createGraphQLDirective,
 				variables: {name: directive.name, description: directive.description, location: directive.location, args: directive.args}
@@ -608,16 +321,6 @@ export default class QueryBuilder {
 
 		await this.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test' });
 		await this.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test' });
-		// console.info(await client.query({
-		// 	query: gql`
-		// 							query {
-		// 								allGraphQLObjectTypes {
-		// 									name
-		// 								}
-		// 							}
-		// 						`
-
-		// }));
 
 		return client;
 	}

@@ -17,6 +17,9 @@ export default [
 			file: pkg.browser,
 			format: 'umd'
 		},
+		watch: {
+			include: 'src/**'
+		},
 		plugins: [
 			resolve({
 				extensions: ['.mjs', '.js', '.json'],
@@ -27,7 +30,8 @@ export default [
 				include: 'node_modules/**',
 				sourceMap: false,
 				namedExports: {
-					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ]
+					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
+					'node_modules/lodash/lodash.js': ['set', 'isString', 'isEqual', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys']
 				}
 			}), // so Rollup can convert `ms` to an ES module
 			typescript(),
@@ -37,7 +41,10 @@ export default [
 			}),
 			globals(),
 			builtins(),
-			serve('public'),      // index.html should be in root of project
+			serve({
+				contentBase: 'lib',
+				port: '10001'
+			}),  
 			livereload()
 		]
 	}

@@ -1,13 +1,13 @@
 import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
-import _ from 'lodash';
+import { isArray, isString, set, each, keys, isEmpty, get, forOwn, isEqual } from 'lodash';
+import { DataResolver } from './TypeGeneratorInterface';
 
-export default class FortuneBuilder {
+export default class FortuneBuilder implements DataResolver {
 	private fortuneTypeNames: Map<string, string>;
 	private schemaInfo: IntrospectionType[];
 	private store;
-	public bambuffer: Buffer;
 	constructor(schemaInfo: IntrospectionType[]) {
 		this.schemaInfo = schemaInfo;
 		this.store = this.buildFortune();
@@ -17,7 +17,7 @@ export default class FortuneBuilder {
 		if (!masterObj) {
 			return masterObj;
 		}
-		if (_.isString(masterObj) && replaceMap[masterObj]) {
+		if (isString(masterObj) && replaceMap[masterObj]) {
 			masterObj = replaceMap[masterObj];
 		}
 		if (masterObj && typeof masterObj === 'object') {
@@ -35,13 +35,13 @@ export default class FortuneBuilder {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		records['__graphtype'] = graphQLTypeName;
 		const results = await this.store.create(fortuneType, records, include, meta);
-		return _.isArray(records) ? results.payload.records : results.payload.records[0];
+		return isArray(records) ? results.payload.records : results.payload.records[0];
 	}
 
 	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
-		_.set(options, 'match.__graphtype', graphQLTypeName);
+		set(options, 'match.__graphtype', graphQLTypeName);
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn;
 
@@ -68,22 +68,39 @@ export default class FortuneBuilder {
 
 	}
 
-	public update = async (graphQLTypeName: string, updates, include?, meta?) => {
-		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const results = await this.store.update(fortuneType, updates, include, meta);
-		return results.payload.records;
+	private generateUpdates = (record) => {
+		const updates = {id: record['id'], replace: {}, push: {}};
 
+		for (const argName in record) {
+			const arg = record[argName];
+			if (argName !== 'id') {
+				if (isArray(arg)) {
+					updates.push[argName] = arg.concat(record[argName]);
+				} else {
+					updates.replace[argName] = arg;
+				}
+			}
+		}
+		return updates;
 	}
 
-	public delete = async (graphQLTypeName: string, ids?: [string], include?, meta?) => {
+	public update = async (graphQLTypeName: string, records, meta?) => {
+
+		const updates = isArray(records) ? records.map(this.generateUpdates) : this.generateUpdates(records);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const results = await this.store.delete(fortuneType, ids, include, meta);
-		return results.payload.records;
+		const results = await this.store.update(fortuneType, updates, meta);
+		return isArray(records) ? results.payload.records : results.payload.records[0];
+	}
+
+	public delete = async (graphQLTypeName: string, ids?: [string], meta?) => {
+		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		await this.store.delete(fortuneType, ids, meta);
+		return true;
 	}
 
 	public getLink = (graphQLTypeName: string, field: string): string => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		return _.get(this.store, `recordTypes.${fortuneType}.${field}.link`);
+		return get(this.store, `recordTypes.${fortuneType}.${field}.link`);
 	}
 
 	public getStore = () => {
@@ -95,24 +112,24 @@ export default class FortuneBuilder {
 
 	private computeFortuneTypeNames = (): Map<string, string> => {
 		this.fortuneTypeNames = new Map<string, string>();
-		_.each(_.keys(this.schemaInfo), (typeName) => {
+		each(keys(this.schemaInfo), (typeName) => {
 			if (typeName !== 'Node' && !this.fortuneTypeNames.has(typeName)) {
 				const type = this.schemaInfo[typeName];
-				if (!_.isEmpty(type.possibleTypes)) {
+				if (!isEmpty(type.possibleTypes)) {
 					const possibleTypes = [type.name];
-					_.each(type.possibleTypes, possibleType => {
+					each(type.possibleTypes, possibleType => {
 						if (possibleTypes.indexOf(possibleType.name) < 0) {
 							possibleTypes.push(possibleType.name);
 						}
 						possibleType = this.schemaInfo[possibleType.name];
-						_.each(possibleType.interfaces, currInterface => {
+						each(possibleType.interfaces, currInterface => {
 							if (currInterface.name !== 'Node' && currInterface.name !== typeName) {
 								if (possibleTypes.indexOf(currInterface.name) < 0) {
 									possibleTypes.push(currInterface.name);
 								}
 							}
 						});
-						_.each(possibleType.unions, currUnion => {
+						each(possibleType.unions, currUnion => {
 							if (currUnion.name !== typeName) {
 								if (possibleTypes.indexOf(currUnion.name) < 0) {
 									possibleTypes.push(currUnion.name);
@@ -122,7 +139,7 @@ export default class FortuneBuilder {
 					});
 					possibleTypes.sort();
 					const fortuneTypeName = possibleTypes.join('_');
-					_.each(possibleTypes, currTypeName => {
+					each(possibleTypes, currTypeName => {
 						this.fortuneTypeNames.set(currTypeName, fortuneTypeName);
 					});
 				}
@@ -139,10 +156,10 @@ export default class FortuneBuilder {
 
 	private computeRelations = (): Map<string, Map<string, string>> => {
 		const relations = new Map<string, Map<string, string>>();
-		_.each(_.keys(this.schemaInfo), (typeName) => {
+		each(keys(this.schemaInfo), (typeName) => {
 			const type = this.schemaInfo[typeName];
-			_.each(type.fields, field => {
-				const relation = _.get(field, 'metadata.relation');
+			each(type.fields, field => {
+				const relation = get(field, 'metadata.relation');
 				if (relation) {
 					let relationMap = relations.get(relation.name);
 					relationMap = relationMap ? relationMap : new Map<string, string>();
@@ -168,10 +185,10 @@ export default class FortuneBuilder {
 		this.computeFortuneTypeNames();
 		const relations = this.computeRelations();
 		const fortuneConfig = {};
-		_.forOwn(this.schemaInfo, (type: any, name: string) => {
+		forOwn(this.schemaInfo, (type: any, name: string) => {
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
 				const fields = {};
-				_.forOwn(type.fields, (field) => {
+				forOwn(type.fields, (field) => {
 					if (field.name !== 'id') {
 						let currType = field.type;
 						let isArray = false;
@@ -190,10 +207,10 @@ export default class FortuneBuilder {
 							currType = Boolean;
 						}
 						let inverse: string;
-						if (_.isString(currType)) {
+						if (isString(currType)) {
 							currType = this.getFortuneTypeName(currType);
-							const relation = _.get(field, 'metadata.relation');
-							if (!_.isEmpty(relation) && relation.name) {
+							const relation = get(field, 'metadata.relation');
+							if (!isEmpty(relation) && relation.name) {
 								if (relations.has(relation.name)) {
 									if (relations.get(relation.name).has(currType)) {
 										inverse = relations.get(relation.name).get(currType);
@@ -212,14 +229,14 @@ export default class FortuneBuilder {
 				});
 				const fortuneName = this.getFortuneTypeName(name);
 				const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};
-				_.each(_.keys(fields), (fieldName) => {
+				each(keys(fields), (fieldName) => {
 					const currType = fortuneConfigForName[fieldName];
 					const newType = fields[fieldName];
 					if (!currType) {
 						fortuneConfigForName[fieldName] = newType;
 					} else {
 						let badSchema = typeof newType !== typeof currType;
-						badSchema = badSchema ? badSchema : !_.isEqual(fortuneConfigForName[fieldName], fields[fieldName]);
+						badSchema = badSchema ? badSchema : !isEqual(fortuneConfigForName[fieldName], fields[fieldName]);
 
 						if (badSchema) {
 							console.error('Bad schema. Types that share unions/interfaces have fields of the same name but different types. This is not allowed\n',
