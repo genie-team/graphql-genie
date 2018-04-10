@@ -7,7 +7,7 @@ import {
 	GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema, IntrospectionType, graphql, GraphQLInputType, IntrospectionObjectType, } from 'graphql';
 import { printType } from 'graphql';
 import { assign, keyBy, map, each } from 'lodash'
-import { addResolvers, addTypeDefsToSchema, getSchema } from './graphQLShema';
+import schemaBuilder from './GraphQLSchemaBuilder';
 import SchemaInfoBuilder from './schemaInfoBuilder';
 import FortuneBuilder from './fortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
@@ -17,7 +17,12 @@ import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 
-export default class QueryBuilder {
+interface GraphQLBuilderOptions {
+	schema?: GraphQLSchema
+	typeDefs?: string
+}
+
+export default class GraphQLGenie {
 	config = {
 		'generateGetAll': true,
 		'generateGetAllMeta': true,
@@ -43,8 +48,20 @@ export default class QueryBuilder {
 
 	private graphQLFortune: FortuneBuilder;
 
-	constructor() {
-		this.schema = getSchema();
+	constructor(options: GraphQLBuilderOptions) {
+		if (options.schema) {
+			this.schema = options.schema;
+		} else if (options.typeDefs) {
+
+			schemaBuilder
+		} else {
+			throw new Error('Need a schema or typeDefs');
+		}
+		this.init();
+	}
+
+
+	private init = () => {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfoBuilder.getSchemaInfo().then(schemaInfo => {
