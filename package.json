@@ -1,9 +1,9 @@
 {
-  "name": "ionic-stencil-conference-app",
+  "name": "graph-genie",
   "private": true,
-  "browser": "public/maker-graph.umd.js",
+  "browser": "public/graph-genie.umd.js",
   "version": "0.0.1",
-  "description": "Stencil App Starter",
+  "description": "Graph Genie",
   "files": [
     "dist/"
   ],
@@ -15,6 +15,8 @@
     "rollup": "^0.57.0",
     "rollup-plugin-commonjs": "^9.1.0",
     "rollup-plugin-livereload": "^0.6.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.2.0",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-serve": "^0.4.2",

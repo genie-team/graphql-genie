@@ -4,10 +4,10 @@ import fortune from 'fortune';
 import _ from 'lodash';
 
 export default class FortuneBuilder {
-
 	private fortuneTypeNames: Map<string, string>;
 	private schemaInfo: IntrospectionType[];
 	private store;
+	public bambuffer: Buffer;
 	constructor(schemaInfo: IntrospectionType[]) {
 		this.schemaInfo = schemaInfo;
 		this.store = this.buildFortune();

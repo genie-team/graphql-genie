@@ -5,6 +5,9 @@ import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 import typescript from 'rollup-plugin-typescript2';
 import replace from 'rollup-plugin-replace';
+import globals from 'rollup-plugin-node-globals';
+import builtins from 'rollup-plugin-node-builtins';
+
 export default [
 	// browser-friendly UMD build
 	{
@@ -32,6 +35,8 @@ export default [
 				'process': true,
 				'process.env.NODE_ENV': JSON.stringify( 'development' )
 			}),
+			globals(),
+			builtins(),
 			serve('public'),      // index.html should be in root of project
 			livereload()
 		]
