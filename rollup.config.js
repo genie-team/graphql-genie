@@ -20,6 +20,7 @@ export default [
 		watch: {
 			include: 'src/**'
 		},
+		onwarn,
 		plugins: [
 			resolve({
 				extensions: ['.mjs', '.js', '.json'],
@@ -49,3 +50,11 @@ export default [
 		]
 	}
 ];
+
+function onwarn(message) {
+  const suppressed = ['THIS_IS_UNDEFINED'];
+
+  if (!suppressed.find(code => message.code === code)) {
+    return console.warn(message.message);
+  }
+}

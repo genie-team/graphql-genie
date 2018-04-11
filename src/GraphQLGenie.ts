@@ -7,22 +7,22 @@ import {
 	GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema, IntrospectionType, graphql, GraphQLInputType, IntrospectionObjectType, } from 'graphql';
 import { printType } from 'graphql';
 import { assign, keyBy, map, each } from 'lodash'
-import schemaBuilder from './GraphQLSchemaBuilder';
-import SchemaInfoBuilder from './schemaInfoBuilder';
-import FortuneBuilder from './fortuneBuilder';
+import SchemaInfoBuilder from './SchemaInfoBuilder';
+import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
 import { TypeGenerator } from './TypeGeneratorInterface';
 import { GenerateGetSingle } from './GenerateGetSingle';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
+import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 
-interface GraphQLBuilderOptions {
-	schema?: GraphQLSchema
+interface GraphQLGenieOptions {
+	schemaBuilder?: GraphQLSchemaBuilder
 	typeDefs?: string
 }
 
-export default class GraphQLGenie {
+export class GraphQLGenie {
 	config = {
 		'generateGetAll': true,
 		'generateGetAllMeta': true,
@@ -41,22 +41,24 @@ export default class GraphQLGenie {
 	};
 	private generators: Array<TypeGenerator>;
 
-	schema: GraphQLSchema;
-	schemaInfo: IntrospectionType[];
+	private schema: GraphQLSchema;
+	private schemaBuilder: GraphQLSchemaBuilder;
+	private schemaInfo: IntrospectionType[];
 
 	private schemaInfoBuilder: SchemaInfoBuilder;
 
 	private graphQLFortune: FortuneBuilder;
 
-	constructor(options: GraphQLBuilderOptions) {
-		if (options.schema) {
-			this.schema = options.schema;
+	constructor(options: GraphQLGenieOptions) {
+		if (options.schemaBuilder) {
+			this.schemaBuilder = options.schemaBuilder;
 		} else if (options.typeDefs) {
-
-			schemaBuilder
+			this.schemaBuilder = new GraphQLSchemaBuilder(options.typeDefs);			
 		} else {
-			throw new Error('Need a schema or typeDefs');
+			throw new Error('Need a schemaBuilder or typeDefs');
 		}
+		this.schema = this.schemaBuilder.getSchema();
+		console.log(this.schema);
 		this.init();
 	}
 
@@ -104,7 +106,7 @@ export default class GraphQLGenie {
 				): any => {
 					return obj.__typename;
 				};
-				addResolvers(type.name, new Map().set('__resolveType', resolver));
+				this.schema = this.schemaBuilder.addResolvers(type.name, new Map().set('__resolveType', resolver));
 			}
 		}
 	}
@@ -174,11 +176,12 @@ export default class GraphQLGenie {
 			newTypes += printType(new GraphQLObjectType({name: objName, fields: fields})) + '\n';
 		}
 
-		this.schema = addTypeDefsToSchema(newTypes);
+		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
 		for(const [name, resolverMap] of resolvers) {
-			addResolvers(name, resolverMap);
-		}		
+			this.schemaBuilder.addResolvers(name, resolverMap);
+		}	
+		this.schema = this.schemaBuilder.getSchema();	
 
 	}
 

@@ -1,4 +1,4 @@
-import GraphQLGenie from './GraphQLGenie';
+import {GraphQLGenie} from './GraphQLGenie';
 
 const typeDefs = `
 """

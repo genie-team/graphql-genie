@@ -13,9 +13,9 @@ export default class GraphQLSchemaBuilder {
 		this.typeDefs = typeDefs;
 	}
 
-	public addTypeDefsToSchema = (typeDefs: string): GraphQLSchema => {
+	public addTypeDefsToSchema = (typeDefs?: string): GraphQLSchema => {
 		let newTypeDefs: string;
-		if (!typeDefs && this.typeDefs.indexOf('Query') < 0) {
+		if (!typeDefs || this.typeDefs.indexOf('Query') < 0) {
 			newTypeDefs = this.typeDefs + 'type Query {noop:Int}';
 		} else {
 			this.typeDefs += typeDefs;
@@ -37,7 +37,7 @@ export default class GraphQLSchemaBuilder {
 
 	public getSchema = (): GraphQLSchema  => {
 		if (!this.schema) {
-			this.schema = this.addTypeDefsToSchema('');
+			this.schema = this.addTypeDefsToSchema();
 		}
 		return this.schema;
 	};
