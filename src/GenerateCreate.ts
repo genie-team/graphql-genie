@@ -1,5 +1,5 @@
 
-import { TypeGenerator, DataResolver } from './TypeGeneratorInterface';
+import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLInputType, GraphQLSchema, IntrospectionType } from 'graphql';
 import { generateArgs, createResolver } from './TypeGeneratorUtils';
 
@@ -13,7 +13,8 @@ export class GenerateCreate implements TypeGenerator {
 	private createArgs: Map<string, object>;
 	private currInputObjectTypes: Map<string, GraphQLInputType>
 	private schemaInfo: IntrospectionType[];
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
+	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], 
+		currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;

@@ -2,7 +2,8 @@ import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
 import { isArray, isString, set, each, keys, isEmpty, get, forOwn, isEqual } from 'lodash';
-import { DataResolver } from './TypeGeneratorInterface';
+import { DataResolver } from './GraphQLGenieInterfaces';
+import { computeRelations } from './TypeGeneratorUtils';
 
 export default class FortuneBuilder implements DataResolver {
 	private fortuneTypeNames: Map<string, string>;
@@ -43,10 +44,12 @@ export default class FortuneBuilder implements DataResolver {
 		options = options ? options : {};
 		set(options, 'match.__graphtype', graphQLTypeName);
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
-		let graphReturn;
+		let graphReturn = results.payload.records;
+
 
 		// handle includes, make them part of the returned data for default resolvers to handle
-		if (results.payload.records && results.payload.include) {
+		if (graphReturn && results.payload.include) {
+			graphReturn = JSON.parse(JSON.stringify(results.payload.records));
 			const includeIdMap = {};
 			for (const includeType in results.payload.include) {
 				const includeArr = results.payload.include[includeType];
@@ -54,12 +57,12 @@ export default class FortuneBuilder implements DataResolver {
 					includeIdMap[include.id] = include;
 				}
 			}
-			this.deepReplaceIdWithObj(includeIdMap, results.payload.records);
+			this.deepReplaceIdWithObj(includeIdMap, graphReturn);
 		}
 
-		if (results.payload.records) {
+		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array
-			graphReturn = ids && ids.length === 1 ? results.payload.records[0] : results.payload.records;
+			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
 		if (!graphReturn) {
 			throw new Error('Nothing Found');
@@ -68,14 +71,19 @@ export default class FortuneBuilder implements DataResolver {
 
 	}
 
-	private generateUpdates = (record) => {
-		const updates = {id: record['id'], replace: {}, push: {}};
+	private generateUpdates = (record, options: object = {}) => {
+		const updates = {id: record['id'], replace: {}, push: {}, pull: {}};
 
 		for (const argName in record) {
 			const arg = record[argName];
 			if (argName !== 'id') {
 				if (isArray(arg)) {
-					updates.push[argName] = arg.concat(record[argName]);
+					if (options['pull']) {
+						updates.pull[argName] = arg;
+					} else {
+						updates.push[argName] = arg;
+					}
+					
 				} else {
 					updates.replace[argName] = arg;
 				}
@@ -84,9 +92,9 @@ export default class FortuneBuilder implements DataResolver {
 		return updates;
 	}
 
-	public update = async (graphQLTypeName: string, records, meta?) => {
+	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
 
-		const updates = isArray(records) ? records.map(this.generateUpdates) : this.generateUpdates(records);
+		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		const results = await this.store.update(fortuneType, updates, meta);
 		return isArray(records) ? results.payload.records : results.payload.records[0];
@@ -150,40 +158,13 @@ export default class FortuneBuilder implements DataResolver {
 		return this.fortuneTypeNames;
 	}
 
-	private getFortuneTypeName = (name: string): string => {
+	public getFortuneTypeName = (name: string): string => {
 		return this.fortuneTypeNames.has(name) ? this.fortuneTypeNames.get(name) : name;
-	}
-
-	private computeRelations = (): Map<string, Map<string, string>> => {
-		const relations = new Map<string, Map<string, string>>();
-		each(keys(this.schemaInfo), (typeName) => {
-			const type = this.schemaInfo[typeName];
-			each(type.fields, field => {
-				const relation = get(field, 'metadata.relation');
-				if (relation) {
-					let relationMap = relations.get(relation.name);
-					relationMap = relationMap ? relationMap : new Map<string, string>();
-					const fortuneName = this.getFortuneTypeName(typeName);
-					if (relationMap.has(fortuneName) && relationMap.get(fortuneName) !== field.name) {
-						console.error('Bad schema, relation could apply to multiple fields\n',
-							'relation name', relation.name, '\n',
-							'fortune name', fortuneName, '\n',
-							'curr field', relationMap.get(fortuneName), '\n',
-							'other field', field.name);
-
-					}
-					relationMap.set(fortuneName, field.name);
-					relations.set(relation.name, relationMap);
-				}
-			});
-		});
-		console.log(relations);
-		return relations;
 	}
 
 	private buildFortune = () => {
 		this.computeFortuneTypeNames();
-		const relations = this.computeRelations();
+		const relations = computeRelations(this.schemaInfo, this.getFortuneTypeName);
 		const fortuneConfig = {};
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {

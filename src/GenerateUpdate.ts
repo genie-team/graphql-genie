@@ -1,5 +1,5 @@
 
-import { TypeGenerator, DataResolver } from './TypeGeneratorInterface';
+import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLInputType, GraphQLSchema, IntrospectionType, GraphQLNonNull, GraphQLID } from 'graphql';
 import { generateArgs, updateResolver } from './TypeGeneratorUtils';
 

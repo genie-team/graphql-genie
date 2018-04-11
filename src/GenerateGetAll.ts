@@ -1,5 +1,5 @@
 
-import { TypeGenerator, DataResolver } from './TypeGeneratorInterface';
+import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLResolveInfo } from 'graphql';
 import pluralize from 'pluralize';
 import { computeIncludes } from './TypeGeneratorUtils';

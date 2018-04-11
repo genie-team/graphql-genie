@@ -69,14 +69,6 @@ export default class SchemaInfoBuilder {
 				});
 			}
 
-			// add _typename field
-			if (!_.isEmpty(type.fields)) {
-				type.fields.push({
-					name: '_typename',
-					description: 'Used internally to keep track of type name',
-					type: { kind: 'SCALAR', name: 'String' }
-				});
-			}
 		});
 
 		return schemaInfo;

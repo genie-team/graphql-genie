@@ -15,7 +15,7 @@ export default class GraphQLSchemaBuilder {
 
 	public addTypeDefsToSchema = (typeDefs?: string): GraphQLSchema => {
 		let newTypeDefs: string;
-		if (!typeDefs || this.typeDefs.indexOf('Query') < 0) {
+		if (!typeDefs && this.typeDefs.indexOf('Query') < 0) {
 			newTypeDefs = this.typeDefs + 'type Query {noop:Int}';
 		} else {
 			this.typeDefs += typeDefs;

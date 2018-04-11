@@ -1,6 +1,35 @@
 import { SelectionNode, Kind, IntrospectionObjectType, GraphQLObjectType, isInputType, GraphQLSchema, GraphQLInputType, isListType, isNonNullType, GraphQLInterfaceType, GraphQLUnionType, GraphQLNonNull, GraphQLList, isUnionType, isObjectType, GraphQLID, isInterfaceType, IntrospectionType, GraphQLInputObjectType, GraphQLResolveInfo, GraphQLOutputType } from "graphql";
-import { DataResolver } from "./TypeGeneratorInterface";
-import { each, get, merge, pickBy, endsWith, isEmpty, isArray, isObject, map } from 'lodash';
+import { DataResolver } from "./GraphQLGenieInterfaces";
+import { keys, each, get, merge, pickBy, endsWith, isEmpty, isArray, isObject, map } from 'lodash';
+
+export const computeRelations = (schemaInfo: IntrospectionType[], nameResolver: (name:string) => string = (name:string) => name): Map<string, Map<string, string>> => {
+	// relations is a map where key is the relation name and value is a map where the key is the type name and the value is the field name
+	const relations = new Map<string, Map<string, string>>();
+	each(keys(schemaInfo), (typeName) => {
+		const type = schemaInfo[typeName];
+		each(type.fields, field => {
+			const relation = get(field, 'metadata.relation');
+			if (relation) {
+				let relationMap = relations.get(relation.name);
+				relationMap = relationMap ? relationMap : new Map<string, string>();
+				const name = nameResolver(typeName);
+				if (relationMap.has(name) && relationMap.get(name) !== field.name) {
+					console.error('Bad schema, relation could apply to multiple fields\n',
+						'relation name', relation.name, '\n',
+						'fortune name', name, '\n',
+						'curr field', relationMap.get(name), '\n',
+						'other field', field.name);
+
+				}
+				relationMap.set(name, field.name);
+				relations.set(relation.name, relationMap);
+			}
+		});
+	});
+	console.log(relations);
+	return relations;
+}
+
 export const computeIncludes = (dataResolver: DataResolver, selection: SelectionNode, type: string, depth?: Array<any>) => {
 	let includes = [];
 	switch (selection.kind) {
@@ -84,11 +113,7 @@ const generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQL
 
 				});
 			}
-			// // create _typename input field with default value
-			// fields['_typename'] = {
-			// 	type: GraphQLString,
-			// 	defaultValue: type.name
-			// };
+
 			currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
@@ -151,11 +176,6 @@ export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string
 
 		});
 
-		// // create _typename input field with default value
-		// args['_typename'] = {
-		// 	type: GraphQLString,
-		// 	defaultValue: schemaType.name
-		// };
 		currArgs.set(type.name, args);
 	}
 

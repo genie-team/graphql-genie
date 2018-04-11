@@ -1,4 +1,8 @@
-import {GraphQLGenie} from './GraphQLGenie';
+import { GraphQLGenie } from './GraphQLGenie';
+import { ApolloClient } from 'apollo-client';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import { SchemaLink } from 'apollo-link-schema';
+import gql from 'graphql-tag';
 
 const typeDefs = `
 """
@@ -14,165 +18,175 @@ directive @relation(
 
 directive @model on OBJECT
 
-
-
-enum  DirectiveLocation {
-	#type system
-	SCHEMA
-	SCALAR
-	OBJECT
-	FIELD_DEFINITION
-	ARGUMENT_DEFINITION
-	INTERFACE
-	UNION
-	ENUM
-	ENUM_VALUE
-	INPUT_OBJECT
-	INPUT_FIELD_DEFINITION
-	#executable
-	QUERY
-	MUTATION
-	SUBSCRIPTION
-	FIELD
-	FRAGMENT_DEFINITION
-	FRAGMENT_SPREAD
-	INLINE_FRAGMENT
-}
-
-
 interface Node {
   id: ID! @isUnique
 }
 
-interface GraphQLType {
-	description: String
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
+type Post @model {
+  id: ID! @isUnique
+  title: String!
+  author: User @relation(name: "WrittenPosts")
+  likedBy: [User!]! @relation(name: "LikedPosts")
 }
 
-type GraphQLInputArgument @model {
-	id: ID! @isUnique
-	name: String!
-	value: GraphQLInputType!
-	parent: GraphQLDirectiveAttribute @relation(name: "InputArgument")
+type User @model {
+  id: ID! @isUnique
+  name : String!
+  address: Address @relation(name: "UserAddress")
+  writtenPosts: [Post!]! @relation(name: "WrittenPosts")
+  likedPosts: [Post!]! @relation(name: "LikedPosts")
 }
 
-type GraphQLArgument @model {
-	id: ID! @isUnique
-	name: String!
-  type: GraphQLInputType!
-	defaultValue: String
-	description: String
-	parent: GraphQLArgumentParent @relation(name: "Argument")
+type Address @model {
+  id: ID! @isUnique
+  city: String!
+  user: User @relation(name: "UserAddress")
 }
-
-union GraphQLArgumentParent = GraphQLDirective | GraphQLField
-
-type GraphQLDirective @model {
-	id: ID! @isUnique
-	name: String!
-	description: String
-	location: [DirectiveLocation!]!
-	args: [GraphQLArgument] @relation(name: "Argument")
-	schema: GraphQLSchema @relation(name: "DirectiveOnSchema")
-}
-
-
-type GraphQLDirectiveAttribute @model {
-	id: ID! @isUnique
-  directive: GraphQLDirective!
-	args: [GraphQLInputArgument] @relation(name: "InputArgument")
-}
-
-
-type GraphQLField @model {
-	id: ID! @isUnique
-	name: String!
-  type: GraphQLOutputType
-  description: String
-	args: [GraphQLArgument] @relation(name: "Argument")
-	directives: [GraphQLDirectiveAttribute]
-	parent: GraphQLType @relation(name: "FieldOnType")
-}
-
-type GraphQLInterfaceType implements GraphQLType @model {
-	id: ID! @isUnique
-  name: String!
-	description: String
-	fields: [GraphQLField!]! @relation(name: "FieldOnType")
-	directives: [GraphQLDirectiveAttribute]
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-	query: GraphQLSchema @relation(name: "QueryOnSchema")
-	mutation: GraphQLSchema @relation(name: "MutationOnSchema")
-}
-
-type GraphQLNonNull implements GraphQLType @model {
-	id: ID! @isUnique
-	description: String
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-	ofType: GraphQLType!
-}
-
-type GraphQLList implements GraphQLType @model {
-	id: ID! @isUnique
-	description: String
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-	ofType: GraphQLType!
-}
-
-type GraphQLObjectType implements GraphQLType @model {
-	id: ID! @isUnique
-	name: String!
-	description: String
-  interfaces: [GraphQLInterfaceType]
-  fields: [GraphQLField!]! @relation(name: "FieldOnType")
-	directives: [GraphQLDirectiveAttribute]
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-type GraphQLUnionType implements GraphQLType @model {
-	id: ID! @isUnique
-	name: String!
-  description: String
-	types:  [GraphQLObjectType]
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-type GraphQLEnumType implements GraphQLType @model {
-	id: ID! @isUnique
-	name: String!
-  description: String
-	values:  [String]
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-type GraphQLScalarType implements GraphQLType @model {
-	id: ID! @isUnique
-	name: String!
-	description: String
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-type GraphQLInputObjectType implements GraphQLType @model {
-	id: ID! @isUnique
-	name: String!
-  description: String
-	fields: [GraphQLField!]! @relation(name: "FieldOnType")
-	schema: GraphQLSchema @relation(name: "TypeOnSchema")
-}
-
-union GraphQLInputType = GraphQLScalarType | GraphQLEnumType | GraphQLInputObjectType | GraphQLNonNull | GraphQLList
-union GraphQLOutputType = GraphQLScalarType | GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLEnumType | GraphQLNonNull | GraphQLList
-
-
-type GraphQLSchema @model @display(name: "Schema Root") {
-	id: ID! @isUnique
-	_typeMap: [GraphQLType] @display(name: "Schema Types")  @relation(name: "TypeOnSchema")
-	_directives: [GraphQLDirective] @display(name: "Directives")  @relation(name: "DirectiveOnSchema")
-  _queryType: GraphQLObjectType @display(name: "Query") @relation(name: "QueryOnSchema")
-  _mutationType: GraphQLObjectType @display(name: "Mutation") @relation(name: "MutationOnSchema")
-	_subscriptionType: GraphQLObjectType @display(name: "Subscription")
-}
-
 `;
 
-new GraphQLGenie({typeDefs});
+
+
+const genie = new GraphQLGenie({ typeDefs });
+
+const buildClient = async (genie: GraphQLGenie) => {
+	const schema = await genie.getSchema();
+	// const resolverMap = {
+	// 	Query: {
+	// 		allTestings: (_obj, { _name }, _context) => {
+	// 			return state.testings;
+	// 		},
+	// 	},
+	// 	Mutation: {
+	// 		addTesting: (_, { name }, _context) => {
+	// 			const testing = { name: name };
+	// 			state.testings.push(testing);
+	// 			return testing;
+	// 		},
+	// 	},
+	// };
+	// // for (const [name, resolve] of newQueryResolvers) {
+	// // 	resolverMap.Query[name] = resolve;
+	// // }
+	console.log(schema);
+	// const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
+	// resolversMap.set('args', (
+	// 	_root: any,
+	// 	_args: { [key: string]: any },
+	// 	_context: any,
+	// 	_info: GraphQLResolveInfo,
+	// ): any => {
+	// 	const selections = computeIncludes(_info.operation.selectionSet.selections[0], 'GraphQLDirective');
+	// 	console.info('selections');
+	// 	console.info(selections);
+	// 	console.info(JSON.stringify(selections));
+	// 	console.log(_root);
+	// 	console.log(_args);
+	// 	console.log(_context);
+	// 	console.log(_info);
+	// });
+	// addResolvers('GraphQLDirective', resolversMap);
+	const client = new ApolloClient({
+		link: new SchemaLink({ schema: schema }),
+		cache: new InMemoryCache(),
+		connectToDevTools: true
+	});
+	client.initQueryManager();
+	console.log(client);
+
+	const createPost = gql`
+		mutation createPost($title: String!) {
+			createPost(title: $title) {
+				id
+			}
+		}
+	`;
+
+const createUser = gql`
+mutation createUser($name: String!) {
+	createUser(name: $name) {
+		id
+	}
+}
+`;
+
+const createAddress = gql`
+mutation createAddress($city: String!) {
+	createAddress(city: $city) {
+		id
+	}
+}
+`;
+	const post = await client.mutate({
+		mutation: createPost,
+		variables: { title: 'bam post' }
+	})
+	const user = await client.mutate({
+		mutation: createUser,
+		variables: { name: 'Corey' }
+	})
+	const address = await client.mutate({
+		mutation: createAddress,
+		variables: { city: 'Eau Claire' }
+	})
+	console.log('post',post.data.createPost.id,
+	'user', user.data.createUser.id, 
+	'address',address.data.createAddress.id);
+
+	// client.mutate({
+	// 	mutation: gql`mutation {
+	// 		setUserAddress (addressAddressId:"9gFXv_BuLNPW19q", userUserId:"M4AQV51bbQgqvD9") {
+	// 			addressAddress {
+	// 				id
+	// 				city
+	// 				user {
+	// 					name
+	// 				}
+	// 			}
+	// 			userUser {
+	// 				id
+	// 				name
+	// 				address {
+	// 					city
+	// 				}
+	// 			}
+	// 		}
+	// 	}`
+	// })
+
+	// mutation {
+	// 	addToWrittenPosts(writtenPostsPostId: "rMxFhntFzZWTNU1" authorUserId: "QRX3X1pER7bPJFT") {
+	// 		writtenPostsPost{
+	// 			title
+	// 			author {
+	// 				name
+	// 			}
+	// 		}
+	// 		authorUser {
+	// 			name
+	// 			writtenPosts {
+	// 				title
+	// 			}
+	// 		}
+	// 	}
+	// }
+	
+	// mutation {
+	// 	addToLikedPosts(likedPostsPostId: "AIl4McpfFIKvQ4G", likedByUserId: "QOK0khLNpq3eX0F") {
+	// 		likedPostsPost {
+	// 			title
+	// 			likedBy {
+	// 				name
+	// 			}
+	// 		}
+	// 		likedByUser {
+	// 			name
+	// 			likedPosts {
+	// 				title
+	// 			}
+	// 		}
+	// 	}
+	// }
+	
+}
+
+buildClient(genie);
