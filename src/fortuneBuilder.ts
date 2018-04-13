@@ -1,7 +1,7 @@
 import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
-import { isArray, isString, set, each, keys, isEmpty, get, forOwn, isEqual } from 'lodash';
+import { each, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import { DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
@@ -13,7 +13,7 @@ export default class FortuneBuilder implements DataResolver {
 	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]) {
 		this.fortuneOptions = fortuneOptions;
 		this.schemaInfo = schemaInfo;
-		
+
 		this.store = this.buildFortune();
 	}
 
@@ -35,7 +35,7 @@ export default class FortuneBuilder implements DataResolver {
 		return masterObj;
 	}
 
-	private handleIncludes = (records: object, includes: object):object => {
+	private handleIncludes = (records: object, includes: object): object => {
 		// handle includes, make them part of the returned data for default resolvers to handle
 		if (records && includes) {
 			records = JSON.parse(JSON.stringify(records));
@@ -94,7 +94,7 @@ export default class FortuneBuilder implements DataResolver {
 					} else {
 						updates.push[argName] = arg;
 					}
-					
+
 				} else {
 					updates.replace[argName] = arg;
 				}
@@ -203,11 +203,7 @@ export default class FortuneBuilder implements DataResolver {
 							currType = this.getFortuneTypeName(currType);
 							const relation = get(field, 'metadata.relation');
 							if (!isEmpty(relation) && relation.name) {
-								if (relations.has(relation.name)) {
-									if (relations.get(relation.name).has(currType)) {
-										inverse = relations.get(relation.name).get(currType);
-									}
-								}
+								inverse = relations.getInverse(name, currType, field.name);
 							}
 						}
 						currType = isArray ? Array(currType) : currType;

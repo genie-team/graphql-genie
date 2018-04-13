@@ -4,10 +4,10 @@ import { ApolloClient } from 'apollo-client';
 let client: ApolloClient<any>;
 beforeAll(async () => {
 	client = await getClient();
-})
+});
 
 const testData = {users: [],
-posts: [], 
+posts: [],
 addresss: []};
 describe('genie', () => {
 
@@ -26,7 +26,7 @@ describe('genie', () => {
 		const post = await client.mutate({
 			mutation: createUser,
 			variables: { name: name }
-		})
+		});
 		testData.users.push(post.data.createUser);
 		expect(post.data.createUser.name).toBe(name);
 	});
@@ -48,7 +48,7 @@ describe('genie', () => {
 		const result = await client.mutate({
 			mutation: createPost,
 			variables: { title: title, authorId: testData.users[0].id}
-		})
+		});
 		testData.posts.push(result.data.createPost);
 		expect(result.data.createPost.title).toBe(title);
 		expect(result.data.createPost.author.id).toBe(testData.users[0].id);
@@ -60,7 +60,7 @@ describe('genie', () => {
 			query User($id: ID!) {
 				User(id: $id) {
 					id
-					writtenPosts {
+					writtenSubmissions {
 						id
 					}
 				}
@@ -69,14 +69,14 @@ describe('genie', () => {
 		const result = await client.query({
 			query: user,
 			variables: { id: testData.users[0].id}
-		})
+		});
 		console.log(result);
-		expect(result.data['User'].writtenPosts[0].id).toBe(testData.posts[0].id);
+		expect(result.data['User'].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
 
 	test('create - post with new user', async () => {
 		const title = 'Genie is more than great';
-		const authorName = 'Totally Real Person'
+		const authorName = 'Totally Real Person';
 		const createPost = gql`
 			mutation createPost($title: String!, $author: UserInput) {
 				createPost(title: $title, author: $author) {
@@ -94,7 +94,7 @@ describe('genie', () => {
 			variables: { title: title, author: {
 				name: authorName,
 			}}
-		})
+		});
 		testData.posts.push(result.data.createPost);
 		testData.users.push(result.data.createPost.author);
 		expect(result.data.createPost.title).toBe(title);
@@ -107,7 +107,7 @@ describe('genie', () => {
 			query User($id: ID!) {
 				User(id: $id) {
 					id
-					writtenPosts {
+					writtenSubmissions {
 						id
 					}
 				}
@@ -116,9 +116,8 @@ describe('genie', () => {
 		const result = await client.query({
 			query: user,
 			variables: { id: testData.users[0].id}
-		})
-		console.log(result);
-		expect(result.data['User'].writtenPosts[0].id).toBe(testData.posts[0].id);
+		});
+		expect(result.data['User'].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
 
 });

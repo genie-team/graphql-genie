@@ -5,35 +5,35 @@ import { SchemaLink } from 'apollo-link-schema';
 import gql from 'graphql-tag';
 
 const typeDefs = `
-"""
-Schema metadata for use in displaying the schema
-"""
-directive @display(
-  name: String
-) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
 
-directive @relation(
-  name: String
-) on FIELD_DEFINITION
-
-directive @model on OBJECT
-
-interface Node {
-  id: ID! @isUnique
+interface Submission {
+	id: ID! @isUnique
+	title: String!
+	text: String
 }
 
-type Post @model {
+type Post implements Submission @model {
   id: ID! @isUnique
-  title: String!
-  author: User @relation(name: "WrittenPosts")
-  likedBy: [User!]! @relation(name: "LikedPosts")
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	likedBy: [User!]! @relation(name: "LikedPosts")
+	comments: [Comment] @relation(name: "CommentsOnPost")
+}
+
+type Comment implements Submission @model {
+  id: ID! @isUnique
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	post: Post @relation(name: "CommentsOnPost")
 }
 
 type User @model {
   id: ID! @isUnique
   name : String!
   address: Address @relation(name: "UserAddress")
-  writtenPosts: [Post!]! @relation(name: "WrittenPosts")
+  writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
   likedPosts: [Post!]! @relation(name: "LikedPosts")
 }
 
@@ -46,7 +46,7 @@ type Address @model {
 
 const fortuneOptions = { settings: { enforceLinks: true } };
 const start = Date.now();
-console.log('GraphQL Genie Started')
+console.log('GraphQL Genie Started');
 const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 const buildClient = async (genie: GraphQLGenie) => {
 	const schema = await genie.getSchema();
@@ -118,18 +118,18 @@ mutation createAddress($city: String!) {
 	const post = await client.mutate({
 		mutation: createPost,
 		variables: { title: 'bam post' }
-	})
+	});
 	const user = await client.mutate({
 		mutation: createUser,
 		variables: { name: 'Corey' }
-	})
+	});
 	const address = await client.mutate({
 		mutation: createAddress,
 		variables: { city: 'Eau Claire' }
-	})
-	console.log('post',post.data.createPost.id,
-	'user', user.data.createUser.id, 
-	'address',address.data.createAddress.id);
+	});
+	console.log('post', post.data.createPost.id,
+	'user', user.data.createUser.id,
+	'address', address.data.createAddress.id);
 
 	// client.mutate({
 	// 	mutation: gql`mutation {
@@ -168,7 +168,7 @@ mutation createAddress($city: String!) {
 	// 		}
 	// 	}
 	// }
-	
+
 	// mutation {
 	// 	addToLikedPosts(likedPostsPostId: "AIl4McpfFIKvQ4G", likedByUserId: "QOK0khLNpq3eX0F") {
 	// 		likedPostsPost {
@@ -185,7 +185,7 @@ mutation createAddress($city: String!) {
 	// 		}
 	// 	}
 	// }
-	
-}
+
+};
 
 buildClient(genie);

@@ -1,19 +1,19 @@
 
-import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLInputType, GraphQLSchema, IntrospectionType } from 'graphql';
-import { generateArgs, createResolver } from './TypeGeneratorUtils';
+import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { createResolver, generateArgs } from './TypeGeneratorUtils';
 
 export class GenerateCreate implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
 	private dataResolver: DataResolver;
-	private schema: GraphQLSchema
+	private schema: GraphQLSchema;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 	private createArgs: Map<string, object>;
-	private currInputObjectTypes: Map<string, GraphQLInputType>
+	private currInputObjectTypes: Map<string, GraphQLInputType>;
 	private schemaInfo: IntrospectionType[];
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], 
+	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[],
 		currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
@@ -37,7 +37,7 @@ export class GenerateCreate implements TypeGenerator {
 			};
 			this.resolvers.set(`create${type.name}`, createResolver(this.dataResolver));
 		});
-	
+
 	}
 
 	public getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>> {

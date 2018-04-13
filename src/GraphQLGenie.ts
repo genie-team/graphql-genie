@@ -1,20 +1,19 @@
 
+import { GenerateGetSingle } from './GenerateGetSingle';
 import {
-	GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema, IntrospectionType, graphql, GraphQLInputType, IntrospectionObjectType, } from 'graphql';
-import { printType } from 'graphql';
-import { assign,  } from 'lodash'
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, } from 'graphql';
+import { assign,  } from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
-import { TypeGenerator, GraphQLGenieOptions, FortuneOptions } from './GraphQLGenieInterfaces';
-import { GenerateGetSingle } from './GenerateGetSingle';
+import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { printType } from 'graphql';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
 import { computeRelations } from './TypeGeneratorUtils';
-import { valueToObjectRepresentation } from 'apollo-utilities';
 
 
 export default class GraphQLGenie {
@@ -55,7 +54,7 @@ export default class GraphQLGenie {
 		if (options.schemaBuilder) {
 			this.schemaBuilder = options.schemaBuilder;
 		} else if (options.typeDefs) {
-			this.schemaBuilder = new GraphQLSchemaBuilder(options.typeDefs);			
+			this.schemaBuilder = new GraphQLSchemaBuilder(options.typeDefs);
 		} else {
 			throw new Error('Need a schemaBuilder or typeDefs');
 		}
@@ -71,12 +70,12 @@ export default class GraphQLGenie {
 
 	private init = async () => {
 		this.generators = [];
-		
+
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
 		this.graphQLFortune = new FortuneBuilder(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
-		
+
 		return true;
 	}
 
@@ -114,11 +113,11 @@ export default class GraphQLGenie {
 
 		const currOutputObjectTypeDefs = new Set<string>();
 		if (this.config.generateSetRelation || this.config.generateUnsetRelation || this.config.generateAddToRelation || this.config.generateRemoveFromRelation) {
-			const relations = computeRelations(this.schemaInfo);			
+			const relations = computeRelations(this.schemaInfo);
 			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.schemaInfo, this.config, relations, currOutputObjectTypeDefs));
 		}
 
-		
+
 
 		let newTypes = '';
 
@@ -130,10 +129,10 @@ export default class GraphQLGenie {
 			newTypes += newType + '\n';
 		});
 
-		let fieldsOnObject = new Map<string, {}>();
+		const fieldsOnObject = new Map<string, {}>();
 		const resolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
 
-		//merge maps and compute new input types
+		// merge maps and compute new input types
 		this.generators.forEach(generator => {
 			generator.getFieldsOnObject().forEach((fields, objectName) => {
 				fieldsOnObject.set(objectName, assign({}, fieldsOnObject.get(objectName), fields));
@@ -142,7 +141,7 @@ export default class GraphQLGenie {
 			const generatorResolvers = generator.getResolvers();
 
 			generatorResolvers.forEach((resolver, name) => {
-				if(!resolvers.has(name)) {
+				if (!resolvers.has(name)) {
 					resolvers.set(name, new Map<string, GraphQLFieldResolver<any, any>>());
 				}
 				resolvers.set(name, new Map([...resolvers.get(name), ...resolver]));
@@ -151,15 +150,15 @@ export default class GraphQLGenie {
 
 		fieldsOnObject.forEach((fields, objName) => {
 			newTypes += printType(new GraphQLObjectType({name: objName, fields: fields})) + '\n';
-		})
+		});
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
 		resolvers.forEach((resolverMap, name) => {
 			this.schemaBuilder.addResolvers(name, resolverMap);
 		});
-		
-		this.schema = this.schemaBuilder.getSchema();	
+
+		this.schema = this.schemaBuilder.getSchema();
 
 	}
 

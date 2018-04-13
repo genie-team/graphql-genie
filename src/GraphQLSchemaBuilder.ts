@@ -8,9 +8,23 @@ import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType } from '
 export default class GraphQLSchemaBuilder {
 	private schema: GraphQLSchema;
 	private typeDefs: string;
-	
-	constructor(typeDefs: string = '') {
-		this.typeDefs = typeDefs;
+
+	constructor(typeDefs = '') {
+		this.typeDefs =
+		`directive @display(
+			name: String
+		) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
+
+		directive @relation(
+			name: String
+		) on FIELD_DEFINITION
+
+		directive @model on OBJECT
+
+		interface Node {
+			id: ID! @isUnique
+		}
+		` + typeDefs;
 	}
 
 	public addTypeDefsToSchema = (typeDefs?: string): GraphQLSchema => {
@@ -31,16 +45,16 @@ export default class GraphQLSchemaBuilder {
 		SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
 			model: ModelDirective
 		});
-		
+
 		return this.schema;
-	};
+	}
 
 	public getSchema = (): GraphQLSchema  => {
 		if (!this.schema) {
 			this.schema = this.addTypeDefsToSchema();
 		}
 		return this.schema;
-	};
+	}
 
 	public addResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
 		const resolverMap = {};
@@ -49,10 +63,10 @@ export default class GraphQLSchemaBuilder {
 			resolverMap[typeName][name] = resolve;
 
 		});
-	
+
 		addResolveFunctionsToSchema(this.schema, resolverMap);
 		return this.schema;
-	};
+	}
 }
 
 

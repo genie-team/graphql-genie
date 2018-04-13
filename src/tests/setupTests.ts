@@ -4,35 +4,35 @@ import { SchemaLink } from 'apollo-link-schema';
 import GraphQLGenie  from '../GraphQLGenie';
 
 const typeDefs = `
-"""
-Schema metadata for use in displaying the schema
-"""
-directive @display(
-  name: String
-) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
 
-directive @relation(
-  name: String
-) on FIELD_DEFINITION
-
-directive @model on OBJECT
-
-interface Node {
-  id: ID! @isUnique
+interface Submission {
+	id: ID! @isUnique
+	title: String!
+	text: String
 }
 
-type Post @model {
+type Post implements Submission @model {
   id: ID! @isUnique
-  title: String!
-  author: User @relation(name: "WrittenPosts")
-  likedBy: [User!]! @relation(name: "LikedPosts")
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	likedBy: [User!]! @relation(name: "LikedPosts")
+	comments: [Comment] @relation(name: "CommentsOnPost")
+}
+
+type Comment implements Submission @model {
+  id: ID! @isUnique
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	post: Post @relation(name: "CommentsOnPost")
 }
 
 type User @model {
   id: ID! @isUnique
   name : String!
   address: Address @relation(name: "UserAddress")
-  writtenPosts: [Post!]! @relation(name: "WrittenPosts")
+  writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
   likedPosts: [Post!]! @relation(name: "LikedPosts")
 }
 
@@ -61,5 +61,5 @@ export const getClient = async () => {
 		console.log('Setup Completed', Date.now() - start);
 	}
 	return process['testSetup']['client'];
-}
+};
 

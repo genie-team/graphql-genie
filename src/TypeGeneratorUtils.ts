@@ -1,33 +1,113 @@
-import { SelectionNode, Kind, IntrospectionObjectType, GraphQLObjectType, isInputType, GraphQLSchema, GraphQLInputType, isListType, isNonNullType, GraphQLInterfaceType, GraphQLUnionType, GraphQLNonNull, GraphQLList, isUnionType, isObjectType, GraphQLID, isInterfaceType, IntrospectionType, GraphQLInputObjectType, GraphQLResolveInfo, GraphQLOutputType } from "graphql";
-import { DataResolver } from "./GraphQLGenieInterfaces";
-import { keys, each, get, merge, pickBy, endsWith, isEmpty, isArray, isObject, map } from 'lodash';
+import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLUnionType, IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType } from 'graphql';
+import { DataResolver } from './GraphQLGenieInterfaces';
+import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
 
-export const computeRelations = (schemaInfo: IntrospectionType[], nameResolver: (name:string) => string = (name:string) => name): Map<string, Map<string, string>> => {
+export class Relation {
+	public type0: string;
+	public field0: string;
+	public type1: string;
+	public field1: string;
+
+
+	constructor($type: string, field: string) {
+		this.type0 = $type;
+		this.field0 = field;
+	}
+
+	setRelative(relation: Relation) {
+		this.type1 = relation.type0;
+		this.field1 = relation.field0;
+	}
+
+	isValidRelative(relation: Relation) {
+		if (!this.type1) {
+			return true;
+		} else {
+			return this.isSameRelative(relation);
+		}
+	}
+
+	isSameRelative(relation: Relation): boolean {
+		return this.type0 === relation.type0 && this.field0 === relation.field0;
+	}
+
+	getInverse(type: string, field: string): string {
+		let inverse = null;
+		if (this.type0 === type && this.field0 === field) {
+			inverse = this.field1;
+		} else if (this.type0 === type && this.field0 === field) {
+			inverse = this.field0;
+		}
+		return inverse;
+	}
+}
+
+export class Relations {
+	private relations: Map<string, Relation>;
+	constructor() {
+		this.relations = new Map<string, Relation>();
+	}
+
+	public getRelations(name: string): Relation {
+		let relations = null;
+		if (this.relations.has(name)) {
+			relations =  this.relations.get(name);
+		}
+		return relations;
+	}
+
+	public getInverse(name: string, type: string, field: string): string {
+		let inverse = null;
+		if (this.relations.has(name)) {
+			const relation = this.relations.get(name);
+			inverse = relation.getInverse(type, field);
+		}
+		return inverse;
+	}
+
+	public setRelation(name: string, type: string, field: string) {
+		const newRelation = new Relation(type, field);
+		if (!this.relations.has(name)) {
+			this.relations.set(name, newRelation);
+		} else {
+			const relation =  this.relations.get(name);
+			if (relation.isValidRelative(newRelation)) {
+				relation.setRelative(newRelation);
+			} else {
+				this.throwError(name, type, field, relation.field0);
+			}
+		}
+	}
+
+	private throwError(name: string, type: string, primaryField: string, relatedField: string) {
+		console.error('Bad schema, relation could apply to multiple fields\n',
+		'relation name', name, '\n',
+		'fortune name', type, '\n',
+		'curr field', primaryField, '\n',
+		'other field', relatedField);
+	}
+
+
+}
+
+
+
+// Map<string, Map<string, Map<string, string>>>
+export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolver: (name: string) => string = (name: string) => name): Relations => {
 	// relations is a map where key is the relation name and value is a map where the key is the type name and the value is the field name
-	const relations = new Map<string, Map<string, string>>();
+	const relations = new Relations();
 	each(keys(schemaInfo), (typeName) => {
 		const type = schemaInfo[typeName];
 		each(type.fields, field => {
 			const relation = get(field, 'metadata.relation');
 			if (relation) {
-				let relationMap = relations.get(relation.name);
-				relationMap = relationMap ? relationMap : new Map<string, string>();
-				const name = nameResolver(typeName);
-				if (relationMap.has(name) && relationMap.get(name) !== field.name) {
-					console.error('Bad schema, relation could apply to multiple fields\n',
-						'relation name', relation.name, '\n',
-						'fortune name', name, '\n',
-						'curr field', relationMap.get(name), '\n',
-						'other field', field.name);
-
-				}
-				relationMap.set(name, field.name);
-				relations.set(relation.name, relationMap);
+				const reslovedTypeName = typeNameResolver(typeName);
+				relations.setRelation(relation.name, reslovedTypeName, field.name);
 			}
 		});
 	});
 	return relations;
-}
+};
 
 export const computeIncludes = (dataResolver: DataResolver, selection: SelectionNode, type: string, depth?: Array<any>) => {
 	let includes = [];
@@ -60,12 +140,12 @@ export const computeIncludes = (dataResolver: DataResolver, selection: Selection
 
 	}
 	return includes;
-}
+};
 
 
 const getInputName = (name: string): string => {
 	return name + 'Input';
-}
+};
 
 // We don't need a reference to the actual input type for the field to print correctly so just dummy it to prevent ifninite recursion
 
@@ -126,7 +206,7 @@ const generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQL
 		}
 		return [currInputObjectTypes.get(name), GraphQLID];
 	}
-}
+};
 
 
 export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInputType[], defaultValue?: string): object => {
@@ -140,7 +220,7 @@ export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInp
 		type: inputTypes[1]
 	};
 	return fields;
-}
+};
 
 const stripNonNull = (type: GraphQLOutputType ): GraphQLOutputType => {
 	if (isNonNullType(type)) {
@@ -148,7 +228,7 @@ const stripNonNull = (type: GraphQLOutputType ): GraphQLOutputType => {
 	} else {
 		return type;
 	}
-}
+};
 
 export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string, object>,
 	currInputObjectTypes: Map<string, GraphQLInputType>,
@@ -179,7 +259,7 @@ export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string
 	}
 
 	return currArgs.get(type.name);
-}
+};
 
 const getReturnType = (type: GraphQLOutputType): string => {
 	if (isListType(type) || isNonNullType(type)) {
@@ -187,7 +267,7 @@ const getReturnType = (type: GraphQLOutputType): string => {
 	} else {
 		return type.name;
 	}
-}
+};
 
 enum Mutation {
 	create,
@@ -205,16 +285,16 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		}
 
 
-	
+
 		const returnTypeName = getReturnType(returnType);
 
-		if(mutation === Mutation.update) {
+		if (mutation === Mutation.update) {
 			const currValue = await dataResolver.find(returnTypeName, [_args['id']]);
 			if (!currValue) {
-				throw new Error(`${returnTypeName} does not have record with ID of ${_args['id']}`)
+				throw new Error(`${returnTypeName} does not have record with ID of ${_args['id']}`);
 			}
 		}
-	
+
 		const nonIdArgs = pickBy(_args, (__, key) => {
 			return key !== 'id' && !endsWith(key, 'Id') && !endsWith(key, 'Ids');
 		});
@@ -242,7 +322,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		}
 		// wait for all the new types to be created
 		const createdTypes = await Promise.all(argPromises);
-	
+
 		// setup the arguments to use the new types
 		createdTypes.forEach(createdType => {
 			const key = createdType.key;
@@ -257,7 +337,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				_args[key] = id;
 			}
 		});
-	
+
 		// now merge in the existing ids passed in
 		const idArgs = pickBy(_args, (__, key) => {
 			return endsWith(key, 'Id') || endsWith(key, 'Ids');
@@ -282,31 +362,31 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				const includes = !recursed ? computeIncludes(dataResolver, _info.operation.selectionSet.selections[0], returnTypeName) : null;
 				dataResult = await dataResolver.create(returnTypeName, _args, includes);
 				break;
-			
+
 			case Mutation.update:
 
 				dataResult = await dataResolver.update(returnTypeName, _args);
-				break;		
+				break;
 		}
 
 		let id;
 		// if everything was an id no need to create anything new
 		id = isArray(dataResult) ? map(dataResult, 'id') : dataResult.id;
-	
+
 		// if key this is recursed else it's the final value
 		if (recursed) {
 			return {key: key, id: id, created: dataResult};
 		} else {
 			return dataResult;
 		}
-	} 
-}
+	};
+};
 
 
 export const createResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.create, dataResolver);
-}
+};
 
 export const updateResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.update, dataResolver);
-}
+};

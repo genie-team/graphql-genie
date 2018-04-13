@@ -1,7 +1,8 @@
 {
   "extends": "tslint-ionic-rules",
   "rules": {
-	"no-import-side-effect": false,
-	"indent": [true, "tabs", 4]
+		"no-import-side-effect": false,
+		"indent": [true, "tabs", 4],
+		"no-unused-variable": [true, {"ignore-pattern": "^_"}]
   }
 }
