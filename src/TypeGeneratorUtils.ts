@@ -26,7 +26,6 @@ export const computeRelations = (schemaInfo: IntrospectionType[], nameResolver: 
 			}
 		});
 	});
-	console.log(relations);
 	return relations;
 }
 
@@ -200,7 +199,7 @@ enum Mutation {
 const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 	return async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
 		// iterate over all the non-id arguments and recursively create new types
-		
+		const recursed = key ? true : false;
 		if (!returnType) {
 				returnType = _info.returnType;
 		}
@@ -245,7 +244,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const createdTypes = await Promise.all(argPromises);
 	
 		// setup the arguments to use the new types
-		for (const createdType of createdTypes) {
+		createdTypes.forEach(createdType => {
 			const key = createdType.key;
 			const id = createdType.id;
 			if (isArray(_args[key])) {
@@ -257,7 +256,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			} else {
 				_args[key] = id;
 			}
-		}
+		});
 	
 		// now merge in the existing ids passed in
 		const idArgs = pickBy(_args, (__, key) => {
@@ -280,7 +279,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		let dataResult;
 		switch (mutation) {
 			case Mutation.create:
-				dataResult = await dataResolver.create(returnTypeName, _args);
+				const includes = !recursed ? computeIncludes(dataResolver, _info.operation.selectionSet.selections[0], returnTypeName) : null;
+				dataResult = await dataResolver.create(returnTypeName, _args, includes);
 				break;
 			
 			case Mutation.update:
@@ -294,7 +294,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		id = isArray(dataResult) ? map(dataResult, 'id') : dataResult.id;
 	
 		// if key this is recursed else it's the final value
-		if (key) {
+		if (recursed) {
 			return {key: key, id: id, created: dataResult};
 		} else {
 			return dataResult;

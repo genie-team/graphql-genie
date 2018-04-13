@@ -70,7 +70,21 @@ export class GenerateRelationMutations implements TypeGenerator {
 	}
 
 	private generate() {
-		for(const [relationName, [[typeName0, fieldName0], [typeName1, fieldName1]]] of this.relations) {
+	//	for(const [relationName, [[typeName0, fieldName0], [typeName1, fieldName1]]]ofthis.relations) {
+		this.relations.forEach((typeMap, relationName)=> {
+			let typeName0 :string;
+			let fieldName0 :string;
+			let typeName1 :string;
+			let fieldName1 :string;
+			typeMap.forEach((fieldName, typeName) => {
+				if (!typeName0) {					
+					typeName0 = typeName;
+					fieldName0 = fieldName;
+				} else {
+					typeName1 = typeName;
+					fieldName1 = fieldName;
+				}
+			});
 			const field0Info = this.schemaInfo[typeName0].fields.find(field => field.name === fieldName0);
 			const field1Info = this.schemaInfo[typeName1].fields.find(field => field.name === fieldName1);
 			const field0IsArray = this.fieldIsArray(field0Info.type);
@@ -172,7 +186,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 				}`
 				this.currOutputObjectTypeDefs.add(typeDef);
 			}
-		}
+		});
 
 	
 	}

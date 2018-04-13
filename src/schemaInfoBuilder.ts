@@ -1,6 +1,6 @@
 import { GraphQLSchema, IntrospectionType, getIntrospectionQuery, graphql } from 'graphql';
 
-import _ from 'lodash';
+import {each, omitBy, omit, set, get, includes, startsWith, findIndex, concat, mapKeys, keys} from 'lodash';
 
 export default class SchemaInfoBuilder {
 
@@ -22,55 +22,57 @@ export default class SchemaInfoBuilder {
 	private addDirectiveFromAST = (astDirective, schemaInfo, path) => {
 		const name = astDirective.name.value;
 		const args = [];
-		_.each(astDirective.arguments, arg => {
-			args.push({ name: arg.name.value, ..._.omit(arg.value, ['loc']) });
+		each(astDirective.arguments, arg => {
+			args.push({ name: arg.name.value, ...omit(arg.value, ['loc']) });
 		});
-		const directives = _.get(schemaInfo, path) ? _.get(schemaInfo, path) : [];
+		
+		const directives = get(schemaInfo, path) ? get(schemaInfo, path) : [];
 		directives.push({ name: name, args: args });
-		_.set(schemaInfo, path, directives);
+		set(schemaInfo, path, directives);
 	}
 
 	private buildSchemaInfo = async (schema): Promise<IntrospectionType[]> => {
 		let originalSchemaInfo = await graphql(schema, getIntrospectionQuery({ descriptions: true }));
 		originalSchemaInfo = originalSchemaInfo.data;
 		let schemaInfo = <any>originalSchemaInfo;
-		schemaInfo = _.omitBy(schemaInfo.__schema.types, (value) => {
-			return _.startsWith(value.name, '__') || _.includes(['Boolean', 'String', 'ID', 'Int', 'Float'], value.name);
+		schemaInfo = omitBy(schemaInfo.__schema.types, (value) => {
+			return startsWith(value.name, '__') || includes(['Boolean', 'String', 'ID', 'Int', 'Float'], value.name);
 		});
-		schemaInfo = _.mapKeys(schemaInfo, (type: any) => type.name);
-		_.each(_.keys(schemaInfo), (typeName) => {
+		schemaInfo = mapKeys(schemaInfo, (type: any) => type.name);
+		each(keys(schemaInfo), (typeName) => {
 			const type = schemaInfo[typeName];
 			// directives on type
-			_.each(_.get(schema.getType(typeName), 'astNode.directives'), (astDirective) => {
+			each(get(schema.getType(typeName), 'astNode.directives'), (astDirective) => {
 				this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.directives`);
 			});
 			// directives on fields
-			_.each(_.get(schema.getType(typeName), 'astNode.fields'), (field) => {
+			each(get(schema.getType(typeName), 'astNode.fields'), (field) => {
 				const fieldName = field.name.value;
-				_.each(_.get(field, 'directives'), (astDirective) => {
-					const fieldIndex = _.findIndex(_.get(schemaInfo, `${typeName}.fields`), { 'name': fieldName });
+				each(get(field, 'directives'), (astDirective) => {
+					const fieldIndex = findIndex(get(schemaInfo, `${typeName}.fields`), { 'name': fieldName });
 					this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.fields[${fieldIndex}].directives`);
 				});
 			});
+				
+			
 			// metadata on type
-			_.set(schemaInfo, `${typeName}.metadata`, _.omit(_.get(schema, `_typeMap.${typeName}`), ['astNode', 'name', 'description', 'extensionASTNodes', 'isTypeOf', '_fields', '_interfaces', '_typeConfig', 'getFields', 'getInterfaces', 'toString', 'inspect', 'toJSON', '_enumConfig', 'getValue', 'getValues', 'parseLiteral', 'parseValue', 'getValue', 'serialize', '_getNameLookup', '_getValueLookup', '_values', 'resolveType', 'getTypes', '_types']));
+			set(schemaInfo, `${typeName}.metadata`, omit(get(schema, `_typeMap.${typeName}`), ['astNode', 'name', 'description', 'extensionASTNodes', 'isTypeOf', '_fields', '_interfaces', '_typeConfig', 'getFields', 'getInterfaces', 'toString', 'inspect', 'toJSON', '_enumConfig', 'getValue', 'getValues', 'parseLiteral', 'parseValue', 'getValue', 'serialize', '_getNameLookup', '_getValueLookup', '_values', 'resolveType', 'getTypes', '_types']));
 			// metadata of fields
-			_.each(_.get(schema, `_typeMap.${typeName}._fields`), (field) => {
-				const fieldIndex = _.findIndex(_.get(schemaInfo, `${typeName}.fields`), { 'name': field.name });
-				_.set(schemaInfo, `${typeName}.fields[${fieldIndex}].metadata`, _.omit(field, ['type', 'description', 'args', 'deprecationReason', 'astNode', 'isDeprecated', 'name']));
+			each(get(schema, `_typeMap.${typeName}._fields`), (field) => {
+				const fieldIndex = findIndex(get(schemaInfo, `${typeName}.fields`), { 'name': field.name });
+				set(schemaInfo, `${typeName}.fields[${fieldIndex}].metadata`, omit(field, ['type', 'description', 'args', 'deprecationReason', 'astNode', 'isDeprecated', 'name']));
 			});
+			
 
 			// add unions to types
 			if (type.kind === 'UNION') {
-				_.each(type.possibleTypes, possibleType => {
+				each(type.possibleTypes, possibleType => {
 					schemaInfo[possibleType.name].unions = schemaInfo[possibleType.name].unions ? schemaInfo[possibleType.name].unions : [];
-					schemaInfo[possibleType.name].unions = _.concat(schemaInfo[possibleType.name].unions,
+					schemaInfo[possibleType.name].unions = concat(schemaInfo[possibleType.name].unions,
 						[{ kind: type.kind, name: type.name, ofType: type.ofType }]);
-				});
+				});				
 			}
-
 		});
-
 		return schemaInfo;
 	}
 

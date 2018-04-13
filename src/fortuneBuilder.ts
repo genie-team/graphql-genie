@@ -2,15 +2,18 @@ import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
 import { isArray, isString, set, each, keys, isEmpty, get, forOwn, isEqual } from 'lodash';
-import { DataResolver } from './GraphQLGenieInterfaces';
+import { DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
 export default class FortuneBuilder implements DataResolver {
+	private fortuneOptions: FortuneOptions;
 	private fortuneTypeNames: Map<string, string>;
 	private schemaInfo: IntrospectionType[];
 	private store;
-	constructor(schemaInfo: IntrospectionType[]) {
+	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]) {
+		this.fortuneOptions = fortuneOptions;
 		this.schemaInfo = schemaInfo;
+		
 		this.store = this.buildFortune();
 	}
 
@@ -32,33 +35,41 @@ export default class FortuneBuilder implements DataResolver {
 		return masterObj;
 	}
 
+	private handleIncludes = (records: object, includes: object):object => {
+		// handle includes, make them part of the returned data for default resolvers to handle
+		if (records && includes) {
+			records = JSON.parse(JSON.stringify(records));
+			const includeIdMap = {};
+			for (const includeType in includes) {
+				const includeArr = includes[includeType];
+				includeArr.forEach(include => {
+					includeIdMap[include.id] = include;
+				});
+
+			}
+			this.deepReplaceIdWithObj(includeIdMap, records);
+		}
+		return records;
+	}
+
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		records['__graphtype'] = graphQLTypeName;
-		const results = await this.store.create(fortuneType, records, include, meta);
-		return isArray(records) ? results.payload.records : results.payload.records[0];
+		records['__typename'] = graphQLTypeName;
+		let results = await this.store.create(fortuneType, records, include, meta);
+		results = this.handleIncludes(results.payload.records, results.payload.include);
+
+		return isArray(records) ? results : results[0];
 	}
 
 	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
-		set(options, 'match.__graphtype', graphQLTypeName);
+		set(options, 'match.__typename', graphQLTypeName);
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn = results.payload.records;
 
 
-		// handle includes, make them part of the returned data for default resolvers to handle
-		if (graphReturn && results.payload.include) {
-			graphReturn = JSON.parse(JSON.stringify(results.payload.records));
-			const includeIdMap = {};
-			for (const includeType in results.payload.include) {
-				const includeArr = results.payload.include[includeType];
-				for (const include of includeArr) {
-					includeIdMap[include.id] = include;
-				}
-			}
-			this.deepReplaceIdWithObj(includeIdMap, graphReturn);
-		}
+		graphReturn = this.handleIncludes(graphReturn, results.payload.include);
 
 		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array
@@ -206,7 +217,7 @@ export default class FortuneBuilder implements DataResolver {
 
 						fields[field.name] = currType;
 					}
-					fields['__graphtype'] = String;
+					fields['__typename'] = String;
 				});
 				const fortuneName = this.getFortuneTypeName(name);
 				const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};
@@ -233,9 +244,7 @@ export default class FortuneBuilder implements DataResolver {
 			}
 
 		});
-		console.info(fortuneConfig);
-		const store = fortune(fortuneConfig, { settings: { enforceLinks: true } });
-		console.info(store);
+		const store = fortune(fortuneConfig, this.fortuneOptions);
 		window['store'] = store;
 		return store;
 	}

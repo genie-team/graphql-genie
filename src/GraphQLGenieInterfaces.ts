@@ -1,6 +1,5 @@
 import {GraphQLFieldResolver } from "graphql";
 import GraphQLSchemaBuilder from "./GraphQLSchemaBuilder";
-
 export interface TypeGenerator {
 	getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>>
 	getFieldsOnObject(): Map<string, object>
@@ -35,4 +34,17 @@ export interface GraphQLGenieOptions {
 	schemaBuilder?: GraphQLSchemaBuilder
 	typeDefs?: string
 	generatorOptions?: GenerateConfig
+	fortuneOptions: FortuneOptions
+}
+
+export interface FortuneSettings {
+	enforceLinks?: boolean
+	name?: string
+	description?: string
+}
+export interface FortuneOptions {
+	adapter?: any
+	hooks?: object
+	documentation?: object
+	settings: FortuneSettings
 }

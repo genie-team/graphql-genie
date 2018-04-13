@@ -6,7 +6,7 @@ import { assign,  } from 'lodash'
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
-import { TypeGenerator, GraphQLGenieOptions } from './GraphQLGenieInterfaces';
+import { TypeGenerator, GraphQLGenieOptions, FortuneOptions } from './GraphQLGenieInterfaces';
 import { GenerateGetSingle } from './GenerateGetSingle';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
@@ -14,10 +14,11 @@ import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
 import { computeRelations } from './TypeGeneratorUtils';
+import { valueToObjectRepresentation } from 'apollo-utilities';
 
 
-
-export class GraphQLGenie {
+export default class GraphQLGenie {
+	private fortuneOptions: FortuneOptions;
 	private config = {
 		'generateGetAll': true,
 		'generateGetAllMeta': true,
@@ -39,13 +40,18 @@ export class GraphQLGenie {
 	private schema: GraphQLSchema;
 	private schemaBuilder: GraphQLSchemaBuilder;
 	private schemaInfo: IntrospectionType[];
-
 	private schemaInfoBuilder: SchemaInfoBuilder;
 
 	public graphQLFortune: FortuneBuilder;
 
 	private initialized: Promise<boolean>;
 	constructor(options: GraphQLGenieOptions) {
+		if (!options.fortuneOptions) {
+			throw new Error('Fortune Options is required');
+		} else {
+			this.fortuneOptions = options.fortuneOptions;
+		}
+
 		if (options.schemaBuilder) {
 			this.schemaBuilder = options.schemaBuilder;
 		} else if (options.typeDefs) {
@@ -68,49 +74,14 @@ export class GraphQLGenie {
 		
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
-		this.graphQLFortune = new FortuneBuilder(this.schemaInfo);
+		this.graphQLFortune = new FortuneBuilder(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
-		await this.buildResolveTypeResolvers();
 		
 		return true;
 	}
 
-	// private mapToObj(map) {
-	// 	const obj = Object.create(null);
-	// 	for (const [k, v] of map) {
-	// 		// We don’t escape the key '__proto__'
-	// 		// which can cause problems on older engines
-	// 		obj[k] = v;
-	// 	}
-	// 	return obj;
-	// }
-
-	private buildResolveTypeResolvers = async() => {
-		const typesResult = await graphql(this.schema, `{
-			__schema {
-				types{
-					name
-					kind
-				}
-			}
-		}
-		`);
-		const types = typesResult.data.__schema.types;
-		for (const type of types) {
-			if (type.kind && type.kind === 'INTERFACE' || type.kind === 'UNION') {
-				const resolver = (
-					obj: any
-				): any => {
-					return obj.__graphtype;
-				};
-				this.schema = this.schemaBuilder.addResolvers(type.name, new Map().set('__resolveType', resolver));
-			}
-		}
-	}
 
 	public buildQueries = async () => {
-		console.info(this.schema);
-		console.info(this.schemaInfo);
 		const nodesResult = await graphql(this.schema, `{
 			__type(name: "Node") {
 				possibleTypes {
@@ -151,43 +122,43 @@ export class GraphQLGenie {
 
 		let newTypes = '';
 
-		for(const [, inputObjectType] of currInputObjectTypes) {
+		currInputObjectTypes.forEach(inputObjectType => {
 			newTypes += printType(inputObjectType) + '\n';
-		}
+		});
 
-		for(const newType of currOutputObjectTypeDefs) {
+		currOutputObjectTypeDefs.forEach(newType => {
 			newTypes += newType + '\n';
-		}
+		});
 
 		let fieldsOnObject = new Map<string, {}>();
 		const resolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
 
 		//merge maps and compute new input types
-		for (const generator of this.generators) {
-			for(const [objectName, fields] of generator.getFieldsOnObject()) {
+		this.generators.forEach(generator => {
+			generator.getFieldsOnObject().forEach((fields, objectName) => {
 				fieldsOnObject.set(objectName, assign({}, fieldsOnObject.get(objectName), fields));
-			}
-			
+			});
 
 			const generatorResolvers = generator.getResolvers();
-			for(const [name, resolver] of generatorResolvers) {
+
+			generatorResolvers.forEach((resolver, name) => {
 				if(!resolvers.has(name)) {
 					resolvers.set(name, new Map<string, GraphQLFieldResolver<any, any>>());
 				}
 				resolvers.set(name, new Map([...resolvers.get(name), ...resolver]));
-			}
-		}
-		
+			});
+		});
 
-		for(const [objName, fields] of fieldsOnObject) {
+		fieldsOnObject.forEach((fields, objName) => {
 			newTypes += printType(new GraphQLObjectType({name: objName, fields: fields})) + '\n';
-		}
+		})
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
-		for(const [name, resolverMap] of resolvers) {
+		resolvers.forEach((resolverMap, name) => {
 			this.schemaBuilder.addResolvers(name, resolverMap);
-		}	
+		});
+		
 		this.schema = this.schemaBuilder.getSchema();	
 
 	}

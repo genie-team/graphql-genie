@@ -1,6 +1,6 @@
 
 import {SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
-import _ from 'lodash';
+import {has, set} from 'lodash';
 import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType } from 'graphql';
 
 
@@ -45,9 +45,10 @@ export default class GraphQLSchemaBuilder {
 	public addResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
 		const resolverMap = {};
 		resolverMap[typeName] = {};
-		for (const [name, resolve] of fieldResolvers) {
+		fieldResolvers.forEach((resolve, name) => {
 			resolverMap[typeName][name] = resolve;
-		}
+
+		});
 	
 		addResolveFunctionsToSchema(this.schema, resolverMap);
 		return this.schema;
@@ -103,7 +104,7 @@ class RelationDirective extends SchemaDirectiveVisitor {
 class ModelDirective extends SchemaDirectiveVisitor {
 	public visitObject(object) {
 		object._interfaces.push(this.schema.getTypeMap().Node);
-		_.has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(object) : _.set(this.schema, '_implementations.Node', [object]);
+		has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(object) : set(this.schema, '_implementations.Node', [object]);
 	}
 }
 

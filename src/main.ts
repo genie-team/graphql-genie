@@ -1,4 +1,4 @@
-import { GraphQLGenie } from './GraphQLGenie';
+import  GraphQLGenie  from './GraphQLGenie';
 import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
@@ -44,12 +44,13 @@ type Address @model {
 }
 `;
 
-
-
-const genie = new GraphQLGenie({ typeDefs });
-
+const fortuneOptions = { settings: { enforceLinks: true } };
+const start = Date.now();
+console.log('GraphQL Genie Started')
+const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 const buildClient = async (genie: GraphQLGenie) => {
 	const schema = await genie.getSchema();
+	console.log('GraphQL Genie Completed', Date.now() - start);
 	// const resolverMap = {
 	// 	Query: {
 	// 		allTestings: (_obj, { _name }, _context) => {
@@ -67,7 +68,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	// // for (const [name, resolve] of newQueryResolvers) {
 	// // 	resolverMap.Query[name] = resolve;
 	// // }
-	console.log(schema);
 	// const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
 	// resolversMap.set('args', (
 	// 	_root: any,
@@ -91,15 +91,14 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
-	console.log(client);
 
-	const createPost = gql`
-		mutation createPost($title: String!) {
-			createPost(title: $title) {
-				id
-			}
+const createPost = gql`
+	mutation createPost($title: String!) {
+		createPost(title: $title) {
+			id
 		}
-	`;
+	}
+`;
 
 const createUser = gql`
 mutation createUser($name: String!) {

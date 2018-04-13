@@ -9,8 +9,12 @@
   ],
   "devDependencies": {
     "@types/graphql": "^0.12.7",
-    "@types/jest": "^21.1.1",
+    "@types/jest": "^21.1.10",
     "@types/lodash": "^4.14.105",
+    "apollo-cache-inmemory": "^1.1.12",
+    "apollo-client": "^2.2.8",
+    "apollo-link-schema": "^1.0.6",
+    "graphql-tag": "^2.8.0",
     "jest": "^21.2.1",
     "rollup": "^0.57.0",
     "rollup-plugin-commonjs": "^9.1.0",
@@ -21,14 +25,14 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-serve": "^0.4.2",
     "rollup-plugin-typescript2": "^0.12.0",
+    "ts-jest": "^22.4.2",
     "tslint": "^5.9.1",
     "typescript": "^2.8.1"
   },
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "test": "node test/test.js",
-    "pretest": "npm run build"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -42,24 +46,21 @@
   "homepage": "https://github.com/ionic-team/stencil",
   "jest": {
     "transform": {
-      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/@stencil/core/testing/jest.preprocessor.js"
+      "^.+\\.tsx?$": "ts-jest"
     },
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$",
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [
       "ts",
       "tsx",
       "js",
+      "jsx",
       "json",
-      "jsx"
-    ]
+      "node"
+		]
   },
   "dependencies": {
-    "apollo-cache-inmemory": "^1.1.12",
-    "apollo-client": "^2.2.8",
-    "apollo-link-schema": "^1.0.6",
     "fortune": "^5.4.2",
     "graphql": "^0.13.2",
-    "graphql-tag": "^2.8.0",
     "graphql-tools": "^2.23.1",
     "lodash": "^4.17.5",
     "pluralize": "^7.0.0"
