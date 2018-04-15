@@ -114,7 +114,7 @@ export default class GraphQLGenie {
 		const currOutputObjectTypeDefs = new Set<string>();
 		if (this.config.generateSetRelation || this.config.generateUnsetRelation || this.config.generateAddToRelation || this.config.generateRemoveFromRelation) {
 			const relations = computeRelations(this.schemaInfo);
-			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.schemaInfo, this.config, relations, currOutputObjectTypeDefs));
+			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.config, relations, currOutputObjectTypeDefs));
 		}
 
 

@@ -203,7 +203,7 @@ export default class FortuneBuilder implements DataResolver {
 							currType = this.getFortuneTypeName(currType);
 							const relation = get(field, 'metadata.relation');
 							if (!isEmpty(relation) && relation.name) {
-								inverse = relations.getInverse(name, currType, field.name);
+								inverse = relations.getInverse(relation.name, currType, field.name);
 							}
 						}
 						currType = isArray ? Array(currType) : currType;

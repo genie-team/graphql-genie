@@ -5,18 +5,22 @@ import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, merge, pick
 export class Relation {
 	public type0: string;
 	public field0: string;
+	public field0isArray: boolean;
 	public type1: string;
 	public field1: string;
+	public field1isArray: boolean;
 
 
-	constructor($type: string, field: string) {
+	constructor($type: string, $field: string, $field0isArray: boolean) {
 		this.type0 = $type;
-		this.field0 = field;
+		this.field0 = $field;
+		this.field0isArray = $field0isArray;
 	}
 
 	setRelative(relation: Relation) {
 		this.type1 = relation.type0;
 		this.field1 = relation.field0;
+		this.field1isArray = relation.field0isArray;
 	}
 
 	isValidRelative(relation: Relation) {
@@ -28,14 +32,14 @@ export class Relation {
 	}
 
 	isSameRelative(relation: Relation): boolean {
-		return this.type0 === relation.type0 && this.field0 === relation.field0;
+		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isArray == relation.field0isArray;
 	}
 
 	getInverse(type: string, field: string): string {
 		let inverse = null;
 		if (this.type0 === type && this.field0 === field) {
 			inverse = this.field1;
-		} else if (this.type0 === type && this.field0 === field) {
+		} else if (this.type1 === type && this.field1 === field) {
 			inverse = this.field0;
 		}
 		return inverse;
@@ -43,12 +47,12 @@ export class Relation {
 }
 
 export class Relations {
-	private relations: Map<string, Relation>;
+	public relations: Map<string, Relation>;
 	constructor() {
 		this.relations = new Map<string, Relation>();
 	}
 
-	public getRelations(name: string): Relation {
+	public getRelation(name: string): Relation {
 		let relations = null;
 		if (this.relations.has(name)) {
 			relations =  this.relations.get(name);
@@ -65,14 +69,16 @@ export class Relations {
 		return inverse;
 	}
 
-	public setRelation(name: string, type: string, field: string) {
-		const newRelation = new Relation(type, field);
+	public setRelation(name: string, type: string, field: string, fieldIsArray: boolean) {
+		const newRelation = new Relation(type, field, fieldIsArray);
 		if (!this.relations.has(name)) {
 			this.relations.set(name, newRelation);
 		} else {
 			const relation =  this.relations.get(name);
 			if (relation.isValidRelative(newRelation)) {
-				relation.setRelative(newRelation);
+				if (!relation.isSameRelative(newRelation)) {
+					relation.setRelative(newRelation);
+				}				
 			} else {
 				this.throwError(name, type, field, relation.field0);
 			}
@@ -92,17 +98,16 @@ export class Relations {
 
 
 
-// Map<string, Map<string, Map<string, string>>>
 export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolver: (name: string) => string = (name: string) => name): Relations => {
-	// relations is a map where key is the relation name and value is a map where the key is the type name and the value is the field name
 	const relations = new Relations();
 	each(keys(schemaInfo), (typeName) => {
 		const type = schemaInfo[typeName];
 		each(type.fields, field => {
 			const relation = get(field, 'metadata.relation');
-			if (relation) {
-				const reslovedTypeName = typeNameResolver(typeName);
-				relations.setRelation(relation.name, reslovedTypeName, field.name);
+			if (relation) {				
+				const reslovedTypeName = typeNameResolver(getReturnType(field.type));
+				
+				relations.setRelation(relation.name, reslovedTypeName, field.name, fieldIsArray(field.type));
 			}
 		});
 	});
@@ -261,8 +266,20 @@ export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string
 	return currArgs.get(type.name);
 };
 
-const getReturnType = (type: GraphQLOutputType): string => {
-	if (isListType(type) || isNonNullType(type)) {
+const fieldIsArray = (fieldInfo) => {
+	let isArray = false;
+	while (fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
+		if (fieldInfo.kind === 'LIST') {
+			isArray = true;
+			break;
+		}
+		fieldInfo = fieldInfo.ofType;
+	}
+	return isArray;
+}
+
+const getReturnType = (type): string => {
+	if (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST') {
 		return getReturnType(type.ofType);
 	} else {
 		return type.name;

@@ -1,25 +1,23 @@
 
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLID, GraphQLNonNull, GraphQLResolveInfo, IntrospectionType } from 'graphql';
-import { computeIncludes } from './TypeGeneratorUtils';
+import { GraphQLFieldResolver, GraphQLID, GraphQLNonNull, GraphQLResolveInfo } from 'graphql';
+import { computeIncludes, Relations } from './TypeGeneratorUtils';
 import { isEmpty } from 'lodash';
 
 export class GenerateRelationMutations implements TypeGenerator {
-	private relations: Map<string, Map<string, string>>;
+	private relations: Relations;
 	private currOutputObjectTypeDefs: Set<string>;
 	private config: GenerateConfig;
-	private schemaInfo: IntrospectionType[];
 	private objectName: string;
 	private dataResolver: DataResolver;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 
 	constructor(dataResolver: DataResolver, objectName: string,
-		 schemaInfo: IntrospectionType[], config: GenerateConfig, relations: Map<string, Map<string, string>>,
+		 config: GenerateConfig, relations: Relations,
 		 currOutputObjectTypeDefs: Set<string>) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
-		this.schemaInfo = schemaInfo;
 		this.config = config;
 		this.currOutputObjectTypeDefs = currOutputObjectTypeDefs;
 		this.relations = relations;
@@ -27,19 +25,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 		this.generate();
-	}
-
-	private fieldIsArray(fieldInfo) {
-		let isArray = false;
-		while (fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
-			if (fieldInfo.kind === 'LIST') {
-				isArray = true;
-				break;
-			}
-			fieldInfo = fieldInfo.ofType;
-		}
-		return isArray;
-	}
+	}	
 
 	private generateRelationFields(fieldName: string, payloadTypeName: string, argNames: string[]) {
 				// create the mutation field
@@ -71,26 +57,15 @@ export class GenerateRelationMutations implements TypeGenerator {
 
 	private generate() {
 	// 	for(const [relationName, [[typeName0, fieldName0], [typeName1, fieldName1]]]ofthis.relations) {
-		this.relations.forEach((typeMap, relationName) => {
-			let typeName0: string;
-			let fieldName0: string;
-			let typeName1: string;
-			let fieldName1: string;
-			typeMap.forEach((fieldName, typeName) => {
-				if (!typeName0) {
-					typeName0 = typeName;
-					fieldName0 = fieldName;
-				} else {
-					typeName1 = typeName;
-					fieldName1 = fieldName;
-				}
-			});
-			const field0Info = this.schemaInfo[typeName0].fields.find(field => field.name === fieldName0);
-			const field1Info = this.schemaInfo[typeName1].fields.find(field => field.name === fieldName1);
-			const field0IsArray = this.fieldIsArray(field0Info.type);
-			const field1IsArray = this.fieldIsArray(field1Info.type);
+		this.relations.relations.forEach((relation, relationName) => {
+			const typeName0 = relation.type0;
+			const fieldName0 = relation.field0;
+			const field0IsArray = relation.field0isArray;
+			const typeName1 = relation.type1;
+			const fieldName1 = relation.field1;						
+			const field1IsArray = relation.field1isArray;
 			const payloadTypeName = `${relationName}Payload`;
-			const argNames = [`${fieldName1}${typeName0}`, `${fieldName0}${typeName1}`];
+			const argNames = [`${fieldName0}${typeName0}`, `${fieldName1}${typeName1}`];
 			let createPayloadType = false;
 
 			// set relation
