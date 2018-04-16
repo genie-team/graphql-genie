@@ -1,5 +1,5 @@
 import { ApolloClient } from 'apollo-client';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
 import GraphQLGenie  from '../GraphQLGenie';
 
@@ -26,6 +26,7 @@ type Comment implements Submission @model {
 	text: String
   author: User @relation(name: "WrittenSubmissions")
 	post: Post @relation(name: "CommentsOnPost")
+	approved: Boolean @default(value: "true")
 }
 
 type User @model {
@@ -49,16 +50,17 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 
 export const getClient = async () => {
 	if (!process['testSetup']['client']) {
-		const start = Date.now();
 		const schema = await genie.getSchema();
+		const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
+		const fragmentMatcher = new IntrospectionFragmentMatcher({
+			introspectionQueryResultData
+		});
 		const client = new ApolloClient({
 			link: new SchemaLink({ schema: schema }),
-			cache: new InMemoryCache(),
-			connectToDevTools: true
+			cache: new InMemoryCache({fragmentMatcher})
 		});
 		client.initQueryManager();
 		process['testSetup']['client'] = client;
-		console.log('Setup Completed', Date.now() - start);
 	}
 	return process['testSetup']['client'];
 };

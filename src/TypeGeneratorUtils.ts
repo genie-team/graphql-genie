@@ -1,4 +1,4 @@
-import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLUnionType, IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isUnionType } from 'graphql';
+import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, GraphQLUnionType, IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
 import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
 
@@ -32,7 +32,7 @@ export class Relation {
 	}
 
 	isSameRelative(relation: Relation): boolean {
-		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isArray == relation.field0isArray;
+		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isArray === relation.field0isArray;
 	}
 
 	getInverse(type: string, field: string): string {
@@ -78,7 +78,7 @@ export class Relations {
 			if (relation.isValidRelative(newRelation)) {
 				if (!relation.isSameRelative(newRelation)) {
 					relation.setRelative(newRelation);
-				}				
+				}
 			} else {
 				this.throwError(name, type, field, relation.field0);
 			}
@@ -104,9 +104,9 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 		const type = schemaInfo[typeName];
 		each(type.fields, field => {
 			const relation = get(field, 'metadata.relation');
-			if (relation) {				
+			if (relation) {
 				const reslovedTypeName = typeNameResolver(getReturnType(field.type));
-				
+
 				relations.setRelation(relation.name, reslovedTypeName, field.name, fieldIsArray(field.type));
 			}
 		});
@@ -180,7 +180,8 @@ const generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQL
 					if (field.name !== 'id') {
 						merge(fields, generateFieldsForInput(
 							field.name,
-							isInputType(field.type) ? [field.type, GraphQLID] : generateInputs(field.type, currInputObjectTypes, schemaInfo, schema, true)));
+							isInputType(field.type) ? [field.type, GraphQLID] : generateInputs(field.type, currInputObjectTypes, schemaInfo, schema, true),
+							get(schemaInfo[type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
 					}
 				});
 			} else if (isInterfaceType(type)) {
@@ -189,7 +190,8 @@ const generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQL
 
 					merge(fields, generateFieldsForInput(
 						possibleType.name,
-						isInputType(schemaType) ? [schemaType, GraphQLID] : generateInputs(schemaType, currInputObjectTypes, schemaInfo, schema, true)));
+						isInputType(schemaType) ? [schemaType, GraphQLID] : generateInputs(schemaType, currInputObjectTypes, schemaInfo, schema, true),
+						get(schemaInfo[type.name].fields.find((introField) => introField.name === possibleType.name), 'metadata.defaultValue')));
 
 					if (!isInputType(schemaType) && !dummy) {
 						generateInputs(schemaType, currInputObjectTypes, schemaInfo, schema);
@@ -220,10 +222,12 @@ export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInp
 		type: inputTypes[0],
 		defaultValue: defaultValue
 	};
-	const idName = isListType(inputTypes[1]) ? fieldName + 'Ids' : fieldName + 'Id';
-	fields[idName] = {
-		type: inputTypes[1]
-	};
+	if (inputTypes[1] && !isScalarType(getReturnGraphQLType(inputTypes[0]))) {
+		const idName = isListType(inputTypes[1]) ? fieldName + 'Ids' : fieldName + 'Id';
+		fields[idName] = {
+			type: inputTypes[1]
+		};
+	}
 	return fields;
 };
 
@@ -276,13 +280,21 @@ const fieldIsArray = (fieldInfo) => {
 		fieldInfo = fieldInfo.ofType;
 	}
 	return isArray;
-}
+};
 
 const getReturnType = (type): string => {
 	if (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST') {
 		return getReturnType(type.ofType);
 	} else {
 		return type.name;
+	}
+};
+
+const getReturnGraphQLType = (type: GraphQLType): GraphQLType => {
+	if (isListType(type) || isNonNullType(type)) {
+		return getReturnGraphQLType(type.ofType);
+	} else {
+		return type;
 	}
 };
 

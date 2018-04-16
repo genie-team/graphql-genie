@@ -1,4 +1,4 @@
-import {GraphQLGenie} from './GraphQLGenie';
+import GraphQLGenie from './GraphQLGenie';
 import gql from 'graphql-tag';
 import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
@@ -336,6 +336,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		await genie.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test' });
 		await genie.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test' });
 
-}
+};
 
 buildClient(genie);

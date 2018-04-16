@@ -1,8 +1,9 @@
 
 import { GenerateGetSingle } from './GenerateGetSingle';
 import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, } from 'graphql';
-import { assign,  } from 'lodash';
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
+} from 'graphql';
+import { assign, } from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
@@ -14,6 +15,7 @@ import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
 import { computeRelations } from './TypeGeneratorUtils';
+import { IntrospectionResultData } from 'apollo-cache-inmemory';
 
 
 export default class GraphQLGenie {
@@ -149,7 +151,7 @@ export default class GraphQLGenie {
 		});
 
 		fieldsOnObject.forEach((fields, objName) => {
-			newTypes += printType(new GraphQLObjectType({name: objName, fields: fields})) + '\n';
+			newTypes += printType(new GraphQLObjectType({ name: objName, fields: fields })) + '\n';
 		});
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
@@ -167,6 +169,27 @@ export default class GraphQLGenie {
 	public getSchema = async (): Promise<GraphQLSchema> => {
 		await this.initialized;
 		return this.schema;
+	}
+
+	public getFragmentTypes = async (): Promise<IntrospectionResultData> => {
+		await this.initialized;
+		const result = await graphql(this.schema, `{
+			__schema {
+				types {
+					kind
+					name
+					possibleTypes {
+						name
+					}
+				}
+			}
+		}`);
+		// here we're filtering out any type information unrelated to unions or interfaces
+		const filteredData = result.data.__schema.types.filter(
+			type => type.possibleTypes !== null,
+		);
+		result.data.__schema.types = filteredData;
+		return <IntrospectionResultData>result.data;
 	}
 
 }

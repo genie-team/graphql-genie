@@ -1,7 +1,7 @@
 
 import {SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import {has, set} from 'lodash';
-import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType, isScalarType } from 'graphql';
 
 
 
@@ -16,7 +16,11 @@ export default class GraphQLSchemaBuilder {
 		) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
 
 		directive @relation(
-			name: String
+			name: String!
+		) on FIELD_DEFINITION
+
+		directive @default(
+			value: String!
 		) on FIELD_DEFINITION
 
 		directive @model on OBJECT
@@ -39,7 +43,8 @@ export default class GraphQLSchemaBuilder {
 			typeDefs: newTypeDefs,
 			schemaDirectives: {
 				display: DisplayDirective,
-				relation: RelationDirective
+				relation: RelationDirective,
+				default: DefaultDirective
 			}
 		});
 		SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
@@ -114,6 +119,36 @@ class RelationDirective extends SchemaDirectiveVisitor {
 	}
 }
 
+
+class DefaultDirective extends SchemaDirectiveVisitor {
+  public visitFieldDefinition(field) {
+		let type = field.type;
+		while (isListType(type) || isNonNullType(type)) {
+			type = type.ofType;
+		}
+		if (!isScalarType(type)) {
+			throw new Error('Can not set default on non scalar type which was attempted on ' + field.name);
+		}
+		if (this.args.value) {
+			const currType = type.name;
+			let value = this.args.value;
+			if (currType === 'Int') {
+				value = Number.parseInt(value);
+			} else if (currType === 'Float') {
+				value = Number.parseFloat(value);
+			} else if (currType === 'Boolean') {
+				value = value.toLowerCase();
+				if (value !== 'true' && value !== 'false') {
+					throw new Error('Default on field ' + field.name + ' which is of type Boolean must be "true" or "false"');
+				}
+				value = value === 'true';
+			}
+			field.defaultValue = value;
+		}
+
+
+  }
+}
 
 class ModelDirective extends SchemaDirectiveVisitor {
 	public visitObject(object) {

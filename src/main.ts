@@ -1,6 +1,6 @@
 import  GraphQLGenie  from './GraphQLGenie';
 import { ApolloClient } from 'apollo-client';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
 import gql from 'graphql-tag';
 
@@ -27,6 +27,7 @@ type Comment implements Submission @model {
 	text: String
   author: User @relation(name: "WrittenSubmissions")
 	post: Post @relation(name: "CommentsOnPost")
+	approved: Boolean @default(value: "true")
 }
 
 type User @model {
@@ -51,48 +52,18 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 const buildClient = async (genie: GraphQLGenie) => {
 	const schema = await genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
-	// const resolverMap = {
-	// 	Query: {
-	// 		allTestings: (_obj, { _name }, _context) => {
-	// 			return state.testings;
-	// 		},
-	// 	},
-	// 	Mutation: {
-	// 		addTesting: (_, { name }, _context) => {
-	// 			const testing = { name: name };
-	// 			state.testings.push(testing);
-	// 			return testing;
-	// 		},
-	// 	},
-	// };
-	// // for (const [name, resolve] of newQueryResolvers) {
-	// // 	resolverMap.Query[name] = resolve;
-	// // }
-	// const resolversMap = new Map<string, GraphQLFieldResolver<any, any>>();
-	// resolversMap.set('args', (
-	// 	_root: any,
-	// 	_args: { [key: string]: any },
-	// 	_context: any,
-	// 	_info: GraphQLResolveInfo,
-	// ): any => {
-	// 	const selections = computeIncludes(_info.operation.selectionSet.selections[0], 'GraphQLDirective');
-	// 	console.info('selections');
-	// 	console.info(selections);
-	// 	console.info(JSON.stringify(selections));
-	// 	console.log(_root);
-	// 	console.log(_args);
-	// 	console.log(_context);
-	// 	console.log(_info);
-	// });
-	// addResolvers('GraphQLDirective', resolversMap);
+	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
+	const fragmentMatcher = new IntrospectionFragmentMatcher({
+		introspectionQueryResultData
+	});
 	const client = new ApolloClient({
 		link: new SchemaLink({ schema: schema }),
-		cache: new InMemoryCache(),
+		cache: new InMemoryCache({fragmentMatcher}),
 		connectToDevTools: true
 	});
 	client.initQueryManager();
 
-const createPost = gql`
+let createPost = gql`
 	mutation createPost($title: String!) {
 		createPost(title: $title) {
 			id
@@ -127,65 +98,141 @@ mutation createAddress($city: String!) {
 		mutation: createAddress,
 		variables: { city: 'Eau Claire' }
 	});
-	console.log('post', post.data.createPost.id,
+	const testData = {users: [user.data.createUser],
+		posts: [post.data.createPost],
+		addresses: [address.data.createAddress],
+	comments: []};
+	console.log('post', testData.posts[0].id,
 	'user', user.data.createUser.id,
 	'address', address.data.createAddress.id);
+	const user2 = await client.mutate({
+		mutation: createUser,
+		variables: { name: 'Corey2' }
+	});
+	testData.users.push(user2.data.createUser);
 
-	// client.mutate({
-	// 	mutation: gql`mutation {
-	// 		setUserAddress (addressAddressId:"9gFXv_BuLNPW19q", userUserId:"M4AQV51bbQgqvD9") {
-	// 			addressAddress {
-	// 				id
-	// 				city
-	// 				user {
-	// 					name
-	// 				}
-	// 			}
-	// 			userUser {
-	// 				id
-	// 				name
-	// 				address {
-	// 					city
-	// 				}
-	// 			}
-	// 		}
-	// 	}`
-	// })
+	const setUserAddress = gql`
+	mutation setUserAddress($addressAddressId: ID!, $userUserId: ID!) {
+		setUserAddress(addressAddressId: $addressAddressId, userUserId: $userUserId	) {
+			addressAddress {
+				id
+				city
+				user {
+					name
+				}
+			}
+			userUser {
+				id
+				name
+				address {
+					city
+				}
+			}
+		}
+	}
+	`;
+	let result = await client.mutate({
+		mutation: setUserAddress,
+		variables: { userUserId: testData.users[0].id, addressAddressId: testData.addresses[0].id}
+	});
+	console.log(result);
 
-	// mutation {
-	// 	addToWrittenPosts(writtenPostsPostId: "rMxFhntFzZWTNU1" authorUserId: "QRX3X1pER7bPJFT") {
-	// 		writtenPostsPost{
-	// 			title
-	// 			author {
-	// 				name
-	// 			}
-	// 		}
-	// 		authorUser {
-	// 			name
-	// 			writtenPosts {
-	// 				title
-	// 			}
-	// 		}
-	// 	}
-	// }
 
-	// mutation {
-	// 	addToLikedPosts(likedPostsPostId: "AIl4McpfFIKvQ4G", likedByUserId: "QOK0khLNpq3eX0F") {
-	// 		likedPostsPost {
-	// 			title
-	// 			likedBy {
-	// 				name
-	// 			}
-	// 		}
-	// 		likedByUser {
-	// 			name
-	// 			likedPosts {
-	// 				title
-	// 			}
-	// 		}
-	// 	}
-	// }
+	const title = 'Genie is great';
+	createPost = gql`
+		mutation createPost($title: String!, $authorId: ID) {
+			createPost(title: $title, authorId: $authorId) {
+				id
+				title
+				author {
+					id
+					name
+				}
+			}
+		}
+		`;
+	result = await client.mutate({
+		mutation: createPost,
+		variables: { title: title, authorId: testData.users[0].id}
+	});
+	testData.posts.push(result.data.createPost);
+
+
+	const createComment = gql`
+		mutation createComment($title: String!, $postId: ID!, $authorId: ID!) {
+			createComment(title: $title, postId: $postId, authorId: $authorId) {
+				id
+				title
+				author {
+					id
+					name
+				}
+			}
+		}
+		`;
+	result = await client.mutate({
+		mutation: createComment,
+		variables: { title: title, postId: testData.posts[1].id, authorId: testData.users[1].id}
+	});
+	testData.comments.push(result.data.createPost);
+
+	const fragment = gql`fragment user on User{
+		name
+		writtenSubmissions {
+			id
+			title
+		}
+	}`;
+	const userWithFragment = gql`
+		query User($id: ID!) {
+			User(id: $id) {
+				id
+				address {
+					id
+					city
+					user {
+						...user
+					}
+				}
+			}
+		}
+		${fragment}
+		`;
+	result = await client.query({
+		query: userWithFragment,
+		variables: { id: testData.users[0].id}
+	});
+	console.log(result.data);
+
+
+// 	const unsetUserAddress = gql`
+// 	mutation unsetUserAddress($addressAddressId: ID!, $userUserId: ID!) {
+// 		unsetUserAddress(addressAddressId: $addressAddressId, userUserId: $userUserId	) {
+// 			addressAddress {
+// 				id
+// 				city
+// 				user {
+// 					name
+// 				}
+// 			}
+// 			userUser {
+// 				id
+// 				name
+// 				address {
+// 					city
+// 				}
+// 			}
+// 		}
+// 	}
+// 	`;
+// result = await client.mutate({
+// 	mutation: unsetUserAddress,
+// 	variables: { userUserId: testData.users[0].id, addressAddressId: testData.addresses[0].id}
+// });
+// console.log(result);
 
 };
 
 buildClient(genie);
+
+

@@ -1,7 +1,7 @@
 
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLID, GraphQLNonNull, GraphQLResolveInfo } from 'graphql';
-import { computeIncludes, Relations } from './TypeGeneratorUtils';
+import { Relations, computeIncludes } from './TypeGeneratorUtils';
 import { isEmpty } from 'lodash';
 
 export class GenerateRelationMutations implements TypeGenerator {
@@ -25,7 +25,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 		this.generate();
-	}	
+	}
 
 	private generateRelationFields(fieldName: string, payloadTypeName: string, argNames: string[]) {
 				// create the mutation field
@@ -62,7 +62,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 			const fieldName0 = relation.field0;
 			const field0IsArray = relation.field0isArray;
 			const typeName1 = relation.type1;
-			const fieldName1 = relation.field1;						
+			const fieldName1 = relation.field1;
 			const field1IsArray = relation.field1isArray;
 			const payloadTypeName = `${relationName}Payload`;
 			const argNames = [`${fieldName0}${typeName0}`, `${fieldName1}${typeName1}`];
@@ -83,7 +83,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 					const id0 = _args[`${argNames[0]}Id`];
 					const id1 = _args[`${argNames[1]}Id`];
 					updates['id'] = id0;
-					updates[fieldName0] = id1;
+					updates[fieldName1] = id1;
 					const updateResult = await this.dataResolver.update(typeName0, updates);
 					return this.getReturn(_info, typeName0, typeName1, updateResult, id0, id1, argNames);
 
@@ -106,7 +106,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 					const id0 = _args[`${argNames[0]}Id`];
 					const id1 = _args[`${argNames[1]}Id`];
 					updates['id'] = id0;
-					updates[fieldName0] = null;
+					updates[fieldName1] = null;
 					const updateResult = await this.dataResolver.update(typeName0, updates);
 					return this.getReturn(_info, typeName0, typeName1, updateResult, id0, id1, argNames);
 				});
@@ -126,7 +126,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 					const id0 = _args[`${argNames[0]}Id`];
 					const id1 = _args[`${argNames[1]}Id`];
 					updates['id'] = id0;
-					updates[fieldName0] = field0IsArray ? [id1] : id1;
+					updates[fieldName1] = field1IsArray ? [id1] : id1;
 					const updateResult = await this.dataResolver.update(typeName0, updates);
 					return this.getReturn(_info, typeName0, typeName1, updateResult, id0, id1, argNames);
 				});
@@ -146,7 +146,7 @@ export class GenerateRelationMutations implements TypeGenerator {
 					const id0 = _args[`${argNames[0]}Id`];
 					const id1 = _args[`${argNames[1]}Id`];
 					updates['id'] = id0;
-					updates[fieldName0]  = field0IsArray ? [id1] : null;
+					updates[fieldName1]  = field1IsArray ? [id1] : null;
 					const updateResult = await this.dataResolver.update(typeName0, updates, null, {pull: true});
 					return this.getReturn(_info, typeName0, typeName1, updateResult, id0, id1, argNames);
 				});

@@ -35,19 +35,20 @@ export default class FortuneBuilder implements DataResolver {
 		return masterObj;
 	}
 
-	private handleIncludes = (records: object, includes: object): object => {
+	private handleIncludes = (records: Array<any>, includes: object): object => {
 		// handle includes, make them part of the returned data for default resolvers to handle
 		if (records && includes) {
-			records = JSON.parse(JSON.stringify(records));
 			const includeIdMap = {};
 			for (const includeType in includes) {
 				const includeArr = includes[includeType];
 				includeArr.forEach(include => {
 					includeIdMap[include.id] = include;
 				});
-
 			}
+			records = JSON.parse(JSON.stringify(records));
+
 			this.deepReplaceIdWithObj(includeIdMap, records);
+
 		}
 		return records;
 	}
@@ -64,7 +65,9 @@ export default class FortuneBuilder implements DataResolver {
 	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
-		set(options, 'match.__typename', graphQLTypeName);
+		if (!ids) {
+			set(options, 'match.__typename', graphQLTypeName);
+		}
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn = results.payload.records;
 
@@ -104,11 +107,11 @@ export default class FortuneBuilder implements DataResolver {
 	}
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
-
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const results = await this.store.update(fortuneType, updates, meta);
-		return isArray(records) ? results.payload.records : results.payload.records[0];
+		let results = await this.store.update(fortuneType, updates, meta);
+		results = this.handleIncludes(results.payload.records, results.payload.include);
+		return isArray(records) ? results : results[0];
 	}
 
 	public delete = async (graphQLTypeName: string, ids?: [string], meta?) => {
