@@ -255,7 +255,7 @@ const fieldIsArray = (fieldInfo) => {
 	return isArray;
 };
 
-const getReturnType = (type): string => {
+export const getReturnType = (type): string => {
 	if (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST') {
 		return getReturnType(type.ofType);
 	} else {

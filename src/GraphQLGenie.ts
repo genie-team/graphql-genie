@@ -1,20 +1,20 @@
 
+import { printType } from 'graphql';
 import { GenerateGetSingle } from './GenerateGetSingle';
-import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
-} from 'graphql';
-import { assign, forOwn, isString, isEmpty } from 'lodash';
+import { assign, forOwn, isEmpty, isString } from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
 import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import { printType } from 'graphql';
+import {
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
+} from 'graphql';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
-import { computeRelations } from './TypeGeneratorUtils';
+import { computeRelations, getReturnType } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 
 
@@ -90,6 +90,13 @@ export default class GraphQLGenie {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
+				const fieldToTypeMap = new Map<string, string>();
+
+				forOwn(type.fields, (field) => {
+					fieldToTypeMap.set(field.name, getReturnType(field.type));
+				});
+
+
 				forOwn(type.fields, (field) => {
 					const resolver = async (
 						fortuneReturn: Object
