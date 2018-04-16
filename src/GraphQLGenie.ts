@@ -3,7 +3,7 @@ import { GenerateGetSingle } from './GenerateGetSingle';
 import {
 	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
 } from 'graphql';
-import { assign, } from 'lodash';
+import { assign, forOwn, isString, isEmpty } from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
@@ -70,19 +70,49 @@ export default class GraphQLGenie {
 	}
 
 
+
 	private init = async () => {
 		this.generators = [];
-
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
 		this.graphQLFortune = new FortuneBuilder(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
+		await this.buildResolvers();
+		window['graphql'] = graphql;
+
+		window['schema'] = this.schema;
 
 		return true;
 	}
 
+	private buildResolvers = async() => {
+		forOwn(this.schemaInfo, (type: any, name: string) => {
+			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
+
+			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
+				forOwn(type.fields, (field) => {
+					const resolver = async (
+						fortuneReturn: Object
+					): Promise<any> => {
+						console.log('field resolver', name, field.name, field.type, fortuneReturn);
+						let result;
+						if (fortuneReturn.hasOwnProperty(field.name)) {
+							result = fortuneReturn[field.name];
+						} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) {
+							await this.graphQLFortune.find(name, [fortuneReturn]);
+						}
+						return result;
+					};
+
+					fieldResolvers.set(field.name, resolver);
+				});
+				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
+			}
+		});
+}
 
 	public buildQueries = async () => {
+
 		const nodesResult = await graphql(this.schema, `{
 			__type(name: "Node") {
 				possibleTypes {

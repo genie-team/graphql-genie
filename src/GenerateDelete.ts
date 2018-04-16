@@ -1,7 +1,6 @@
 
-import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLNonNull, GraphQLID, GraphQLResolveInfo } from 'graphql';
-import { computeIncludes } from './TypeGeneratorUtils';
+import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GraphQLFieldResolver, GraphQLID, GraphQLNonNull, GraphQLResolveInfo, IntrospectionObjectType } from 'graphql';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
@@ -38,12 +37,10 @@ export class GenerateDelete implements TypeGenerator {
 				_context: any,
 				_info: GraphQLResolveInfo,
 			): Promise<any> => {
-				const includes = computeIncludes(this.dataResolver, _info.operation.selectionSet.selections[0], type.name);
-				const currValue = await this.dataResolver.find(type.name, [_args['id']], null, includes);
+				const currValue = await this.dataResolver.find(type.name, [_args['id']]);
 				await this.dataResolver.delete(type.name, [_args['id']]);
 				return currValue;
 			});		});
-	
 	}
 
 	public getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>> {

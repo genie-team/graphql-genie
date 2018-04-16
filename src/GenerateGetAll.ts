@@ -1,8 +1,7 @@
 
-import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLResolveInfo } from 'graphql';
+import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GraphQLFieldResolver, GraphQLResolveInfo, IntrospectionObjectType } from 'graphql';
 import pluralize from 'pluralize';
-import { computeIncludes } from './TypeGeneratorUtils';
 
 export class GenerateGetAll implements TypeGenerator {
 	private objectName: string;
@@ -26,15 +25,14 @@ export class GenerateGetAll implements TypeGenerator {
 			this.fields[fieldName] = {
 				type: `[${type.name}]`,
 			};
-	
+
 			this.resolvers.set(fieldName, (
 				_root: any,
 				_args: { [key: string]: any },
 				_context: any,
 				_info: GraphQLResolveInfo,
 			): any => {
-				const includes = computeIncludes(this.dataResolver, _info.operation.selectionSet.selections[0], type.name);
-				return this.dataResolver.find(type.name, null, null, includes);
+				return this.dataResolver.find(type.name);
 			});
 		});
 	}
@@ -47,5 +45,5 @@ export class GenerateGetAll implements TypeGenerator {
 	public getFieldsOnObject(): Map<string, object> {
 		return new Map([[this.objectName, this.fields]]);
 	}
-	
+
 }

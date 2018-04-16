@@ -17,47 +17,12 @@ export default class FortuneBuilder implements DataResolver {
 		this.store = this.buildFortune();
 	}
 
-	private deepReplaceIdWithObj = (replaceMap, masterObj) => {
-		if (!masterObj) {
-			return masterObj;
-		}
-		if (isString(masterObj) && replaceMap[masterObj]) {
-			masterObj = replaceMap[masterObj];
-		}
-		if (masterObj && typeof masterObj === 'object') {
-			for (const key in masterObj) {
-				if (key !== 'id') {
-					masterObj[key] = this.deepReplaceIdWithObj(replaceMap, masterObj[key]);
-				}
-			}
-		}
-
-		return masterObj;
-	}
-
-	private handleIncludes = (records: Array<any>, includes: object): object => {
-		// handle includes, make them part of the returned data for default resolvers to handle
-		if (records && includes) {
-			const includeIdMap = {};
-			for (const includeType in includes) {
-				const includeArr = includes[includeType];
-				includeArr.forEach(include => {
-					includeIdMap[include.id] = include;
-				});
-			}
-			records = JSON.parse(JSON.stringify(records));
-
-			this.deepReplaceIdWithObj(includeIdMap, records);
-
-		}
-		return records;
-	}
 
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		records['__typename'] = graphQLTypeName;
 		let results = await this.store.create(fortuneType, records, include, meta);
-		results = this.handleIncludes(results.payload.records, results.payload.include);
+		results = results.payload.records;
 
 		return isArray(records) ? results : results[0];
 	}
@@ -71,8 +36,6 @@ export default class FortuneBuilder implements DataResolver {
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 		let graphReturn = results.payload.records;
 
-
-		graphReturn = this.handleIncludes(graphReturn, results.payload.include);
 
 		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array
@@ -110,7 +73,7 @@ export default class FortuneBuilder implements DataResolver {
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		let results = await this.store.update(fortuneType, updates, meta);
-		results = this.handleIncludes(results.payload.records, results.payload.include);
+		results = results.payload.records;
 		return isArray(records) ? results : results[0];
 	}
 

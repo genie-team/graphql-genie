@@ -1,4 +1,8 @@
-import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, GraphQLUnionType, IntrospectionObjectType, IntrospectionType, Kind, SelectionNode, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType,
+	GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType,
+	GraphQLResolveInfo, GraphQLSchema, GraphQLType, GraphQLUnionType,
+	IntrospectionObjectType, IntrospectionType, isInputType, isInterfaceType,
+	isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
 import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
 
@@ -114,38 +118,7 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 	return relations;
 };
 
-export const computeIncludes = (dataResolver: DataResolver, selection: SelectionNode, type: string, depth?: Array<any>) => {
-	let includes = [];
-	switch (selection.kind) {
-		case Kind.FIELD:
-			const link = dataResolver.getLink(type, selection.name.value);
-			if (link) {
-				type = link;
-				const include = depth ? [...depth, [selection.name.value]] : [selection.name.value];
-				depth = include;
-				includes.push(include);
-			}
-			if (selection.selectionSet && (selection.selectionSet.selections.length > 0)) {
-				includes = includes.concat(selection.selectionSet.selections
-					.map(function (selectionNode) {
-						return computeIncludes(dataResolver, selectionNode, type, depth);
-					})
-					.reduce(function (selections, selected) {
-						return selections.concat(selected);
-					}, []));
-			}
-			break;
 
-		case Kind.INLINE_FRAGMENT:
-			break;
-
-		case Kind.FRAGMENT_SPREAD:
-			break;
-
-
-	}
-	return includes;
-};
 
 
 const getInputName = (name: string): string => {
@@ -388,8 +361,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		let dataResult;
 		switch (mutation) {
 			case Mutation.create:
-				const includes = !recursed ? computeIncludes(dataResolver, _info.operation.selectionSet.selections[0], returnTypeName) : null;
-				dataResult = await dataResolver.create(returnTypeName, _args, includes);
+				dataResult = await dataResolver.create(returnTypeName, _args);
 				break;
 
 			case Mutation.update:

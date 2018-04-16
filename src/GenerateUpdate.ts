@@ -1,17 +1,17 @@
 
-import { TypeGenerator, DataResolver } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, IntrospectionObjectType, GraphQLInputType, GraphQLSchema, IntrospectionType, GraphQLNonNull, GraphQLID } from 'graphql';
+import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GraphQLFieldResolver, GraphQLID, GraphQLInputType, GraphQLNonNull, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import { generateArgs, updateResolver } from './TypeGeneratorUtils';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
 	private dataResolver: DataResolver;
-	private schema: GraphQLSchema
+	private schema: GraphQLSchema;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 	private updateArgs: Map<string, object>;
-	private currInputObjectTypes: Map<string, GraphQLInputType>
+	private currInputObjectTypes: Map<string, GraphQLInputType>;
 	private schemaInfo: IntrospectionType[];
 	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
 		this.dataResolver = dataResolver;
@@ -34,7 +34,6 @@ export class GenerateUpdate implements TypeGenerator {
 				type: new GraphQLNonNull(GraphQLID)
 			};
 			Object.assign(args, generateArgs(type, this.updateArgs, this.currInputObjectTypes, this.schemaInfo, this.schema, true));
-			
 
 			this.fields[`update${type.name}`] = {
 				type: type.name,
@@ -42,7 +41,7 @@ export class GenerateUpdate implements TypeGenerator {
 			};
 			this.resolvers.set(`update${type.name}`, updateResolver(this.dataResolver));
 		});
-	
+
 	}
 
 	public getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>> {
