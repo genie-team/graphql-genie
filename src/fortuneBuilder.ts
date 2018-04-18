@@ -27,7 +27,7 @@ export default class FortuneBuilder implements DataResolver {
 		return isArray(records) ? results : results[0];
 	}
 
-	public find = async (graphQLTypeName: string, ids?: [string], options?, include?, meta?) => {
+	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
 		if (!ids) {
@@ -42,7 +42,7 @@ export default class FortuneBuilder implements DataResolver {
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
 		if (!graphReturn) {
-			throw new Error('Nothing Found');
+			throw new Error('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
 		}
 		return graphReturn;
 

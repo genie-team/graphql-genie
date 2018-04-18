@@ -1,7 +1,7 @@
 
-import { printType } from 'graphql';
+import { printType, isScalarType } from 'graphql';
 import { GenerateGetSingle } from './GenerateGetSingle';
-import { assign, forOwn, isEmpty, isString } from 'lodash';
+import { assign, forOwn, isEmpty, isString, isArray, isObject } from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneBuilder from './FortuneBuilder';
 import { GenerateGetAll } from './GenerateGetAll';
@@ -85,38 +85,62 @@ export default class GraphQLGenie {
 		return true;
 	}
 
-	private buildResolvers = async() => {
+	private async getResult(name:string, fortuneReturn: any[]) {
+		const ids = [];
+		let result = [];
+		fortuneReturn.forEach(element => {
+			if (element) {
+				ids.push(element);			
+			}						
+		});
+		if (!isEmpty(ids)) {
+			let findResult = await this.graphQLFortune.find(name, fortuneReturn);
+			findResult = isArray(findResult) ? findResult : [findResult];
+			result = result.concat(findResult);
+		} else {
+			result = [null];
+		}
+
+		return result;
+	}
+
+	private buildResolvers = async () => {
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
-				const fieldToTypeMap = new Map<string, string>();
-
 				forOwn(type.fields, (field) => {
-					fieldToTypeMap.set(field.name, getReturnType(field.type));
-				});
+					const graphQLType = this.schema.getType(getReturnType(field.type));
+					if (!isScalarType(graphQLType)) {
+						const resolver = async (
+							fortuneReturn: any
+						): Promise<any> => {
+							console.log('field resolver', name, field.name, field.type, fortuneReturn);
+							let result: any[];
+							let returnArray = false;
+							if (isArray(fortuneReturn)) { //do I need this?
+								returnArray = true;
+								result = await this.getResult(getReturnType(field.type), fortuneReturn);
+							} else if (isObject(fortuneReturn) && fortuneReturn.hasOwnProperty(field.name)) {
+								let fieldValue = fortuneReturn[field.name];
+								returnArray = isArray(fieldValue);
+								fieldValue = returnArray ? fieldValue : [fieldValue];
+								result = await this.getResult(getReturnType(field.type), fieldValue);
+							} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) { //do I need this?
+								result = await this.getResult(getReturnType(field.type), [fortuneReturn]);
+							}
+							
+							return returnArray ? result : result[0];
+						};
 
+						fieldResolvers.set(field.name, resolver);
+					}
 
-				forOwn(type.fields, (field) => {
-					const resolver = async (
-						fortuneReturn: Object
-					): Promise<any> => {
-						console.log('field resolver', name, field.name, field.type, fortuneReturn);
-						let result;
-						if (fortuneReturn.hasOwnProperty(field.name)) {
-							result = fortuneReturn[field.name];
-						} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) {
-							await this.graphQLFortune.find(name, [fortuneReturn]);
-						}
-						return result;
-					};
-
-					fieldResolvers.set(field.name, resolver);
 				});
 				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
 			}
 		});
-}
+	}
 
 	public buildQueries = async () => {
 
