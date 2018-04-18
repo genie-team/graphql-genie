@@ -4,7 +4,7 @@ import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceTy
 	IntrospectionObjectType, IntrospectionType, isInputType, isInterfaceType,
 	isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
+import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
 
 export class Relation {
 	public type0: string;
@@ -317,7 +317,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						_args[argName] = [];
 					}
 				});
-			} else if (isObject(arg) && argReturnType) {
+			} else if (!isDate(arg) && isObject(arg) && argReturnType) {
 				argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, argName, argReturnType));
 				_args[argName] = undefined;
 			}

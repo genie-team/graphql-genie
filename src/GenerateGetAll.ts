@@ -24,6 +24,7 @@ export class GenerateGetAll implements TypeGenerator {
 
 			this.fields[fieldName] = {
 				type: `[${type.name}]`,
+				args: { 'filter': { type: 'JSON' } }
 			};
 
 			this.resolvers.set(fieldName, (
@@ -32,7 +33,11 @@ export class GenerateGetAll implements TypeGenerator {
 				_context: any,
 				_info: GraphQLResolveInfo,
 			): any => {
-				return this.dataResolver.find(type.name);
+				let options = null;
+				if (_args && _args.filter) {
+					options = _args.filter;
+				}
+				return this.dataResolver.find(type.name, null, options);
 			});
 		});
 	}

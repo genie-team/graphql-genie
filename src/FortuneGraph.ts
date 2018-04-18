@@ -5,7 +5,7 @@ import { each, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } fro
 import { DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
-export default class FortuneBuilder implements DataResolver {
+export default class FortuneGraph implements DataResolver {
 	private fortuneOptions: FortuneOptions;
 	private fortuneTypeNames: Map<string, string>;
 	private schemaInfo: IntrospectionType[];
@@ -163,6 +163,10 @@ export default class FortuneBuilder implements DataResolver {
 							currType = Number;
 						} else if (currType === 'Boolean') {
 							currType = Boolean;
+						} else if (currType === 'JSON') {
+							currType = Object;
+						} else if (currType === 'Date' || currType === 'Time' || currType === 'DateTime') {
+							currType = Date;
 						}
 						let inverse: string;
 						if (isString(currType)) {

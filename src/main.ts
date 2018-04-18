@@ -34,7 +34,9 @@ type User @model {
   id: ID! @isUnique
   name : String!
   address: Address @relation(name: "UserAddress")
-  writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
+	writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
+	age: Int
+	birthday: Date
   likedPosts: [Post!]! @relation(name: "LikedPosts")
 }
 
@@ -72,8 +74,8 @@ let createPost = gql`
 `;
 
 const createUser = gql`
-mutation createUser($name: String!) {
-	createUser(name: $name) {
+mutation createUser($name: String!, $age: Int, $birthday: Date) {
+	createUser(name: $name, age: $age, birthday: $birthday) {
 		id
 	}
 }
@@ -92,7 +94,7 @@ mutation createAddress($city: String!) {
 	});
 	const user = await client.mutate({
 		mutation: createUser,
-		variables: { name: 'Corey' }
+		variables: { name: 'Corey', age: 30, birthday: '1988-02-23' }
 	});
 	const address = await client.mutate({
 		mutation: createAddress,
@@ -107,9 +109,15 @@ mutation createAddress($city: String!) {
 	'address', address.data.createAddress.id);
 	const user2 = await client.mutate({
 		mutation: createUser,
-		variables: { name: 'Corey2' }
+		variables: { name: 'Zain', age: 22, birthday: '1996-01-22' }
 	});
 	testData.users.push(user2.data.createUser);
+
+	const user3 = await client.mutate({
+		mutation: createUser,
+		variables: { name: 'Steve', age: 26, birthday: '1992-06-02' }
+	});
+	testData.users.push(user3.data.createUser);
 
 	const setUserAddress = gql`
 	mutation setUserAddress($addressAddressId: ID!, $userUserId: ID!) {

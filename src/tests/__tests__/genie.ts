@@ -14,26 +14,35 @@ const testData = {users: [],
 posts: [],
 addresses: [],
 comments: []};
+
+
+const createUser = gql`
+mutation createUser($name: String!, $age: Int, $birthday: Date) {
+	createUser(name: $name, age: $age, birthday: $birthday) {
+		id
+		name
+		age
+		birthday
+	}
+}
+`;
+
 describe('genie', () => {
 
 	test('create - simple user', async () => {
-		const name = 'Corey J';
+		const $name = 'Corey J';
+		const $age = 30;
+		const $birthday = '1988-02-23';
 
-		const createUser = gql`
-		mutation createUser($name: String!) {
-			createUser(name: $name) {
-				id
-				name
-			}
-		}
-		`;
 
-		const post = await client.mutate({
+		const user = await client.mutate({
 			mutation: createUser,
-			variables: { name: name }
+			variables: { name: $name, age: $age, birthday: $birthday }
 		});
-		testData.users.push(post.data.createUser);
-		expect(post.data.createUser.name).toBe(name);
+		testData.users.push(user.data.createUser);
+		expect(user.data.createUser.name).toBe($name);
+		expect(user.data.createUser.age).toBe($age);
+		expect(user.data.createUser.birthday).toBe($birthday);
 	});
 
 
@@ -307,7 +316,7 @@ describe('genie', () => {
 			query: user,
 			variables: { id: testData.users[0].id}
 		});
-		
+
 
 		expect(result.data['User'].writtenSubmissions).toHaveLength(2);
 		expect(result.data['User'].writtenSubmissions[1].title).toBe(testData.comments[0].title);
@@ -341,6 +350,65 @@ describe('genie', () => {
 		expect(result.data.addToCommentsOnPost.postPost.id).toBe(testData.posts[0].id);
 		expect(result.data.addToCommentsOnPost.postPost.title).toBe(testData.posts[0].title);
 	});
+
+	test('all filter - filter by age', async () => {
+		const zain = await client.mutate({
+			mutation: createUser,
+			variables: { name: 'Zain', age: 22, birthday: '1996-01-22' }
+		});
+		const steve = await client.mutate({
+			mutation: createUser,
+			variables: { name: 'Steve', age: 26, birthday: '1992-06-02' }
+		});
+
+		testData.users.push(zain.data.createUser);
+		testData.users.push(steve.data.createUser);
+
+
+		const allUsers = gql`
+				{
+					allUsers(filter:{
+						range:{
+							age: [23, null]
+						}
+					}) {
+						name
+						birthday
+						age
+					}
+				}
+		`;
+
+// {
+//   allUsers(filter:{
+//     range:{
+//       name: [ "C", "T" ]
+//     }
+//   }) {
+//     name
+//     birthday
+//     age
+//   }
+// }
+// {
+//   allUsers(filter:{
+//     range:{
+//       birthday: [ null, "2016" ]
+//     }
+//   }) {
+//     name
+//     birthday
+//     age
+//   }
+// }
+
+		const result = await client.query({
+			query: allUsers
+		});
+
+		expect(result.data['allUsers']).toHaveLength(2);
+	});
+
 
 
 });

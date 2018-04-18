@@ -1,17 +1,20 @@
 
-import {SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+import {IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import {has, set} from 'lodash';
 import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType, isScalarType } from 'graphql';
-
-
-
+import GraphQLJSON from 'graphql-type-json';
+import {GraphQLDate, GraphQLDateTime, GraphQLTime} from 'graphql-iso-date';
 export default class GraphQLSchemaBuilder {
 	private schema: GraphQLSchema;
 	private typeDefs: string;
-
+	private resolveFunctions: IResolvers<any, any>;
 	constructor(typeDefs = '') {
-		this.typeDefs =
-		`directive @display(
+		this.typeDefs = `
+		scalar JSON
+		scalar Date
+		scalar Time
+		scalar DateTime
+		directive @display(
 			name: String
 		) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
 
@@ -29,6 +32,12 @@ export default class GraphQLSchemaBuilder {
 			id: ID! @isUnique
 		}
 		` + typeDefs;
+		this.resolveFunctions = {
+			JSON: GraphQLJSON,
+			Date: GraphQLDate,
+			Time: GraphQLTime,
+			DateTime: GraphQLDateTime
+		};
 	}
 
 	public addTypeDefsToSchema = (typeDefs?: string): GraphQLSchema => {
@@ -41,6 +50,7 @@ export default class GraphQLSchemaBuilder {
 		}
 		this.schema = makeExecutableSchema({
 			typeDefs: newTypeDefs,
+			resolvers: this.resolveFunctions,
 			schemaDirectives: {
 				display: DisplayDirective,
 				relation: RelationDirective,
@@ -64,9 +74,10 @@ export default class GraphQLSchemaBuilder {
 	public addResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
 		const resolverMap = {};
 		resolverMap[typeName] = {};
+		this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
 		fieldResolvers.forEach((resolve, name) => {
 			resolverMap[typeName][name] = resolve;
-
+			this.resolveFunctions[typeName][name] = resolve; // save in case type defs changed
 		});
 
 		addResolveFunctionsToSchema(this.schema, resolverMap);

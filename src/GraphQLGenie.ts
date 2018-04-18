@@ -1,14 +1,14 @@
 
-import { printType, isScalarType } from 'graphql';
-import { GenerateGetSingle } from './GenerateGetSingle';
-import { assign, forOwn, isEmpty, isString, isArray, isObject } from 'lodash';
-import SchemaInfoBuilder from './SchemaInfoBuilder';
-import FortuneBuilder from './FortuneBuilder';
-import { GenerateGetAll } from './GenerateGetAll';
-import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import {
 	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
 } from 'graphql';
+import { isScalarType, printType } from 'graphql';
+import { assign, forOwn, isArray, isEmpty, isObject, isString } from 'lodash';
+import SchemaInfoBuilder from './SchemaInfoBuilder';
+import FortuneGraph from './FortuneGraph';
+import { GenerateGetAll } from './GenerateGetAll';
+import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GenerateGetSingle } from './GenerateGetSingle';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
@@ -43,7 +43,7 @@ export default class GraphQLGenie {
 	private schemaInfo: IntrospectionType[];
 	private schemaInfoBuilder: SchemaInfoBuilder;
 
-	public graphQLFortune: FortuneBuilder;
+	public graphQLFortune: FortuneGraph;
 
 	private initialized: Promise<boolean>;
 	constructor(options: GraphQLGenieOptions) {
@@ -75,7 +75,7 @@ export default class GraphQLGenie {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
-		this.graphQLFortune = new FortuneBuilder(this.fortuneOptions, this.schemaInfo);
+		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
 		await this.buildResolvers();
 		window['graphql'] = graphql;
@@ -85,13 +85,13 @@ export default class GraphQLGenie {
 		return true;
 	}
 
-	private async getResult(name:string, fortuneReturn: any[]) {
+	private async getResult(name: string, fortuneReturn: any[]) {
 		const ids = [];
 		let result = [];
 		fortuneReturn.forEach(element => {
 			if (element) {
-				ids.push(element);			
-			}						
+				ids.push(element);
+			}
 		});
 		if (!isEmpty(ids)) {
 			let findResult = await this.graphQLFortune.find(name, fortuneReturn);
@@ -115,10 +115,9 @@ export default class GraphQLGenie {
 						const resolver = async (
 							fortuneReturn: any
 						): Promise<any> => {
-							console.log('field resolver', name, field.name, field.type, fortuneReturn);
 							let result: any[];
 							let returnArray = false;
-							if (isArray(fortuneReturn)) { //do I need this?
+							if (isArray(fortuneReturn)) { // do I need this?
 								returnArray = true;
 								result = await this.getResult(getReturnType(field.type), fortuneReturn);
 							} else if (isObject(fortuneReturn) && fortuneReturn.hasOwnProperty(field.name)) {
@@ -126,10 +125,10 @@ export default class GraphQLGenie {
 								returnArray = isArray(fieldValue);
 								fieldValue = returnArray ? fieldValue : [fieldValue];
 								result = await this.getResult(getReturnType(field.type), fieldValue);
-							} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) { //do I need this?
+							} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) { // do I need this?
 								result = await this.getResult(getReturnType(field.type), [fortuneReturn]);
 							}
-							
+
 							return returnArray ? result : result[0];
 						};
 
