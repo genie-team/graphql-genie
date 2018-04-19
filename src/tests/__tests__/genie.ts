@@ -380,6 +380,22 @@ describe('genie', () => {
 		`;
 
 // {
+// 	allUsers(filter:{
+// 		or: [{
+// 			range:{
+// 				age: [0, 24]
+// 			}
+// 		}, {range:{
+// 			age: [29, null]
+// 		}}]
+// 	}) {
+// 		name
+// 		birthday
+// 		age
+// 	}
+// }
+
+// {
 //   allUsers(filter:{
 //     range:{
 //       name: [ "C", "T" ]
@@ -393,7 +409,7 @@ describe('genie', () => {
 // {
 //   allUsers(filter:{
 //     range:{
-//       birthday: [ null, "2016" ]
+//       birthday: [ null, "1994-01-01" ]
 //     }
 //   }) {
 //     name

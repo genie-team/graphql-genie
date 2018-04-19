@@ -42,7 +42,7 @@ export default class FortuneGraph implements DataResolver {
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
 		if (!graphReturn) {
-			throw new Error('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
+			console.error('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
 		}
 		return graphReturn;
 

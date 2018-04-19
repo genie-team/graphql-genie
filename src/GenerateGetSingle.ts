@@ -24,13 +24,15 @@ export class GenerateGetSingle implements TypeGenerator {
 				args: { 'id': { type: new GraphQLNonNull<any>(GraphQLID) } }
 			};
 
-			this.resolvers.set(type.name, (
+			this.resolvers.set(type.name, async (
 				_root: any,
 				_args: { [key: string]: any },
 				_context: any,
 				_info: GraphQLResolveInfo,
-			): any => {
-				return this.dataResolver.find(type.name, [_args['id']]);
+			): Promise<any> => {
+				const fortuneReturn = await this.dataResolver.find(type.name, [_args['id']]);
+				return {fortuneReturn,
+						cache: new Map<string, object>([[fortuneReturn.id, fortuneReturn]])};
 			});
 		});
 	}

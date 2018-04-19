@@ -1,20 +1,20 @@
 
-import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
-} from 'graphql';
-import { isScalarType, printType } from 'graphql';
-import { assign, forOwn, isArray, isEmpty, isObject, isString } from 'lodash';
+import { defaultFieldResolver, isScalarType, printType } from 'graphql';
+import { GenerateGetSingle } from './GenerateGetSingle';
+import { assign, forOwn, isArray, isEmpty} from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneGraph from './FortuneGraph';
 import { GenerateGetAll } from './GenerateGetAll';
 import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GenerateGetSingle } from './GenerateGetSingle';
+import {
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
+} from 'graphql';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
-import { computeRelations, getReturnType } from './TypeGeneratorUtils';
+import { computeRelations, getReturnType, parseFilter } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 
 
@@ -85,25 +85,6 @@ export default class GraphQLGenie {
 		return true;
 	}
 
-	private async getResult(name: string, fortuneReturn: any[]) {
-		const ids = [];
-		let result = [];
-		fortuneReturn.forEach(element => {
-			if (element) {
-				ids.push(element);
-			}
-		});
-		if (!isEmpty(ids)) {
-			let findResult = await this.graphQLFortune.find(name, fortuneReturn);
-			findResult = isArray(findResult) ? findResult : [findResult];
-			result = result.concat(findResult);
-		} else {
-			result = [null];
-		}
-
-		return result;
-	}
-
 	private buildResolvers = async () => {
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
@@ -111,29 +92,89 @@ export default class GraphQLGenie {
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
 				forOwn(type.fields, (field) => {
 					const graphQLType = this.schema.getType(getReturnType(field.type));
+					let resolver;
 					if (!isScalarType(graphQLType)) {
-						const resolver = async (
-							fortuneReturn: any
+						resolver = async (
+							root: any,
+							_args: { [key: string]: any },
+							_context: any,
+							_info: GraphQLResolveInfo
 						): Promise<any> => {
-							let result: any[];
-							let returnArray = false;
-							if (isArray(fortuneReturn)) { // do I need this?
-								returnArray = true;
-								result = await this.getResult(getReturnType(field.type), fortuneReturn);
-							} else if (isObject(fortuneReturn) && fortuneReturn.hasOwnProperty(field.name)) {
-								let fieldValue = fortuneReturn[field.name];
-								returnArray = isArray(fieldValue);
-								fieldValue = returnArray ? fieldValue : [fieldValue];
-								result = await this.getResult(getReturnType(field.type), fieldValue);
-							} else if (!isEmpty(fortuneReturn) && isString(fortuneReturn)) { // do I need this?
-								result = await this.getResult(getReturnType(field.type), [fortuneReturn]);
-							}
+							const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
 
-							return returnArray ? result : result[0];
+							if (!fortuneReturn) {return fortuneReturn; }
+
+							const cache = root && root.cache ? root.cache : new Map<string, object>();
+							let filter = root && root.filter ? root.filter : null;
+							const typeName = getReturnType(field.type);
+
+							let options = null;
+							if (filter) {
+								filter = filter[field.name];
+								if (!filter) {
+									filter = filter[`f_${field.name}`];
+								}
+								if (filter) {
+									 options = parseFilter(filter, this.schema.getType(typeName));
+								}
+							}
+							let result = [];
+							let returnArray = false;
+							let fieldValue = fortuneReturn[field.name];
+							returnArray = isArray(fieldValue);
+							fieldValue = returnArray ? fieldValue : [fieldValue];
+							const ids = [];
+							fieldValue.forEach(element => {
+								if (element) {
+									if (cache.has(element)) {
+										result.push({fortuneReturn: cache.get(element),
+											filter: filter,
+											cache: cache,
+											__typename: element.__typename
+										});
+									} else {
+										ids.push(element);
+									}
+								}
+							});
+							if (!isEmpty(ids)) {
+								let findResult = await this.graphQLFortune.find(typeName, ids, options);
+								if (findResult) {
+									findResult = isArray(findResult) ? findResult : [findResult];
+									findResult.forEach(result => {
+										cache.set(result.id, result);
+									});
+
+									findResult = findResult.map((result) => {
+										return {fortuneReturn: result,
+											filter: filter,
+											cache: cache,
+											__typename: result.__typename
+										};
+									});
+									result = result.concat(findResult);
+								} else if (options) {
+									root = null;
+								}
+							}
+							return result.length === 0 ? null : returnArray ? result : result[0];
 						};
 
-						fieldResolvers.set(field.name, resolver);
+					} else {
+						resolver  = async (
+							root: any,
+							_args: { [key: string]: any },
+							_context: any,
+							_info: GraphQLResolveInfo
+						): Promise<any> => {
+							const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+							const result = await defaultFieldResolver.apply(this, [fortuneReturn, _args, _context, _info]);
+							return result;
+						};
+
 					}
+					fieldResolvers.set(field.name, resolver);
+
 
 				});
 				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
@@ -158,7 +199,7 @@ export default class GraphQLGenie {
 		});
 		const currInputObjectTypes = new Map<string, GraphQLInputType>();
 		if (this.config.generateGetAll) {
-			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes));
+			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema));
 		}
 		if (this.config.generateGetSingle) {
 			this.generators.push(new GenerateGetSingle(this.graphQLFortune, 'Query', nodeTypes));

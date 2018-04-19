@@ -34,10 +34,11 @@ type User @model {
   id: ID! @isUnique
   name : String!
   address: Address @relation(name: "UserAddress")
-	writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
+	writtenSubmissions: [Submission!] @relation(name: "WrittenSubmissions")
 	age: Int
 	birthday: Date
-  likedPosts: [Post!]! @relation(name: "LikedPosts")
+	likedPosts: [Post!]! @relation(name: "LikedPosts")
+	match: User
 }
 
 type Address @model {
@@ -167,8 +168,8 @@ mutation createAddress($city: String!) {
 
 
 	const createComment = gql`
-		mutation createComment($title: String!, $postId: ID!, $authorId: ID!) {
-			createComment(title: $title, postId: $postId, authorId: $authorId) {
+		mutation createComment($title: String!, $postId: ID!, $authorId: ID!, $text: String) {
+			createComment(title: $title, postId: $postId, authorId: $authorId, text: $text) {
 				id
 				title
 				author {
@@ -180,7 +181,7 @@ mutation createAddress($city: String!) {
 		`;
 	result = await client.mutate({
 		mutation: createComment,
-		variables: { title: title, postId: testData.posts[1].id, authorId: testData.users[1].id}
+		variables: { title: title + ' Comment', postId: testData.posts[1].id, authorId: testData.users[1].id, text: 'Test Text'}
 	});
 	testData.comments.push(result.data.createPost);
 

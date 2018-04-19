@@ -1,18 +1,21 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLResolveInfo, IntrospectionObjectType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType } from 'graphql';
 import pluralize from 'pluralize';
+import { parseFilter } from './TypeGeneratorUtils';
 
 export class GenerateGetAll implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
+	private schema: GraphQLSchema;
 	private dataResolver: DataResolver;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[]) {
+	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], $schema: GraphQLSchema) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
+		this.schema = $schema;
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 		this.generate();
@@ -27,17 +30,29 @@ export class GenerateGetAll implements TypeGenerator {
 				args: { 'filter': { type: 'JSON' } }
 			};
 
-			this.resolvers.set(fieldName, (
+			this.resolvers.set(fieldName, async (
 				_root: any,
 				_args: { [key: string]: any },
 				_context: any,
 				_info: GraphQLResolveInfo,
-			): any => {
+			): Promise<any> => {
 				let options = null;
 				if (_args && _args.filter) {
-					options = _args.filter;
+					options = parseFilter(_args.filter, this.schema.getType(type.name));
 				}
-				return this.dataResolver.find(type.name, null, options);
+				const fortuneReturn = await this.dataResolver.find(type.name, null, options);
+				const cache = new Map<string, object>();
+				fortuneReturn.forEach(result => {
+					cache.set(result.id, result);
+				});
+				return 	fortuneReturn.map((result) => {
+					if (!result) { return result; }
+					return {fortuneReturn: result,
+						cache: cache,
+						filter: _args.filter,
+						__typename: result.__typename
+					};
+				});
 			});
 		});
 	}

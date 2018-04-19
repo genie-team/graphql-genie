@@ -1,11 +1,12 @@
-import { GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType,
-	GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLOutputType,
-	GraphQLResolveInfo, GraphQLSchema, GraphQLType, GraphQLUnionType,
-	IntrospectionObjectType, IntrospectionType, isInputType, isInterfaceType,
-	isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import {
+	GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType,
+	GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLObjectType,
+	GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema,
+	GraphQLType, GraphQLUnionType, IntrospectionObjectType, IntrospectionType,
+	isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType
+} from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, merge, pickBy } from 'lodash';
-
+import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy } from 'lodash';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -59,7 +60,7 @@ export class Relations {
 	public getRelation(name: string): Relation {
 		let relations = null;
 		if (this.relations.has(name)) {
-			relations =  this.relations.get(name);
+			relations = this.relations.get(name);
 		}
 		return relations;
 	}
@@ -78,7 +79,7 @@ export class Relations {
 		if (!this.relations.has(name)) {
 			this.relations.set(name, newRelation);
 		} else {
-			const relation =  this.relations.get(name);
+			const relation = this.relations.get(name);
 			if (relation.isValidRelative(newRelation)) {
 				if (!relation.isSameRelative(newRelation)) {
 					relation.setRelative(newRelation);
@@ -91,10 +92,10 @@ export class Relations {
 
 	private throwError(name: string, type: string, primaryField: string, relatedField: string) {
 		console.error('Bad schema, relation could apply to multiple fields\n',
-		'relation name', name, '\n',
-		'fortune name', type, '\n',
-		'curr field', primaryField, '\n',
-		'other field', relatedField);
+			'relation name', name, '\n',
+			'fortune name', type, '\n',
+			'curr field', primaryField, '\n',
+			'other field', relatedField);
 	}
 
 
@@ -204,7 +205,7 @@ export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInp
 	return fields;
 };
 
-const stripNonNull = (type: GraphQLOutputType ): GraphQLOutputType => {
+const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
 	if (isNonNullType(type)) {
 		return type.ofType;
 	} else {
@@ -279,11 +280,11 @@ enum Mutation {
 
 
 const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
-	return async (_root: any, _args: { [key: string]: any }, _context: any, 	_info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
+	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
 		// iterate over all the non-id arguments and recursively create new types
 		const recursed = key ? true : false;
 		if (!returnType) {
-				returnType = _info.returnType;
+			returnType = _info.returnType;
 		}
 
 
@@ -376,7 +377,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 		// if key this is recursed else it's the final value
 		if (recursed) {
-			return {key: key, id: id, created: dataResult};
+			return { key: key, id: id, created: dataResult };
 		} else {
 			return dataResult;
 		}
@@ -390,4 +391,51 @@ export const createResolver = (dataResolver: DataResolver) => {
 
 export const updateResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.update, dataResolver);
+};
+
+const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) => {
+	if (!filter || !isObject(filter) || isArray(filter)) {
+		return filter;
+	}
+	return mapValues(filter, (val, key) => {
+
+		if (isArray(val)) {
+			return val.map((val) => {
+				if (isObject(val)) {
+					return parseScalars(val, fieldMap);
+				} else {
+					return val && fieldMap.has(key) ? fieldMap.get(key).parseValue(val) : val;
+				}
+			});
+		} else if (isObject(val)) {
+			if (key === 'range' || key === 'match') {
+				return parseScalars(val, fieldMap);
+			} else {
+				return val;
+			}
+		} else {
+			return val && fieldMap.has(key) ? fieldMap.get(key).parseValue(val) : val;
+		}
+	});
+};
+
+export const parseFilter = (filter: object, type: GraphQLNamedType) => {
+	if (!isObjectType(type) && !isInterfaceType(type)) {
+		return filter;
+	}
+	if (!filter || !isObject(filter) || isArray(filter)) {
+		return filter;
+	}
+	const fieldMap = new Map<string, GraphQLScalarType>();
+	each(type.getFields(), field => {
+		const fieldOutputType = getReturnGraphQLType(field.type);
+		if (isScalarType(fieldOutputType)) {
+			fieldMap.set(field.name, fieldOutputType);
+		}
+	});
+
+	const scalarsParsed = parseScalars(pick(filter, ['not', 'or', 'and', 'range', 'match']), fieldMap);
+	return Object.assign(filter, scalarsParsed);
+
+
 };

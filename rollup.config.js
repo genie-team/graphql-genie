@@ -7,6 +7,7 @@ import typescript from 'rollup-plugin-typescript2';
 import replace from 'rollup-plugin-replace';
 import globals from 'rollup-plugin-node-globals';
 import builtins from 'rollup-plugin-node-builtins';
+// import uglify from 'rollup-plugin-uglify';
 
 export default [
 	// browser-friendly UMD build
@@ -32,7 +33,7 @@ export default [
 				sourceMap: false,
 				namedExports: {
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
-					'node_modules/lodash/lodash.js': ['isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', ],
+					'node_modules/lodash/lodash.js': ['pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
 					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime']
 				}
@@ -49,6 +50,7 @@ export default [
 				port: '10001'
 			}),  
 			livereload()
+			//uglify()
 		]
 	}
 ];

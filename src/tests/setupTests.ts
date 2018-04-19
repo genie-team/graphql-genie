@@ -34,10 +34,11 @@ type User @model {
   id: ID! @isUnique
   name : String!
   address: Address @relation(name: "UserAddress")
-	writtenSubmissions: [Submission!]! @relation(name: "WrittenSubmissions")
+	writtenSubmissions: [Submission] @relation(name: "WrittenSubmissions")
 	age: Int
 	birthday: Date
-  likedPosts: [Post!]! @relation(name: "LikedPosts")
+	likedPosts: [Post!]! @relation(name: "LikedPosts")
+	match: User
 }
 
 type Address @model {
