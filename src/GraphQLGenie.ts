@@ -14,7 +14,7 @@ import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
-import { computeRelations, getReturnType, parseFilter } from './TypeGeneratorUtils';
+import { computeRelations, getReturnType } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 
 
@@ -105,19 +105,8 @@ export default class GraphQLGenie {
 							if (!fortuneReturn) {return fortuneReturn; }
 
 							const cache = root && root.cache ? root.cache : new Map<string, object>();
-							let filter = root && root.filter ? root.filter : null;
 							const typeName = getReturnType(field.type);
 
-							let options = null;
-							if (filter) {
-								filter = filter[field.name];
-								if (!filter) {
-									filter = filter[`f_${field.name}`];
-								}
-								if (filter) {
-									 options = parseFilter(filter, this.schema.getType(typeName));
-								}
-							}
 							let result = [];
 							let returnArray = false;
 							let fieldValue = fortuneReturn[field.name];
@@ -128,9 +117,8 @@ export default class GraphQLGenie {
 								if (element) {
 									if (cache.has(element)) {
 										result.push({fortuneReturn: cache.get(element),
-											filter: filter,
 											cache: cache,
-											__typename: element.__typename
+											__typename: cache.get(element).__typename
 										});
 									} else {
 										ids.push(element);
@@ -138,7 +126,7 @@ export default class GraphQLGenie {
 								}
 							});
 							if (!isEmpty(ids)) {
-								let findResult = await this.graphQLFortune.find(typeName, ids, options);
+								let findResult = await this.graphQLFortune.find(typeName, ids);
 								if (findResult) {
 									findResult = isArray(findResult) ? findResult : [findResult];
 									findResult.forEach(result => {
@@ -147,14 +135,11 @@ export default class GraphQLGenie {
 
 									findResult = findResult.map((result) => {
 										return {fortuneReturn: result,
-											filter: filter,
 											cache: cache,
 											__typename: result.__typename
 										};
 									});
 									result = result.concat(findResult);
-								} else if (options) {
-									root = null;
 								}
 							}
 							return result.length === 0 ? null : returnArray ? result : result[0];

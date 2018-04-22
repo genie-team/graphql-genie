@@ -365,9 +365,9 @@ describe('genie', () => {
 		testData.users.push(steve.data.createUser);
 
 
-		const allUsers = gql`
+		const users = gql`
 				{
-					allUsers(filter:{
+					users(filter:{
 						range:{
 							age: [23, null]
 						}
@@ -380,7 +380,7 @@ describe('genie', () => {
 		`;
 
 // {
-// 	allUsers(filter:{
+// 	users(filter:{
 // 		or: [{
 // 			range:{
 // 				age: [0, 24]
@@ -396,7 +396,7 @@ describe('genie', () => {
 // }
 
 // {
-//   allUsers(filter:{
+//   users(filter:{
 //     range:{
 //       name: [ "C", "T" ]
 //     }
@@ -407,7 +407,7 @@ describe('genie', () => {
 //   }
 // }
 // {
-//   allUsers(filter:{
+//   users(filter:{
 //     range:{
 //       birthday: [ null, "1994-01-01" ]
 //     }
@@ -418,11 +418,31 @@ describe('genie', () => {
 //   }
 // }
 
+// {
+//   users (filter: {
+//     exists:{
+//       writtenSubmissions: true
+//     }
+//     writtenSubmissions: {
+//       match: {
+//         title: "Genie is great"
+//       }
+//     }
+//   }) {
+//     name
+//     writtenSubmissions {
+//       id
+//       title
+//     }
+//   }
+// }
+
+
 		const result = await client.query({
-			query: allUsers
+			query: users
 		});
 
-		expect(result.data['allUsers']).toHaveLength(2);
+		expect(result.data['users']).toHaveLength(2);
 	});
 
 

@@ -30,10 +30,11 @@ export default class FortuneGraph implements DataResolver {
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
-		if (!ids) {
+		if (!ids || ids.length < 1) {
 			set(options, 'match.__typename', graphQLTypeName);
 		}
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
+
 		let graphReturn = results.payload.records;
 
 
@@ -42,7 +43,7 @@ export default class FortuneGraph implements DataResolver {
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
 		if (!graphReturn) {
-			console.error('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
+			console.log('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
 		}
 		return graphReturn;
 

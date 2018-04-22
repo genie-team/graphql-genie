@@ -6,7 +6,7 @@ import {
 	isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy } from 'lodash';
+import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy, set } from 'lodash';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -264,7 +264,7 @@ export const getReturnType = (type): string => {
 	}
 };
 
-const getReturnGraphQLType = (type: GraphQLType): GraphQLType => {
+export const getReturnGraphQLType = (type: GraphQLType): GraphQLNamedType => {
 	if (isListType(type) || isNonNullType(type)) {
 		return getReturnGraphQLType(type.ofType);
 	} else {
@@ -419,6 +419,15 @@ const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) 
 	});
 };
 
+export const filterArgs = {
+	'filter': { type: 'JSON' },
+	'sort': { type: 'JSON' },
+	'first': { type: 'Int' },
+	'offset': { type: 'Int' },
+	'cursor': { type: 'String' }
+};
+
+
 export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 	if (!isObjectType(type) && !isInterfaceType(type)) {
 		return filter;
@@ -428,6 +437,13 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 	}
 	const fieldMap = new Map<string, GraphQLScalarType>();
 	each(type.getFields(), field => {
+		if (filter[field.name]) {
+			if (filter['and']) {
+				filter['and'].push({ exists: { [field.name]: true } });
+			} else {
+				set(filter, `exists.${field.name}`, true);
+			}
+		}
 		const fieldOutputType = getReturnGraphQLType(field.type);
 		if (isScalarType(fieldOutputType)) {
 			fieldMap.set(field.name, fieldOutputType);
@@ -439,3 +455,38 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 
 
 };
+
+export const filterNested = async (filter: object, sort: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver): Promise<Set<string>> => {
+	// if they have nested filters on types we need to get that data now so we can filter at this root query
+	const pullIds = new Set<string>();
+	if (filter && isObjectType(type) || isInterfaceType(type)) {
+		await Promise.all(map(type.getFields(), async (field) => {
+			const currFilter = filter[field.name] ? filter[field.name] : filter[`f_${field.name}`] ? filter[`f_${field.name}`] : null;
+			const currSort = sort && sort[field.name] ? sort[field.name] : sort && sort[`f_${field.name}`] ? sort[`f_${field.name}`] : null;
+			if (currFilter) {
+				const childType = getReturnGraphQLType(field.type);
+				const options = parseFilter(currFilter, childType);
+				await Promise.all(fortuneReturn.map(async (result) => {
+					const childIds = result[field.name];
+					if (childIds && !isEmpty(childIds)) {
+						if (currSort) {
+							options.sort = currSort;
+						}
+						let childReturn = await dataResolver.find(childType.name, childIds, options);
+						if (isArray(childReturn)) {
+							const recursePullIds = await filterNested(options, currSort, childType, childReturn, cache, dataResolver);
+							childReturn = childReturn ? childReturn.filter(result => !recursePullIds.has(result.id)) : childReturn;
+						}
+						if (childReturn && !isEmpty(childReturn)) {
+							cache.set(childReturn.id, childReturn);
+						} else {
+							pullIds.add(result.id);
+						}
+					}
+				}));
+			}
+		}));
+	}
+	return pullIds;
+};
+

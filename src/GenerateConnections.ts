@@ -1,30 +1,50 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLNamedType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, isInterfaceType, isObjectType } from 'graphql';
-import pluralize from 'pluralize';
 import { filterArgs, filterNested, parseFilter } from './TypeGeneratorUtils';
 import { set } from 'lodash';
 
-export class GenerateGetAll implements TypeGenerator {
+export class GenerateConnections implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
 	private schema: GraphQLSchema;
 	private dataResolver: DataResolver;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], $schema: GraphQLSchema) {
+	private currOutputObjectTypeDefs: Set<string>;
+
+	constructor(dataResolver: DataResolver, objectName: string,
+		types: IntrospectionObjectType[], $schema: GraphQLSchema,
+		$currOutputObjectTypeDefs: Set<string>) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
 		this.schema = $schema;
+		this.currOutputObjectTypeDefs = $currOutputObjectTypeDefs;
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
+		this.currOutputObjectTypeDefs.add(`
+			type PageInfo {
+				hasNextPage: Boolean!
+				hasPreviousPage: Boolean!
+				startCursor: String
+				endCursor: String
+			}
+		`);
 		this.generate();
 	}
 
 	generate() {
 		this.types.forEach(type => {
-			const fieldName = `${pluralize(type.name.toLowerCase())}`;
+			this.currOutputObjectTypeDefs.add(`
+			type ${type.name.toLowerCase()}Connection {
+				edges: Edge
+				pageInfo: PageInfo
+			}
+		`);
+
+
+			const fieldName = `${type.name.toLowerCase()}Connection`;
 
 			this.fields[fieldName] = {
 				type: `[${type.name}]`,
@@ -58,7 +78,7 @@ export class GenerateGetAll implements TypeGenerator {
 					cache.set(result.id, result);
 				});
 				if (filter && isObjectType(schemaType) || isInterfaceType(schemaType)) {
-					const pullIds = await filterNested(filter, _args.sort, schemaType, fortuneReturn, cache, this.dataResolver);
+					const pullIds = await filterNested(filter, schemaType, fortuneReturn, cache, this.dataResolver);
 					fortuneReturn = fortuneReturn.filter(result => !pullIds.has(result.id));
 				}
 
