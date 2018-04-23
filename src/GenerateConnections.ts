@@ -78,7 +78,7 @@ export class GenerateConnections implements TypeGenerator {
 					cache.set(result.id, result);
 				});
 				if (filter && isObjectType(schemaType) || isInterfaceType(schemaType)) {
-					const pullIds = await filterNested(filter, schemaType, fortuneReturn, cache, this.dataResolver);
+					const pullIds = await filterNested(filter, _args.sort, schemaType, fortuneReturn, cache, this.dataResolver);
 					fortuneReturn = fortuneReturn.filter(result => !pullIds.has(result.id));
 				}
 
