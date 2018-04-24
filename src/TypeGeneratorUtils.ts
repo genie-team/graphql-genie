@@ -41,11 +41,16 @@ export class Relation {
 	}
 
 	getInverse(type: string, field: string): string {
+		const inverse = this.getInverseTuple(type, field);
+		return inverse ? inverse[1] : null;
+	}
+
+	getInverseTuple(type: string, field: string): [string, string] {
 		let inverse = null;
 		if (this.type0 === type && this.field0 === field) {
-			inverse = this.field1;
+			inverse = [this.type1, this.field1];
 		} else if (this.type1 === type && this.field1 === field) {
-			inverse = this.field0;
+			inverse = [this.type0, this.field0];
 		}
 		return inverse;
 	}
@@ -63,6 +68,17 @@ export class Relations {
 			relations = this.relations.get(name);
 		}
 		return relations;
+	}
+
+	public getInverseWithoutName(type: string, field: string): string {
+		let inverse: string = null;
+		const iter = this.relations.values();
+		let relation = iter.next().value;
+		while (!inverse && relation) {
+			inverse = relation.getInverse(type, field);
+			relation = iter.next().value;
+		}
+		return inverse;
 	}
 
 	public getInverse(name: string, type: string, field: string): string {
@@ -100,8 +116,6 @@ export class Relations {
 
 
 }
-
-
 
 export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolver: (name: string) => string = (name: string) => name): Relations => {
 	const relations = new Relations();
@@ -244,7 +258,7 @@ export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string
 	return currArgs.get(type.name);
 };
 
-const fieldIsArray = (fieldInfo) => {
+export const fieldIsArray = (fieldInfo) => {
 	let isArray = false;
 	while (fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
 		if (fieldInfo.kind === 'LIST') {

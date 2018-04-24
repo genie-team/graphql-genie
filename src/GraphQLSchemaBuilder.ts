@@ -26,6 +26,8 @@ export default class GraphQLSchemaBuilder {
 			value: String!
 		) on FIELD_DEFINITION
 
+		directive @unique on FIELD_DEFINITION
+
 		directive @model on OBJECT
 
 		interface Node {
@@ -54,7 +56,8 @@ export default class GraphQLSchemaBuilder {
 			schemaDirectives: {
 				display: DisplayDirective,
 				relation: RelationDirective,
-				default: DefaultDirective
+				default: DefaultDirective,
+				unique: UniqueDirective
 			}
 		});
 		SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
@@ -169,7 +172,11 @@ class ModelDirective extends SchemaDirectiveVisitor {
 }
 
 
-
+class UniqueDirective extends SchemaDirectiveVisitor {
+	public visitFieldDefinition(field) {
+		field.unique = true;
+	}
+}
 
 
 

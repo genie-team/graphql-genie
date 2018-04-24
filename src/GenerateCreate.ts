@@ -1,7 +1,8 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import { createResolver, generateArgs } from './TypeGeneratorUtils';
+import { Relations, createResolver} from './TypeGeneratorUtils';
+import { InputGenerator } from './InputGenerator';
 
 export class GenerateCreate implements TypeGenerator {
 	private objectName: string;
@@ -10,27 +11,31 @@ export class GenerateCreate implements TypeGenerator {
 	private schema: GraphQLSchema;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
-	private createArgs: Map<string, object>;
 	private currInputObjectTypes: Map<string, GraphQLInputType>;
 	private schemaInfo: IntrospectionType[];
+	private relations: Relations;
 	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[],
-		currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
+		currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema, relations: Relations) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
 		this.currInputObjectTypes = currInputObjectTypes;
 		this.schema = schema;
 		this.schemaInfo = schemaInfo;
+		this.relations = relations;
 
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
-		this.createArgs = new Map<string, object>();
 		this.generate();
 	}
 
 	generate() {
+		console.log('generate create');
 		this.types.forEach(type => {
-			const args = generateArgs(type, this.createArgs, this.currInputObjectTypes, this.schemaInfo, this.schema);
+			console.log(type.name);
+			const args = {};
+			args['input'] = new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations).generateCreateInput();
+			console.log(args);
 			this.fields[`create${type.name}`] = {
 				type: type.name,
 				args: args

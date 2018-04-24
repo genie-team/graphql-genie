@@ -1,20 +1,20 @@
 
+import {
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
+} from 'graphql';
 import { defaultFieldResolver, isScalarType, printType } from 'graphql';
-import { GenerateGetSingle } from './GenerateGetSingle';
 import { assign, forOwn, isArray, isEmpty} from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneGraph from './FortuneGraph';
 import { GenerateGetAll } from './GenerateGetAll';
 import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
-} from 'graphql';
+import { GenerateGetSingle } from './GenerateGetSingle';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { GenerateRelationMutations } from './GenerateRelationMutations';
-import { computeRelations, getReturnType } from './TypeGeneratorUtils';
+import { Relations, computeRelations, getReturnType } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 
 
@@ -42,7 +42,7 @@ export default class GraphQLGenie {
 	private schemaBuilder: GraphQLSchemaBuilder;
 	private schemaInfo: IntrospectionType[];
 	private schemaInfoBuilder: SchemaInfoBuilder;
-
+	private relations: Relations;
 	public graphQLFortune: FortuneGraph;
 
 	private initialized: Promise<boolean>;
@@ -75,6 +75,7 @@ export default class GraphQLGenie {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
+		this.relations = computeRelations(this.schemaInfo);
 		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
 		await this.buildResolvers();
@@ -190,7 +191,7 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateGetSingle(this.graphQLFortune, 'Query', nodeTypes));
 		}
 		if (this.config.generateCreate) {
-			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
+			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema, this.relations));
 		}
 		if (this.config.generateUpdate) {
 			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
@@ -201,8 +202,7 @@ export default class GraphQLGenie {
 
 		const currOutputObjectTypeDefs = new Set<string>();
 		if (this.config.generateSetRelation || this.config.generateUnsetRelation || this.config.generateAddToRelation || this.config.generateRemoveFromRelation) {
-			const relations = computeRelations(this.schemaInfo);
-			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.config, relations, currOutputObjectTypeDefs));
+			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.config, this.relations, currOutputObjectTypeDefs));
 		}
 
 
