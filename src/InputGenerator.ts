@@ -21,6 +21,10 @@ export class InputGenerator {
 		this.relations = $relations;
 	}
 
+	private capFirst(val: string) {
+		return val.charAt(0).toUpperCase() + val.slice(1);
+	}
+
 	generateFieldForInput = (fieldName: string, inputType: GraphQLInputType, defaultValue?: string): object => {
 		const field = {};
 		field[fieldName] = {
@@ -33,7 +37,7 @@ export class InputGenerator {
 	generateCreateWithoutInput(fieldType: GraphQLNamedType, relationFieldName?: string): GraphQLInputType {
 
 		let name = fieldType.name + 'Create';
-		name += relationFieldName ? 'Without' + relationFieldName.charAt(0).toUpperCase() + relationFieldName.slice(1) : '';
+		name += relationFieldName ? 'Without' + this.capFirst(relationFieldName) : '';
 		name += 'Input';
 		if (!relationFieldName) {
 			return new GraphQLInputObjectType({name, fields: {}});
@@ -43,25 +47,26 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (field.name !== relationFieldName) {
-					const schemaType = this.schema.getType(getReturnType(field.type));
+					const fieldTypeName = getReturnType(field.type);
+					const schemaType = this.schema.getType(fieldTypeName);
 					let inputType;
 					if (isInputType(schemaType)) {
-						inputType = field.type;
+						inputType = schemaType;
 					} else {
 						const isArray = fieldIsArray(field.type);
 						let fieldInputName = schemaType.name + 'Create';
 						fieldInputName += isArray ? 'Many' : 'One';
 
-						const relationFieldName = this.relations.getInverseWithoutName(schemaType.name, field.name);
-						fieldInputName += relationFieldName ? 'Without' + relationFieldName : '';
+						const relationFieldName = this.relations.getInverseWithoutName(fieldTypeName, field.name);
+						fieldInputName += relationFieldName ? 'Without' + this.capFirst(relationFieldName) : '';
 						fieldInputName += 'Input';
 						inputType = new GraphQLInputObjectType({name: fieldInputName, fields: {}});
 					}
 
-					this.generateFieldForInput(
+					merge(fields, this.generateFieldForInput(
 						field.name,
 						inputType,
-						get(field, 'metadata.defaultValue'));
+						get(field, 'metadata.defaultValue')));
 				}
 			});
 
@@ -85,7 +90,7 @@ export class InputGenerator {
 					const schemaType = this.schema.getType(getReturnType(field.type));
 					let inputType;
 					if (isInputType(schemaType)) {
-						inputType = field.type;
+						inputType = schemaType;
 					} else {
 						const fieldInputName = schemaType.name + 'WhereUniqueInput';
 						inputType = new GraphQLInputObjectType({name: fieldInputName, fields: {}});
@@ -93,10 +98,10 @@ export class InputGenerator {
 					if (isArray) {
 						inputType = new GraphQLList(inputType);
 					}
-					this.generateFieldForInput(
+					merge(fields, this.generateFieldForInput(
 						field.name,
 						inputType,
-						get(field, 'metadata.defaultValue'));
+						get(field, 'metadata.defaultValue')));
 				}
 			});
 
@@ -108,11 +113,11 @@ export class InputGenerator {
 		return this.currInputObjectTypes.get(name);
 	}
 	generateCreateManyWithoutInput(fieldType: GraphQLNamedType, relationFieldName: string): GraphQLInputType {
-		const name = fieldType.name + 'CreateManyWithout' + relationFieldName.charAt(0).toUpperCase() + relationFieldName.slice(1) + 'Input';
+		const name = fieldType.name + 'CreateManyWithout' + this.capFirst(relationFieldName) + 'Input';
 		if (!this.currInputObjectTypes.has(name)) {
 			const fields = {};
-			fields['create'] = new GraphQLList(new GraphQLNonNull(this.generateCreateWithoutInput(fieldType, relationFieldName)));
-			fields['connect'] = new GraphQLList(new GraphQLNonNull(this.generateWhereUniqueInput(fieldType)));
+			fields['create'] = {type: new GraphQLList(new GraphQLNonNull(this.generateCreateWithoutInput(fieldType, relationFieldName)))};
+			fields['connect'] = {type: new GraphQLList(new GraphQLNonNull(this.generateWhereUniqueInput(fieldType)))};
 			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
@@ -122,11 +127,11 @@ export class InputGenerator {
 	}
 
 	generateCreateOneWithoutInput(fieldType: GraphQLNamedType, relationFieldName: string): GraphQLInputType {
-		const name = fieldType.name + 'CreateOneWithout' + relationFieldName.charAt(0).toUpperCase() + relationFieldName.slice(1) + 'Input';
+		const name = fieldType.name + 'CreateOneWithout' + this.capFirst(relationFieldName) + 'Input';
 		if (!this.currInputObjectTypes.has(name)) {
 			const fields = {};
-			fields['create'] = this.generateCreateWithoutInput(fieldType, relationFieldName);
-			fields['connect'] = this.generateWhereUniqueInput(fieldType);
+			fields['create'] = {type: this.generateCreateWithoutInput(fieldType, relationFieldName)};
+			fields['connect'] = {type: this.generateWhereUniqueInput(fieldType)};
 			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
@@ -172,9 +177,9 @@ export class InputGenerator {
 					if (isInputType(field.type)) {
 						inputType = field.type;
 					} else {
-						const relationFieldName = this.relations.getInverseWithoutName(this.type.name, field.name);
-						const isList = fieldIsArray(field.type);
 						const fieldType = getReturnGraphQLType(field.type);
+						const relationFieldName = this.relations.getInverseWithoutName(fieldType.name, field.name);
+						const isList = fieldIsArray(field.type);
 						if (relationFieldName) {
 							// tslint:disable-next-line:prefer-conditional-expression
 							if (isList) {

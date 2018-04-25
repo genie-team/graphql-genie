@@ -21,20 +21,20 @@ import { IntrospectionResultData } from 'apollo-cache-inmemory';
 export default class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
 	private config = {
-		'generateGetAll': true,
-		'generateGetAllMeta': true,
-		'generateGetSingle': true,
+		'generateGetAll': false,
+		'generateGetAllMeta': false,
+		'generateGetSingle': false,
 		'generateCreate': true,
-		'generateUpdate': true,
-		'generateDelete': true,
-		'generateAddToRelation': true,
-		'generateRemoveFromRelation': true,
-		'generateSetRelation': true,
-		'generateUnsetRelation': true,
-		'generateIntegrationFields': true,
-		'generateCustomMutationFields': true,
-		'generateCustomQueryFields': true,
-		'includeSubscription': true
+		'generateUpdate': false,
+		'generateDelete': false,
+		'generateAddToRelation': false,
+		'generateRemoveFromRelation': false,
+		'generateSetRelation': false,
+		'generateUnsetRelation': false,
+		'generateIntegrationFields': false,
+		'generateCustomMutationFields': false,
+		'generateCustomQueryFields': false,
+		'includeSubscription': false
 	};
 	private generators: Array<TypeGenerator>;
 
@@ -210,6 +210,7 @@ export default class GraphQLGenie {
 		let newTypes = '';
 		console.log(currInputObjectTypes);
 		currInputObjectTypes.forEach(inputObjectType => {
+			//console.log(printType(inputObjectType));
 			newTypes += printType(inputObjectType) + '\n';
 		});
 		console.log(newTypes);
@@ -241,6 +242,7 @@ export default class GraphQLGenie {
 		fieldsOnObject.forEach((fields, objName) => {
 			newTypes += printType(new GraphQLObjectType({ name: objName, fields: fields })) + '\n';
 		});
+		console.log(newTypes);
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 

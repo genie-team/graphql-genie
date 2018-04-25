@@ -193,7 +193,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 // 		variables: { id: testData.users[0].id}
 // 	});
 // 	console.log(result.data);
-
+   
 
 // 	const unsetUserAddress = gql`
 // 	mutation unsetUserAddress($addressAddressId: ID!, $userUserId: ID!) {

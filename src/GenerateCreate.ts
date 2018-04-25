@@ -1,6 +1,6 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, GraphQLString } from 'graphql';
 import { Relations, createResolver} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
 
@@ -34,7 +34,7 @@ export class GenerateCreate implements TypeGenerator {
 		this.types.forEach(type => {
 			console.log(type.name);
 			const args = {};
-			args['input'] = new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations).generateCreateInput();
+			args['input'] = {type: new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations).generateCreateInput({clientMutationId: {type: GraphQLString}})};
 			console.log(args);
 			this.fields[`create${type.name}`] = {
 				type: type.name,

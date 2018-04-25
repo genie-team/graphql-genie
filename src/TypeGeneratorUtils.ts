@@ -260,8 +260,8 @@ export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string
 
 export const fieldIsArray = (fieldInfo) => {
 	let isArray = false;
-	while (fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
-		if (fieldInfo.kind === 'LIST') {
+	while (isListType(fieldInfo) || isNonNullType(fieldInfo) || fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
+		if (isListType(fieldInfo) || fieldInfo.kind === 'LIST') {
 			isArray = true;
 			break;
 		}
