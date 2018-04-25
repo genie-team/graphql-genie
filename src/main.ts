@@ -2,6 +2,7 @@ import  GraphQLGenie  from './GraphQLGenie';
 import { ApolloClient } from 'apollo-client';
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { SchemaLink } from 'apollo-link-schema';
+import gql from 'graphql-tag';
 
 const typeDefs = `
 
@@ -20,9 +21,10 @@ type Post @model {
 type User @model {
   id: ID! @unique
   email: String! @unique
-  password: String!
-  name: String!
-  posts: [Post!]! @relation(name: "PostsonAuthor")
+  password: String
+	name: String!
+	age: Int
+  posts: [Post] @relation(name: "PostsonAuthor")
 	profile: Post @relation(name: "ProfileonUser")
 }
 
@@ -46,6 +48,26 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
+
+	const zeus = await client.mutate({
+		mutation: gql`
+		mutation {
+			createUser(
+				input: {
+					age: 42
+					email: "zeus@example.com"
+					name: "Zeus"
+				}
+			) {
+				payload {
+					id
+					name
+				}
+			}
+		}
+		`
+	});
+	console.log(zeus);
 
 // let createPost = gql`
 // 	mutation createPost($title: String!) {
@@ -193,7 +215,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 // 		variables: { id: testData.users[0].id}
 // 	});
 // 	console.log(result.data);
-   
 
 // 	const unsetUserAddress = gql`
 // 	mutation unsetUserAddress($addressAddressId: ID!, $userUserId: ID!) {

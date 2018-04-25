@@ -19,6 +19,7 @@ export default class FortuneGraph implements DataResolver {
 
 
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
+		records = records.hasOwnProperty ? records : Object.assign({}, records);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		records['__typename'] = graphQLTypeName;
 		let results = await this.store.create(fortuneType, records, include, meta);
@@ -71,6 +72,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
+		records = records.hasOwnProperty ? records : Object.assign({}, records);
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		let results = await this.store.update(fortuneType, updates, meta);

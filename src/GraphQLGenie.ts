@@ -1,14 +1,14 @@
 
+import { GenerateGetSingle } from './GenerateGetSingle';
 import {
 	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
 } from 'graphql';
-import { defaultFieldResolver, isScalarType, printType } from 'graphql';
-import { assign, forOwn, isArray, isEmpty} from 'lodash';
+import { assign, forOwn, get, isArray, isEmpty} from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneGraph from './FortuneGraph';
 import { GenerateGetAll } from './GenerateGetAll';
 import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GenerateGetSingle } from './GenerateGetSingle';
+import { defaultFieldResolver, isScalarType, printType } from 'graphql';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
@@ -21,7 +21,7 @@ import { IntrospectionResultData } from 'apollo-cache-inmemory';
 export default class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
 	private config = {
-		'generateGetAll': false,
+		'generateGetAll': true,
 		'generateGetAllMeta': false,
 		'generateGetSingle': false,
 		'generateCreate': true,
@@ -184,6 +184,8 @@ export default class GraphQLGenie {
 			nodeTypes.push(<IntrospectionObjectType>this.schemaInfo[result.name]);
 		});
 		const currInputObjectTypes = new Map<string, GraphQLInputType>();
+		const currOutputObjectTypeDefs = new Set<string>();
+
 		if (this.config.generateGetAll) {
 			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema));
 		}
@@ -191,7 +193,7 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateGetSingle(this.graphQLFortune, 'Query', nodeTypes));
 		}
 		if (this.config.generateCreate) {
-			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema, this.relations));
+			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 		if (this.config.generateUpdate) {
 			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
@@ -200,7 +202,6 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes));
 		}
 
-		const currOutputObjectTypeDefs = new Set<string>();
 		if (this.config.generateSetRelation || this.config.generateUnsetRelation || this.config.generateAddToRelation || this.config.generateRemoveFromRelation) {
 			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.config, this.relations, currOutputObjectTypeDefs));
 		}
@@ -210,7 +211,7 @@ export default class GraphQLGenie {
 		let newTypes = '';
 		console.log(currInputObjectTypes);
 		currInputObjectTypes.forEach(inputObjectType => {
-			//console.log(printType(inputObjectType));
+			// console.log(printType(inputObjectType));
 			newTypes += printType(inputObjectType) + '\n';
 		});
 		console.log(newTypes);
@@ -275,10 +276,14 @@ export default class GraphQLGenie {
 			}
 		}`);
 		// here we're filtering out any type information unrelated to unions or interfaces
-		const filteredData = result.data.__schema.types.filter(
-			type => type.possibleTypes !== null,
-		);
-		result.data.__schema.types = filteredData;
+		const types = get(result, 'data.__schema.types');
+		if (types) {
+			const filteredData = result.data.__schema.types.filter(
+				type => type.possibleTypes !== null,
+			);
+			result.data.__schema.types = filteredData;
+
+		}
 		return <IntrospectionResultData>result.data;
 	}
 

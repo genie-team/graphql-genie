@@ -6,7 +6,7 @@ import {
 	isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, endsWith, get, isArray, isDate, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy, set } from 'lodash';
+import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy, set } from 'lodash';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -289,7 +289,7 @@ export const getReturnGraphQLType = (type: GraphQLType): GraphQLNamedType => {
 enum Mutation {
 	create,
 	update,
-	unset
+	delete
 }
 
 
@@ -298,43 +298,54 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// iterate over all the non-id arguments and recursively create new types
 		const recursed = key ? true : false;
 		if (!returnType) {
-			returnType = _info.returnType;
+			returnType = (<GraphQLObjectType>_info.returnType).getFields().payload.type;
+			returnType = <GraphQLOutputType>getReturnGraphQLType(returnType);
 		}
-
-
-
 		const returnTypeName = getReturnType(returnType);
+		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : null;
+		const createArgs = _args.create ? _args.create : mutation === Mutation.create && _args.input ? _args.input : null;
+		// const updateArgs = _args.update ? _args.update : mutation === Mutation.update && _args.input ? _args.input : null;
+		// const deleteArgs = _args.delete ? _args.delete : mutation === Mutation.delete && _args.input ? _args.input : null;
+		// const connectArgs = _args.connect ? _args.create : null;
+		// const disconnectArgs = _args.disconnect ? _args.disconnect : {};
+		const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
 
-		if (mutation === Mutation.update) {
-			const currValue = await dataResolver.find(returnTypeName, [_args['id']]);
+		if (mutation === Mutation.update || mutation === Mutation.delete) {
+			if (!whereArgs) {
+				throw new Error(`Cannot ${Mutation[mutation]} without where arguments`);
+			}
+			let currValue;
+			// tslint:disable-next-line:prefer-conditional-expression
+			if (whereArgs.id) {
+				currValue = await dataResolver.find(returnTypeName, [whereArgs.id]);
+			} else {
+				currValue = await dataResolver.find(returnTypeName, undefined, {match: whereArgs});
+			}
 			if (!currValue) {
-				throw new Error(`${returnTypeName} does not have record with ID of ${_args['id']}`);
+				throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 			}
 		}
 
-		const nonIdArgs = pickBy(_args, (__, key) => {
-			return key !== 'id' && !endsWith(key, 'Id') && !endsWith(key, 'Ids');
-		});
-		if (isEmpty(nonIdArgs)) {
-			throw new Error(`Bad Mutation\n You sent in an input argument with no new data, you probably want to use the key ${key}Id(s) instead of ${key} with only Id arguments`);
-		}
 		const argPromises = [];
-		for (const argName in nonIdArgs) {
+		for (const argName in createArgs) {
 			let argReturnType: GraphQLOutputType;
 			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
 				argReturnType = returnType.getFields()[argName].type;
 			}
-			const arg = _args[argName];
-			if (isArray(arg)) {
-				each(arg, currArgObj => {
-					if (isObject(currArgObj) && argReturnType) {
-						argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, currArgObj, _context, _info, argName, argReturnType));
-						_args[argName] = [];
-					}
-				});
-			} else if (!isDate(arg) && isObject(arg) && argReturnType) {
-				argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, argName, argReturnType));
-				_args[argName] = undefined;
+			const argReturnRootType = getReturnGraphQLType(argReturnType);
+			if (!isScalarType(argReturnRootType)) {
+				const arg = createArgs[argName];
+				if (isArray(arg)) {
+					each(arg, currArgObj => {
+						if (isObject(currArgObj) && argReturnType) {
+							argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, currArgObj, _context, _info, argName, argReturnType));
+							createArgs[argName] = [];
+						}
+					});
+				} else if (isObject(arg) && argReturnType) {
+					argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, argName, argReturnType));
+					createArgs[argName] = undefined;
+				}
 			}
 		}
 		// wait for all the new types to be created
@@ -344,14 +355,14 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		createdTypes.forEach(createdType => {
 			const key = createdType.key;
 			const id = createdType.id;
-			if (isArray(_args[key])) {
+			if (isArray(createArgs[key])) {
 				if (isArray(id)) {
-					_args[key] = _args[key].concat(id);
+					createArgs[key] = createArgs[key].concat(id);
 				} else {
-					_args[key].push(id);
+					createArgs[key].push(id);
 				}
 			} else {
-				_args[key] = id;
+				createArgs[key] = id;
 			}
 		});
 
@@ -376,7 +387,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		let dataResult;
 		switch (mutation) {
 			case Mutation.create:
-				dataResult = await dataResolver.create(returnTypeName, _args);
+				dataResult = await dataResolver.create(returnTypeName, createArgs);
 				break;
 
 			case Mutation.update:
@@ -393,7 +404,10 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (recursed) {
 			return { key: key, id: id, created: dataResult };
 		} else {
-			return dataResult;
+			return {
+				payload: dataResult,
+				clientMutationId
+			};
 		}
 	};
 };
@@ -504,3 +518,14 @@ export const filterNested = async (filter: object, sort: object, type: GraphQLNa
 	return pullIds;
 };
 
+export const getPayloadTypeName = (typeName: string): string => {
+	return `${typeName}Payload`;
+};
+
+export const getPayloadTypeDef = (typeName: string): string => {
+	return `
+		type ${getPayloadTypeName(typeName)} {
+			payload: ${typeName}!
+			clientMutationId: String
+		}`;
+};

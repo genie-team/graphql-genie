@@ -58,6 +58,9 @@ export default class GraphQLSchemaBuilder {
 				relation: RelationDirective,
 				default: DefaultDirective,
 				unique: UniqueDirective
+			},
+			resolverValidationOptions: {
+				requireResolversForResolveType: false
 			}
 		});
 		SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
@@ -83,7 +86,13 @@ export default class GraphQLSchemaBuilder {
 			this.resolveFunctions[typeName][name] = resolve; // save in case type defs changed
 		});
 
-		addResolveFunctionsToSchema(this.schema, resolverMap);
+		addResolveFunctionsToSchema({
+			schema: this.schema,
+			resolvers: resolverMap,
+			resolverValidationOptions: {
+				requireResolversForResolveType: false
+			}
+		});
 		return this.schema;
 	}
 }
