@@ -1,7 +1,9 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLID, GraphQLInputType, GraphQLNonNull, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import { generateArgs, updateResolver } from './TypeGeneratorUtils';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
+	GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import {Relations,  getPayloadTypeDef, getPayloadTypeName, updateResolver} from './TypeGeneratorUtils';
+import { InputGenerator } from './InputGenerator';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
@@ -10,35 +12,53 @@ export class GenerateUpdate implements TypeGenerator {
 	private schema: GraphQLSchema;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
-	private updateArgs: Map<string, object>;
 	private currInputObjectTypes: Map<string, GraphQLInputType>;
+	private currOutputObjectTypeDefs: Set<string>;
 	private schemaInfo: IntrospectionType[];
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema) {
+	private relations: Relations;
+	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[],
+		currInputObjectTypes: Map<string, GraphQLInputType>,
+		currOutputObjectTypeDefs: Set<string>,
+		schemaInfo: IntrospectionType[], schema: GraphQLSchema, $relations: Relations) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
 		this.currInputObjectTypes = currInputObjectTypes;
+		this.currOutputObjectTypeDefs = currOutputObjectTypeDefs;
 		this.schema = schema;
 		this.schemaInfo = schemaInfo;
+		this.relations = $relations;
 
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
-		this.updateArgs = new Map<string, object>();
 		this.generate();
 	}
 
 	generate() {
 		this.types.forEach(type => {
 			const args = {};
-			args['id'] = {
-				type: new GraphQLNonNull(GraphQLID)
-			};
-			Object.assign(args, generateArgs(type, this.updateArgs, this.currInputObjectTypes, this.schemaInfo, this.schema, true));
 
+			const generator = new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
+			const updateInputName = `Update${type.name}MutationInput`;
+			const updateInput =  new GraphQLInputObjectType({
+				name: updateInputName,
+				fields: {
+					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
+					where: {type: new GraphQLNonNull(generator.generateWhereUniqueInput())},
+					clientMutationId: {type: GraphQLString}
+				}
+			});
+			this.currInputObjectTypes.set(updateInputName, updateInput);
+			args['input'] = {
+				type: new GraphQLNonNull(updateInput)
+			};
+
+			const outputTypeName = getPayloadTypeName(type.name);
 			this.fields[`update${type.name}`] = {
-				type: type.name,
+				type: outputTypeName,
 				args: args
 			};
+			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
 			this.resolvers.set(`update${type.name}`, updateResolver(this.dataResolver));
 		});
 

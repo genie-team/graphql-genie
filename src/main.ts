@@ -8,8 +8,8 @@ const typeDefs = `
 
 type Post @model {
   id: ID! @unique
-  createdAt: DateTime!
-  updatedAt: DateTime!
+  createdAt: DateTime
+  updatedAt: DateTime
   isPublished: Boolean! @default(value: "false")
   title: String!
   text: String!
@@ -54,19 +54,42 @@ const buildClient = async (genie: GraphQLGenie) => {
 		mutation {
 			createUser(
 				input: {
-					age: 42
-					email: "zeus@example.com"
-					name: "Zeus"
+					data: {
+						age: 42
+						email: "zeus@example.com"
+						name: "Zeus"
+						posts: {
+							create: [{
+								title: "Hello World"
+								text: "This is my first blog post ever!"
+								isPublished: true
+							}, {
+								title: "My Second Post"
+								text: "My first post was good, but this one is better!"
+								isPublished: true
+							}, {
+								title: "Solving World Hunger"
+								text: "This is a draft..."
+								isPublished: false
+							}]
+						}
+					}
+					clientMutationId: "Test"
 				}
 			) {
-				payload {
+				data {
 					id
 					name
+					posts {
+						title
+					}
 				}
+				clientMutationId
 			}
 		}
 		`
 	});
+
 	console.log(zeus);
 
 // let createPost = gql`

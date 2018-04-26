@@ -294,17 +294,21 @@ enum Mutation {
 
 
 const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
-	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, key?: string, returnType?: GraphQLOutputType) => {
+	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, index?: number, key?: string, returnType?: GraphQLOutputType) => {
 		// iterate over all the non-id arguments and recursively create new types
 		const recursed = key ? true : false;
 		if (!returnType) {
-			returnType = (<GraphQLObjectType>_info.returnType).getFields().payload.type;
+			returnType = (<GraphQLObjectType>_info.returnType).getFields().data.type;
 			returnType = <GraphQLOutputType>getReturnGraphQLType(returnType);
 		}
 		const returnTypeName = getReturnType(returnType);
-		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : null;
-		const createArgs = _args.create ? _args.create : mutation === Mutation.create && _args.input ? _args.input : null;
-		// const updateArgs = _args.update ? _args.update : mutation === Mutation.update && _args.input ? _args.input : null;
+		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
+		let createArgs = _args.create ? _args.create : mutation === Mutation.create && get(_args, 'input.data') ? get(_args, 'input.data') : [];
+		createArgs = createArgs && !isArray(createArgs) ? [createArgs] : createArgs;
+
+		let updateArgs = _args.update ? _args.update : mutation === Mutation.update && get(_args, 'input.data') ? get(_args, 'input.data') : [];
+		updateArgs = updateArgs && !isArray(updateArgs) ? [updateArgs] : updateArgs;
+
 		// const deleteArgs = _args.delete ? _args.delete : mutation === Mutation.delete && _args.input ? _args.input : null;
 		// const connectArgs = _args.connect ? _args.create : null;
 		// const disconnectArgs = _args.disconnect ? _args.disconnect : {};
@@ -327,43 +331,43 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		}
 
 		const argPromises = [];
-		for (const argName in createArgs) {
-			let argReturnType: GraphQLOutputType;
-			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
-				argReturnType = returnType.getFields()[argName].type;
-			}
-			const argReturnRootType = getReturnGraphQLType(argReturnType);
-			if (!isScalarType(argReturnRootType)) {
-				const arg = createArgs[argName];
-				if (isArray(arg)) {
-					each(arg, currArgObj => {
-						if (isObject(currArgObj) && argReturnType) {
-							argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, currArgObj, _context, _info, argName, argReturnType));
-							createArgs[argName] = [];
-						}
-					});
-				} else if (isObject(arg) && argReturnType) {
-					argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, argName, argReturnType));
-					createArgs[argName] = undefined;
+		createArgs.forEach((createArg, index) => {
+			for (const argName in createArg) {
+				let argReturnType: GraphQLOutputType;
+				if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
+					argReturnType = returnType.getFields()[argName].type;
+				}
+				const argReturnRootType = getReturnGraphQLType(argReturnType);
+				if (!isScalarType(argReturnRootType)) {
+					const arg = createArg[argName];
+					if (isObject(arg) && argReturnType) {
+						argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, index, argName, argReturnType));
+						createArg[argName] = fieldIsArray(argReturnType) ? [] : undefined;
+					}
 				}
 			}
-		}
+		});
+
 		// wait for all the new types to be created
-		const createdTypes = await Promise.all(argPromises);
+		const argResults = await Promise.all(argPromises);
 
 		// setup the arguments to use the new types
-		createdTypes.forEach(createdType => {
-			const key = createdType.key;
-			const id = createdType.id;
-			if (isArray(createArgs[key])) {
-				if (isArray(id)) {
-					createArgs[key] = createArgs[key].concat(id);
+		argResults.forEach((createdTypes: Array<any>) => {
+			createdTypes.forEach(createdType => {
+				const key = createdType.key;
+				const id = createdType.id;
+				const createArg = createArgs[createdType.index];
+				if (isArray(createArg[key])) {
+					if (isArray(id)) {
+						createArg[key] = createArg[key].concat(id);
+					} else {
+						createArg[key].push(id);
+					}
 				} else {
-					createArgs[key].push(id);
+					createArg[key] = id;
 				}
-			} else {
-				createArgs[key] = id;
-			}
+			});
+
 		});
 
 		// now merge in the existing ids passed in
@@ -384,28 +388,39 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			}
 		}
 
-		let dataResult;
-		switch (mutation) {
-			case Mutation.create:
-				dataResult = await dataResolver.create(returnTypeName, createArgs);
-				break;
+		// could be creating more than 1 type
+		const dataResolverPromises: Array<Promise<any>> = [];
+		createArgs.forEach((createArg) => {
+			createArg = createArg.hasOwnProperty ? createArg : Object.assign({}, createArg);
 
-			case Mutation.update:
+			dataResolverPromises.push(new Promise((resolve) => {
+				dataResolver.create(returnTypeName, createArg).then(data => {
+					const id = isArray(data) ? map(data, 'id') : data.id;
+					resolve({index, key, id, data});
+				});
+			}));
+		});
+		updateArgs.forEach((updateArg) => {
+			updateArg = updateArg.hasOwnProperty ? updateArg : Object.assign({}, updateArg);
+			dataResolverPromises.push(new Promise((resolve) => {
+				dataResolver.update(returnTypeName, null, updateArg).then(data => {
+					const id = isArray(data) ? map(data, 'id') : data.id;
+					resolve({index, key, id, data});
+				});
+			}));
+		});
 
-				dataResult = await dataResolver.update(returnTypeName, _args);
-				break;
-		}
 
-		let id;
+		const dataResult = await Promise.all(dataResolverPromises);
+
 		// if everything was an id no need to create anything new
-		id = isArray(dataResult) ? map(dataResult, 'id') : dataResult.id;
 
 		// if key this is recursed else it's the final value
 		if (recursed) {
-			return { key: key, id: id, created: dataResult };
+			return dataResult;
 		} else {
 			return {
-				payload: dataResult,
+				data: dataResult[0].data,
 				clientMutationId
 			};
 		}
@@ -451,8 +466,10 @@ export const filterArgs = {
 	'filter': { type: 'JSON' },
 	'sort': { type: 'JSON' },
 	'first': { type: 'Int' },
+	'last': { type: 'Int' },
 	'offset': { type: 'Int' },
-	'cursor': { type: 'String' }
+	'before': { type: 'String' },
+	'after': { type: 'String' }
 };
 
 
@@ -525,7 +542,7 @@ export const getPayloadTypeName = (typeName: string): string => {
 export const getPayloadTypeDef = (typeName: string): string => {
 	return `
 		type ${getPayloadTypeName(typeName)} {
-			payload: ${typeName}!
+			data: ${typeName}!
 			clientMutationId: String
 		}`;
 };

@@ -1,6 +1,6 @@
 
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import { Relations, createResolver, getPayloadTypeDef, getPayloadTypeName} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
 
@@ -38,15 +38,31 @@ export class GenerateCreate implements TypeGenerator {
 		console.log('generate create');
 		this.types.forEach(type => {
 			const args = {};
-			args['input'] = {type: new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations).generateCreateInput({clientMutationId: {type: GraphQLString}})};
+
+			const createInputName = `Create${type.name}MutationInput`;
+			const createInput =  new GraphQLInputObjectType({
+				name: createInputName,
+				fields: {
+					data: {type: new GraphQLNonNull(new InputGenerator(this.schema.getType(type.name), this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations).generateCreateInput())},
+					clientMutationId: {type: GraphQLString}
+				}
+			});
+
+			this.currInputObjectTypes.set(createInputName, createInput);
+			args['input'] = {
+				type: new GraphQLNonNull(createInput)
+			};
 			const outputTypeName = getPayloadTypeName(type.name);
 			this.fields[`create${type.name}`] = {
 				type: outputTypeName,
 				args: args
 			};
+			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
+
+
+
 			this.resolvers.set(`create${type.name}`, createResolver(this.dataResolver));
 
-			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
 
 		});
 

@@ -196,7 +196,7 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 		if (this.config.generateUpdate) {
-			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, this.schemaInfo, this.schema));
+			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 		if (this.config.generateDelete) {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes));
