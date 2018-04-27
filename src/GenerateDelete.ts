@@ -1,18 +1,20 @@
 
-import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
+import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLID, GraphQLNonNull, GraphQLResolveInfo, IntrospectionObjectType } from 'graphql';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
+	private config: GenerateConfig;
 	private dataResolver: DataResolver;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 
-	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[]) {
+	constructor(dataResolver: DataResolver, objectName: string, types: IntrospectionObjectType[], $config: GenerateConfig) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
+		this.config = $config;
 
 
 		this.fields = {};
@@ -26,7 +28,7 @@ export class GenerateDelete implements TypeGenerator {
 			args['id'] = {
 				type: new GraphQLNonNull(GraphQLID)
 			};
-
+			console.log(this.config);
 			this.fields[`delete${type.name}`] = {
 				type: type.name,
 				args: args

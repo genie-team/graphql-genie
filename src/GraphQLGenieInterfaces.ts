@@ -15,18 +15,10 @@ export interface DataResolver {
 
 export interface GenerateConfig {
 	generateGetAll?: boolean;
-	generateGetAllMeta?: boolean;
-	generateGetSingle?: boolean;
 	generateCreate?: boolean;
 	generateUpdate?: boolean;
 	generateDelete?: boolean;
-	generateAddToRelation?: boolean;
-	generateRemoveFromRelation?: boolean;
-	generateSetRelation?: boolean;
-	generateUnsetRelation?: boolean;
-	generateIntegrationFields?: boolean;
-	generateCustomMutationFields?: boolean;
-	generateCustomQueryFields?: boolean;
+	generateUpsert?: boolean;
 	includeSubscription?: boolean;
 }
 

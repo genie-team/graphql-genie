@@ -1,5 +1,4 @@
 
-import { GenerateGetSingle } from './GenerateGetSingle';
 import {
 	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
 } from 'graphql';
@@ -13,28 +12,20 @@ import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
-import { GenerateRelationMutations } from './GenerateRelationMutations';
 import { Relations, computeRelations, getReturnType } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
+import { GenerateUpsert } from './GenerateUpsert';
 
 
 export default class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
 	private config = {
-		'generateGetAll': true,
-		'generateGetAllMeta': false,
-		'generateGetSingle': false,
-		'generateCreate': true,
-		'generateUpdate': false,
-		'generateDelete': false,
-		'generateAddToRelation': false,
-		'generateRemoveFromRelation': false,
-		'generateSetRelation': false,
-		'generateUnsetRelation': false,
-		'generateIntegrationFields': false,
-		'generateCustomMutationFields': false,
-		'generateCustomQueryFields': false,
-		'includeSubscription': false
+		generateGetAll: true,
+		generateCreate: true,
+		generateUpdate: true,
+		generateDelete: true,
+		generateUpsert: true,
+		includeSubscription: true
 	};
 	private generators: Array<TypeGenerator>;
 
@@ -189,22 +180,20 @@ export default class GraphQLGenie {
 		if (this.config.generateGetAll) {
 			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema));
 		}
-		if (this.config.generateGetSingle) {
-			this.generators.push(new GenerateGetSingle(this.graphQLFortune, 'Query', nodeTypes));
-		}
 		if (this.config.generateCreate) {
-			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
+			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 		if (this.config.generateUpdate) {
-			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
+			this.generators.push(new GenerateUpdate(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
-		if (this.config.generateDelete) {
-			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes));
+		if (this.config.generateUpsert) {
+			this.generators.push(new GenerateUpsert(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 
-		if (this.config.generateSetRelation || this.config.generateUnsetRelation || this.config.generateAddToRelation || this.config.generateRemoveFromRelation) {
-			this.generators.push(new GenerateRelationMutations(this.graphQLFortune, 'Mutation', this.config, this.relations, currOutputObjectTypeDefs));
+		if (this.config.generateDelete) {
+			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config));
 		}
+
 
 
 

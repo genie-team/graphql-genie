@@ -5,7 +5,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
 import {Relations,  getPayloadTypeDef, getPayloadTypeName, updateResolver} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
 
-export class GenerateUpdate implements TypeGenerator {
+export class GenerateUpsert implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
 	private config: GenerateConfig;

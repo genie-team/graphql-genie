@@ -6,7 +6,7 @@ import {
 	isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, endsWith, get, isArray, isEmpty, isObject, keys, map, mapValues, merge, pick, pickBy, set } from 'lodash';
+import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, merge, pick, set } from 'lodash';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -219,7 +219,7 @@ export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInp
 	return fields;
 };
 
-const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
+export const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
 	if (isNonNullType(type)) {
 		return type.ofType;
 	} else {
@@ -286,15 +286,83 @@ export const getReturnGraphQLType = (type: GraphQLType): GraphQLNamedType => {
 	}
 };
 
-enum Mutation {
-	create,
-	update,
-	delete
+export enum Mutation {
+	Create,
+	Update,
+	Delete,
+	Upsert
 }
 
+const clean = (obj) => {
+	for (const propName in obj) {
+		if (obj[propName] === null || obj[propName] === undefined || (isArray(obj[propName]) && obj[propName].length < 1)) {
+			delete obj[propName];
+		}
+	}
+};
+
+const getValueByUnique = async (dataResolver: DataResolver, returnTypeName: string, args) => {
+	let currValue;
+	// tslint:disable-next-line:prefer-conditional-expression
+	if (args.id) {
+		currValue = await dataResolver.find(returnTypeName, [args.id]);
+	} else {
+		currValue = await dataResolver.find(returnTypeName, undefined, { match: args });
+	}
+	if (!currValue || isEmpty(currValue)) {
+		throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(args)}`);
+	}
+	return isArray(currValue) ? currValue[0] : currValue;
+};
+
+const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, mutation: Mutation, dataResolver: DataResolver, currRecord: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo): Promise<Array<any>> => {
+	const promises: Array<Promise<any>> = [];
+	args.forEach((currArg, index) => {
+		for (const argName in currArg) {
+			let argReturnType: GraphQLOutputType;
+			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
+				argReturnType = returnType.getFields()[argName].type;
+			}
+			const argReturnRootType = getReturnGraphQLType(argReturnType);
+			if (!isScalarType(argReturnRootType)) {
+				const arg = currArg[argName];
+				if (isObject(arg) && argReturnType) {
+					promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg, _context, _info, index, argName, argReturnType));
+					currArg[argName] = fieldIsArray(argReturnType) ? [] : undefined;
+				}
+			}
+		}
+	});
+
+	const results = await Promise.all(promises);
+	// setup the arguments to use the new types
+	results.forEach((types: Array<any>) => {
+		types = types ? types : [];
+		types.forEach(type => {
+			if (type && type.key && type.id && type.index > -1) {
+				const key = type.key;
+				const id = type.id;
+				const arg = args[type.index];
+				if (isArray(arg[key])) {
+					if (isArray(id)) {
+						arg[key] = arg[key].concat(id);
+					} else {
+						arg[key].push(id);
+					}
+				} else {
+					arg[key] = id;
+				}
+			}
+		});
+
+	});
+
+	return args;
+
+};
 
 const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
-	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, index?: number, key?: string, returnType?: GraphQLOutputType) => {
+	return async (currRecord: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, index?: number, key?: string, returnType?: GraphQLOutputType) => {
 		// iterate over all the non-id arguments and recursively create new types
 		const recursed = key ? true : false;
 		if (!returnType) {
@@ -303,113 +371,118 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		}
 		const returnTypeName = getReturnType(returnType);
 		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
-		let createArgs = _args.create ? _args.create : mutation === Mutation.create && get(_args, 'input.data') ? get(_args, 'input.data') : [];
+		let createArgs = _args.create ? _args.create : mutation === Mutation.Create && get(_args, 'input.data') ? get(_args, 'input.data') : [];
 		createArgs = createArgs && !isArray(createArgs) ? [createArgs] : createArgs;
 
-		let updateArgs = _args.update ? _args.update : mutation === Mutation.update && get(_args, 'input.data') ? get(_args, 'input.data') : [];
+		let updateArgs = _args.update ? _args.update : mutation === Mutation.Update && get(_args, 'input.data') ? get(_args, 'input.data') : [];
 		updateArgs = updateArgs && !isArray(updateArgs) ? [updateArgs] : updateArgs;
 
-		// const deleteArgs = _args.delete ? _args.delete : mutation === Mutation.delete && _args.input ? _args.input : null;
-		// const connectArgs = _args.connect ? _args.create : null;
+		let deleteArgs = _args.delete ? _args.delete : mutation === Mutation.Delete && _args.input ? _args.input : [];
+		deleteArgs = deleteArgs && !isArray(deleteArgs) ? [deleteArgs] : deleteArgs;
+
+		let connectArgs = _args.connect ? _args.connect : [];
+		connectArgs = connectArgs && !isArray(connectArgs) ? [connectArgs] : connectArgs;
+
+		let disconnectArgs = _args.disconnect ? _args.disconnect : [];
+		disconnectArgs = disconnectArgs && !isArray(disconnectArgs) ? [disconnectArgs] : disconnectArgs;
+
 		// const disconnectArgs = _args.disconnect ? _args.disconnect : {};
-		const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
-
-		if (mutation === Mutation.update || mutation === Mutation.delete) {
-			if (!whereArgs) {
+		let whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
+		if (updateArgs.where && updateArgs.data) {
+			whereArgs = updateArgs.where;
+			updateArgs = updateArgs.data;
+		}
+		if (!isEmpty(updateArgs) || !isEmpty(deleteArgs)) {
+			if (!whereArgs && !currRecord) {
 				throw new Error(`Cannot ${Mutation[mutation]} without where arguments`);
-			}
-			let currValue;
-			// tslint:disable-next-line:prefer-conditional-expression
-			if (whereArgs.id) {
-				currValue = await dataResolver.find(returnTypeName, [whereArgs.id]);
+			} else if (whereArgs) {
+				currRecord = await getValueByUnique(dataResolver, returnTypeName, whereArgs);
 			} else {
-				currValue = await dataResolver.find(returnTypeName, undefined, {match: whereArgs});
-			}
-			if (!currValue) {
-				throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+				currRecord = await dataResolver.find(returnTypeName, currRecord[key]);
 			}
 		}
 
-		const argPromises = [];
-		createArgs.forEach((createArg, index) => {
-			for (const argName in createArg) {
-				let argReturnType: GraphQLOutputType;
-				if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
-					argReturnType = returnType.getFields()[argName].type;
-				}
-				const argReturnRootType = getReturnGraphQLType(argReturnType);
-				if (!isScalarType(argReturnRootType)) {
-					const arg = createArg[argName];
-					if (isObject(arg) && argReturnType) {
-						argPromises.push(mutateResolver(Mutation.create, dataResolver)(_root, arg, _context, _info, index, argName, argReturnType));
-						createArg[argName] = fieldIsArray(argReturnType) ? [] : undefined;
-					}
-				}
-			}
-		});
 
-		// wait for all the new types to be created
-		const argResults = await Promise.all(argPromises);
+		[createArgs, updateArgs] = await Promise.all([
+			resolveArgs(createArgs, returnType, mutation, dataResolver, currRecord, _args, _context, _info),
+			resolveArgs(updateArgs, returnType, mutation, dataResolver, currRecord, _args, _context, _info)
+		]);
 
-		// setup the arguments to use the new types
-		argResults.forEach((createdTypes: Array<any>) => {
-			createdTypes.forEach(createdType => {
-				const key = createdType.key;
-				const id = createdType.id;
-				const createArg = createArgs[createdType.index];
-				if (isArray(createArg[key])) {
-					if (isArray(id)) {
-						createArg[key] = createArg[key].concat(id);
-					} else {
-						createArg[key].push(id);
-					}
-				} else {
-					createArg[key] = id;
-				}
-			});
-
-		});
-
-		// now merge in the existing ids passed in
-		const idArgs = pickBy(_args, (__, key) => {
-			return endsWith(key, 'Id') || endsWith(key, 'Ids');
-		});
-		for (const argName in idArgs) {
-			const arg = idArgs[argName];
-			if (isArray(arg)) {
-				const actualArgName = argName.replace('Ids', '');
-				_args[actualArgName] = arg.concat(_args[actualArgName]);
-			} else {
-				const actualArgName = argName.replace('Id', '');
-				if (_args[actualArgName]) {
-					throw new Error(`Bad mutation\n Input argument contained multiple values for non array field with ${argName} and ${actualArgName}`);
-				}
-				_args[actualArgName] = arg;
-			}
-		}
 
 		// could be creating more than 1 type
 		const dataResolverPromises: Array<Promise<any>> = [];
 		createArgs.forEach((createArg) => {
 			createArg = createArg.hasOwnProperty ? createArg : Object.assign({}, createArg);
-
-			dataResolverPromises.push(new Promise((resolve) => {
-				dataResolver.create(returnTypeName, createArg).then(data => {
-					const id = isArray(data) ? map(data, 'id') : data.id;
-					resolve({index, key, id, data});
-				});
-			}));
+			clean(createArg);
+			if (createArg && !isEmpty(createArg)) {
+				dataResolverPromises.push(new Promise((resolve) => {
+					dataResolver.create(returnTypeName, createArg).then(data => {
+						const id = isArray(data) ? map(data, 'id') : data.id;
+						resolve({ index, key, id, data });
+					});
+				}));
+			}
 		});
+
+		// now updates
 		updateArgs.forEach((updateArg) => {
 			updateArg = updateArg.hasOwnProperty ? updateArg : Object.assign({}, updateArg);
-			dataResolverPromises.push(new Promise((resolve) => {
-				dataResolver.update(returnTypeName, null, updateArg).then(data => {
-					const id = isArray(data) ? map(data, 'id') : data.id;
-					resolve({index, key, id, data});
+			clean(updateArg);
+			if (updateArg && !isEmpty(updateArg)) {
+				dataResolverPromises.push(new Promise((resolve) => {
+					updateArg.id = currRecord.id;
+					dataResolver.update(returnTypeName, updateArg).then(data => {
+						const id = isArray(data) ? map(data, 'id') : data.id;
+						resolve({ index, key, id, data });
+					});
+				}));
+			}
+		});
+
+
+		// now add the connect types
+		connectArgs.forEach(connectArg => {
+			dataResolverPromises.push(new Promise((resolve, reject) => {
+				getValueByUnique(dataResolver, returnTypeName, connectArg).then(data => {
+					if (data && data['id']) {
+						resolve({ index, key, id: data['id'], data });
+					} else {
+						reject();
+					}
 				});
 			}));
 		});
 
+		// disconnect
+		const disconnectPromies: Array<Promise<any>> = [];
+		disconnectArgs.forEach(disconnectArg => {
+			if (disconnectArg === true) {
+				dataResolverPromises.push(new Promise((resolve) => {
+					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(_data => {
+						resolve();
+					});
+				}));
+			} else {
+				disconnectPromies.push(new Promise((resolve, reject) => {
+					getValueByUnique(dataResolver, returnTypeName, disconnectArg).then(data => {
+						if (data && data['id']) {
+							resolve(data['id']);
+						} else {
+							reject();
+						}
+					});
+				}));
+			}
+		});
+
+		const disconnectIds = await Promise.all(disconnectPromies);
+		if (!isEmpty(disconnectIds)) {
+			dataResolverPromises.push(new Promise((resolve) => {
+				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(_data => {
+					resolve();
+				});
+			}));
+		}
 
 		const dataResult = await Promise.all(dataResolverPromises);
 
@@ -420,7 +493,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			return dataResult;
 		} else {
 			return {
-				data: dataResult[0].data,
+				// if everything was already done on the object (deletions and disconnects) we need to refind it
+				data: get(dataResult, '[0].data', await dataResolver.find(returnTypeName, [currRecord.id])),
 				clientMutationId
 			};
 		}
@@ -429,11 +503,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 
 export const createResolver = (dataResolver: DataResolver) => {
-	return mutateResolver(Mutation.create, dataResolver);
+	return mutateResolver(Mutation.Create, dataResolver);
 };
 
 export const updateResolver = (dataResolver: DataResolver) => {
-	return mutateResolver(Mutation.update, dataResolver);
+	return mutateResolver(Mutation.Update, dataResolver);
 };
 
 const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) => {

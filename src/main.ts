@@ -13,7 +13,7 @@ type Post @model {
   isPublished: Boolean! @default(value: "false")
   title: String!
   text: String!
-  author: User! @relation(name: "PostsonAuthor")
+  author: User @relation(name: "PostsonAuthor")
 	test: String
 	user: User @relation(name: "ProfileonUser")
 }
@@ -24,7 +24,7 @@ type User @model {
   password: String
 	name: String!
 	age: Int
-  posts: [Post] @relation(name: "PostsonAuthor")
+  posts: [Post]! @relation(name: "PostsonAuthor")
 	profile: Post @relation(name: "ProfileonUser")
 }
 
@@ -34,7 +34,14 @@ type User @model {
 const fortuneOptions = { settings: { enforceLinks: true } };
 const start = Date.now();
 console.log('GraphQL Genie Started');
-const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
+const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
+	generateGetAll: true,
+	generateCreate: true,
+	generateUpdate: true,
+	generateDelete: false,
+	generateUpsert: false,
+	includeSubscription: false
+}});
 const buildClient = async (genie: GraphQLGenie) => {
 	const schema = await genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
@@ -91,6 +98,99 @@ const buildClient = async (genie: GraphQLGenie) => {
 	});
 
 	console.log(zeus);
+
+
+	const addPost = await client.mutate({
+		mutation: gql`mutation {
+			createPost(
+				input: {
+					data: {
+						title: "Genie is great"
+						isPublished: false
+						text: "Look how fast I can create an executable schema"
+						author: {
+							connect:{
+								email: "zeus@example.com"
+							}
+						}
+					}
+				}
+			) {
+				data {
+					id
+					author {
+						email
+					}
+				}
+			}
+		}
+		`
+	});
+	console.log(addPost);
+
+	const updateZeus = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						age: 43
+						profile: {
+							create: {
+								title: "I'm a god"
+								text: "No literally I am the God of thunder"
+								isPublished: true
+							}
+						}
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					profile {
+						id
+						title
+						text
+					}
+				}
+			}
+		}
+		`
+	});
+	console.log(updateZeus);
+
+
+	// mutation {
+	// 	updateUser(
+	// 		input: {
+	// 			data: {
+	// 				profile: {
+	// 					disconnect: true
+	// 				}
+	// 			}
+	// 			where: { 
+	// 				email: "zeus@example.com"
+	// 			}
+	// 		}
+	// 	) {
+	// 		data {
+	// 			id
+	// 			name
+	// 			profile {
+	// 				id
+	// 				title
+	// 				text
+	// 			}
+	// 		}
+	// 	}
+		
+	// }
+
+
+
 
 // let createPost = gql`
 // 	mutation createPost($title: String!) {
