@@ -1,12 +1,11 @@
 import {
-	GraphQLID, GraphQLInputObjectType, GraphQLInputType, GraphQLInterfaceType,
-	GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLObjectType,
-	GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema,
-	GraphQLType, GraphQLUnionType, IntrospectionObjectType, IntrospectionType,
-	isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType
+	GraphQLInputType, GraphQLNamedType, GraphQLObjectType,
+	GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType,
+	GraphQLType, IntrospectionType,
+	isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, merge, pick, set } from 'lodash';
+import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set } from 'lodash';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -134,76 +133,6 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 };
 
 
-
-
-const getInputName = (name: string): string => {
-	return name + 'Input';
-};
-
-// We don't need a reference to the actual input type for the field to print correctly so just dummy it to prevent ifninite recursion
-
-const generateInputs = (type: GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | GraphQLNonNull<any> | GraphQLList<any>, currInputObjectTypes: Map<string, GraphQLInputType>, schemaInfo: IntrospectionType[], schema: GraphQLSchema, dummy?: boolean): GraphQLInputType[] => {
-	if (isListType(type)) {
-		return [new GraphQLList(new GraphQLNonNull(generateInputs(type.ofType, currInputObjectTypes, schemaInfo, schema, dummy)[0])),
-		new GraphQLList(new GraphQLNonNull(generateInputs(type.ofType, currInputObjectTypes, schemaInfo, schema, dummy)[1]))];
-	} else if (isNonNullType(type)) {
-		return [generateInputs(type.ofType, currInputObjectTypes, schemaInfo, schema, dummy)[0],
-		generateInputs(type.ofType, currInputObjectTypes, schemaInfo, schema, dummy)[1]];
-	} else {
-		const fields = {};
-		const name = getInputName(type.name);
-		if (!dummy && !currInputObjectTypes.has(name)) {
-			if (isUnionType(type)) {
-				each(type.getTypes(), unionType => {
-					merge(fields, generateFieldsForInput(
-						getInputName(unionType.name),
-						generateInputs(unionType, currInputObjectTypes, schemaInfo, schema, true)));
-
-					if (!dummy) {
-						generateInputs(unionType, currInputObjectTypes, schemaInfo, schema);
-					}
-				});
-			} else if (isObjectType(type)) {
-				each(type.getFields(), field => {
-					if (field.name !== 'id') {
-						merge(fields, generateFieldsForInput(
-							field.name,
-							isInputType(field.type) ? [field.type, GraphQLID] : generateInputs(field.type, currInputObjectTypes, schemaInfo, schema, true),
-							get(schemaInfo[type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
-					}
-				});
-			} else if (isInterfaceType(type)) {
-				each(schemaInfo[type.name].possibleTypes, (possibleType) => {
-					const schemaType = schema.getType(possibleType.name);
-
-					merge(fields, generateFieldsForInput(
-						possibleType.name,
-						isInputType(schemaType) ? [schemaType, GraphQLID] : generateInputs(schemaType, currInputObjectTypes, schemaInfo, schema, true),
-						get(schemaInfo[type.name].fields.find((introField) => introField.name === possibleType.name), 'metadata.defaultValue')));
-
-					if (!isInputType(schemaType) && !dummy) {
-						generateInputs(schemaType, currInputObjectTypes, schemaInfo, schema);
-					}
-
-				});
-			}
-
-			currInputObjectTypes.set(name, new GraphQLInputObjectType({
-				name,
-				fields
-			}));
-			// console.info(printType(newInputObjectTypes.get(name)));
-		} else if (dummy) {
-			return [new GraphQLInputObjectType({
-				name: name,
-				fields: {}
-			}), GraphQLID];
-		}
-		return [currInputObjectTypes.get(name), GraphQLID];
-	}
-};
-
-
 export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInputType[], defaultValue?: string): object => {
 	const fields = {};
 	fields[fieldName] = {
@@ -225,37 +154,6 @@ export const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
 	} else {
 		return type;
 	}
-};
-
-export const generateArgs = (type: IntrospectionObjectType, currArgs: Map<string, object>,
-	currInputObjectTypes: Map<string, GraphQLInputType>,
-	schemaInfo: IntrospectionType[], schema: GraphQLSchema, shouldStripNonNull?: boolean): object => {
-	if (!currArgs.has(type.name)) {
-		const args = {};
-		const schemaType = <GraphQLObjectType>schema.getType(type.name);
-		each(schemaType.getFields(), field => {
-			if (field.name !== 'id') {
-				if (isInputType(field.type)) {
-					args[field.name] = {
-						type: shouldStripNonNull ? stripNonNull(field.type) : field.type,
-						defaultValue: get(type.fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')
-					};
-				} else {
-					// console.info('generate input for', field.type);
-					merge(args, generateFieldsForInput(
-						field.name,
-						generateInputs(field.type, currInputObjectTypes, schemaInfo, schema)));
-
-					// console.info(args.get(field.name));
-				}
-			}
-
-		});
-
-		currArgs.set(type.name, args);
-	}
-
-	return currArgs.get(type.name);
 };
 
 export const fieldIsArray = (fieldInfo) => {
@@ -352,6 +250,8 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 				} else {
 					arg[key] = id;
 				}
+			} else if (type.data) {
+				currRecord = type.data;
 			}
 		});
 
@@ -458,8 +358,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		disconnectArgs.forEach(disconnectArg => {
 			if (disconnectArg === true) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(_data => {
-						resolve();
+					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(data => {
+						resolve({index, key, id: null, data});
 					});
 				}));
 			} else {
@@ -478,8 +378,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const disconnectIds = await Promise.all(disconnectPromies);
 		if (!isEmpty(disconnectIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
-				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(_data => {
-					resolve();
+				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(data => {
+					resolve({index, key, id: null, data});
 				});
 			}));
 		}
@@ -493,8 +393,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			return dataResult;
 		} else {
 			return {
-				// if everything was already done on the object (deletions and disconnects) we need to refind it
-				data: get(dataResult, '[0].data', await dataResolver.find(returnTypeName, [currRecord.id])),
+				// if everything was already done on the object (deletions and disconnects) it should be the currRecord
+				data: get(dataResult, '[0].data', currRecord),
 				clientMutationId
 			};
 		}
