@@ -1,7 +1,7 @@
 
 import {IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import {has, set} from 'lodash';
-import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType, isScalarType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType, isObjectType, isScalarType } from 'graphql';
 import GraphQLJSON from 'graphql-type-json';
 import {GraphQLDate, GraphQLDateTime, GraphQLTime} from 'graphql-iso-date';
 export default class GraphQLSchemaBuilder {
@@ -28,8 +28,6 @@ export default class GraphQLSchemaBuilder {
 
 		directive @unique on FIELD_DEFINITION
 
-		directive @model on OBJECT
-
 		interface Node {
 			id: ID! @isUnique
 		}
@@ -50,6 +48,10 @@ export default class GraphQLSchemaBuilder {
 			this.typeDefs += typeDefs;
 			newTypeDefs = this.typeDefs;
 		}
+		if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
+			this.typeDefs = 'directive @model on OBJECT ' + this.typeDefs;
+			newTypeDefs = 'directive @model on OBJECT ' + newTypeDefs;
+		}
 		this.schema = makeExecutableSchema({
 			typeDefs: newTypeDefs,
 			resolvers: this.resolveFunctions,
@@ -63,9 +65,20 @@ export default class GraphQLSchemaBuilder {
 				requireResolversForResolveType: false
 			}
 		});
-		SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
-			model: ModelDirective
-		});
+		if (this.typeDefs.includes('@model')) {
+			SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
+				model: ModelDirective
+			});
+		} else {
+			const typeMap = this.schema.getTypeMap();
+			Object.keys(typeMap).forEach(name => {
+				const type = typeMap[name];
+				if (isObjectType(type) && !type.name.includes('__') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+					type['_interfaces'].push(typeMap.Node);
+					has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(type) : set(this.schema, '_implementations.Node', [type]);
+				}
+			});
+		}
 
 		return this.schema;
 	}

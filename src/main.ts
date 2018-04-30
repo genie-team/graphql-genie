@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 
 const typeDefs = `
 
-type Post @model {
+type Post {
   id: ID! @unique
   createdAt: DateTime
   updatedAt: DateTime
@@ -18,7 +18,7 @@ type Post @model {
 	user: User @relation(name: "ProfileonUser")
 }
 
-type User @model {
+type User {
   id: ID! @unique
   email: String! @unique
   password: String
