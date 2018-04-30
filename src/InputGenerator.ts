@@ -1,7 +1,7 @@
 
 import { Mutation, Relations, fieldIsArray, getReturnGraphQLType, getReturnType, stripNonNull } from './TypeGeneratorUtils';
 import { GraphQLBoolean, GraphQLField, GraphQLInputObjectType, GraphQLInputType, GraphQLList,
-	 GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, isInputType, isNonNullType, isObjectType } from 'graphql';
+	 GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, isInputType, isNonNullType, isObjectType, isInterfaceType } from 'graphql';
 import { each, get, merge } from 'lodash';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 
@@ -47,7 +47,7 @@ export class InputGenerator {
 		return inputType;
 	}
 
-	private generateDummyInputTypeForFieldInfo(field: IntrospectionField, mutation: Mutation): GraphQLInputType {
+	private generateInputTypeForFieldInfo(field: IntrospectionField, mutation: Mutation): GraphQLInputType {
 		let inputType: GraphQLInputType;
 		const fieldTypeName = getReturnType(field.type);
 		const schemaType = this.schema.getType(fieldTypeName);
@@ -55,13 +55,35 @@ export class InputGenerator {
 			inputType = schemaType;
 		} else {
 			const isArray = fieldIsArray(field.type);
-			let fieldInputName = schemaType.name + Mutation[mutation];
-			fieldInputName += isArray ? 'Many' : 'One';
+			let fieldInputName = schemaType.name;
+			let fieldSuffix = Mutation[mutation];
+			fieldSuffix += isArray ? 'Many' : 'One';
 
 			const relationFieldName = this.relations.getInverseWithoutName(fieldTypeName, field.name);
-			fieldInputName += relationFieldName ? 'Without' + this.capFirst(relationFieldName) : '';
-			fieldInputName += 'Input';
-			inputType = new GraphQLInputObjectType({name: fieldInputName, fields: {}});
+			fieldSuffix += relationFieldName ? 'Without' + this.capFirst(relationFieldName) : '';
+			fieldSuffix += 'Input';
+			fieldInputName += fieldSuffix;
+			if (isInterfaceType(schemaType)) {
+				// tslint:disable-next-line:prefer-conditional-expression
+				if (!this.currInputObjectTypes.has(fieldInputName)) {
+					inputType = this.currInputObjectTypes.get(fieldTypeName);
+				} else {
+					const fields = {};
+					const possibleTypes = this.schemaInfo[fieldTypeName].possibleTypes;
+					possibleTypes.forEach(typeInfo => {
+						const fieldName = Mutation[mutation].toLowerCase() + typeInfo.name;
+						const possibleSchemaType = getReturnGraphQLType(this.schema.getType(typeInfo.name));
+						const possibleTypeGenerator = new InputGenerator(possibleSchemaType, this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
+						fields[fieldName] = possibleTypeGenerator[`generate${fieldSuffix}`]();
+					});
+					this.currInputObjectTypes.set(fieldInputName, new GraphQLInputObjectType({
+						name: fieldInputName,
+						fields
+					}));
+				}
+			} else {
+				inputType = new GraphQLInputObjectType({name: fieldInputName, fields: {}});
+			}
 		}
 
 		return inputType;
@@ -124,7 +146,7 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (field.name !== relationFieldName && field.name !== 'id') {
-					let inputType = this.generateDummyInputTypeForFieldInfo(field, Mutation.Create);
+					let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
 					if (field.type.kind === 'NON_NULL') {
 						inputType = new GraphQLNonNull(inputType);
 					}
@@ -249,7 +271,7 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (field.name !== relationFieldName && field.name !== 'id') {
-					const inputType = this.generateDummyInputTypeForFieldInfo(field, Mutation.Update);
+					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update);
 					merge(fields, this.generateFieldForInput(
 						field.name,
 						inputType,
@@ -404,7 +426,7 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (field.name !== relationFieldName && field.name !== 'id') {
-					const inputType = this.generateDummyInputTypeForFieldInfo(field, Mutation.Upsert);
+					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Upsert);
 					merge(fields, this.generateFieldForInput(
 						field.name,
 						inputType,
