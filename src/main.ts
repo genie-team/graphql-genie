@@ -6,28 +6,49 @@ import gql from 'graphql-tag';
 
 const typeDefs = `
 
-type Post {
-  id: ID! @unique
-  createdAt: DateTime
-  updatedAt: DateTime
-  isPublished: Boolean! @default(value: "false")
-  title: String!
-  text: String!
-  author: User @relation(name: "PostsonAuthor")
-	test: String
-	user: User @relation(name: "ProfileonUser")
+interface Submission {
+	id: ID! @unique
+	title: String!
+	text: String
 }
+
+type Post implements Submission {
+  id: ID! @unique
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	likedBy: [User!] @relation(name: "LikedPosts")
+	comments: [Comment] @relation(name: "CommentsOnPost")
+	published: Boolean @default(value: "true")
+}
+
+type Comment implements Submission {
+  id: ID! @unique
+	title: String!
+	text: String
+  author: User @relation(name: "WrittenSubmissions")
+	post: Post @relation(name: "CommentsOnPost")
+	approved: Boolean @default(value: "true")
+}
+
 
 type User {
-  id: ID! @unique
-  email: String! @unique
-  password: String
-	name: String!
+	id: ID! @unique
+	email: String! @unique
+  name : String!
+  address: Address @relation(name: "UserAddress")
+	writtenSubmissions: [Submission] @relation(name: "WrittenSubmissions")
 	age: Int
-  posts: [Post]! @relation(name: "PostsonAuthor")
-	profile: Post @relation(name: "ProfileonUser")
+	birthday: Date
+	likedPosts: [Post!] @relation(name: "LikedPosts")
+	family: User
 }
 
+type Address {
+  id: ID! @unique
+  city: String!
+  user: User @relation(name: "UserAddress")
+}
 
 `;
 
@@ -39,7 +60,7 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateCreate: true,
 	generateUpdate: true,
 	generateDelete: false,
-	generateUpsert: false,
+	generateUpsert: true,
 	includeSubscription: false
 }});
 const buildClient = async (genie: GraphQLGenie) => {
@@ -55,7 +76,8 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
-
+	console.log(schema);
+	console.log(client);
 	const zeus = await client.mutate({
 		mutation: gql`
 		mutation {
@@ -65,20 +87,19 @@ const buildClient = async (genie: GraphQLGenie) => {
 						age: 42
 						email: "zeus@example.com"
 						name: "Zeus"
-						posts: {
-							create: [{
-								title: "Hello World"
-								text: "This is my first blog post ever!"
-								isPublished: true
-							}, {
-								title: "My Second Post"
-								text: "My first post was good, but this one is better!"
-								isPublished: true
-							}, {
-								title: "Solving World Hunger"
-								text: "This is a draft..."
-								isPublished: false
-							}]
+						writtenSubmissions: {
+							posts: {
+								create: [{
+									title: "Hello World"
+									text: "This is my first blog post ever!"
+								}, {
+									title: "My Second Post"
+									text: "My first post was good, but this one is better!"
+								}, {
+									title: "Solving World Hunger"
+									text: "This is a draft..."
+								}]
+							}
 						}
 					}
 					clientMutationId: "Test"
@@ -87,7 +108,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 				data {
 					id
 					name
-					posts {
+					writtenSubmissions {
 						title
 					}
 				}
@@ -96,6 +117,8 @@ const buildClient = async (genie: GraphQLGenie) => {
 		}
 		`
 	});
+
+
 
 	console.log(zeus);
 
@@ -106,7 +129,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 				input: {
 					data: {
 						title: "Genie is great"
-						isPublished: false
 						text: "Look how fast I can create an executable schema"
 						author: {
 							connect:{
@@ -128,17 +150,15 @@ const buildClient = async (genie: GraphQLGenie) => {
 	});
 	console.log(addPost);
 
-	const updateZeus = await client.mutate({
+	const addAddress = await client.mutate({
 		mutation: gql`mutation {
 			updateUser(
 				input: {
 					data: {
 						age: 43
-						profile: {
+						address: {
 							create: {
-								title: "I'm a god"
-								text: "No literally I am the God of thunder"
-								isPublished: true
+								city: "Olympus"
 							}
 						}
 					}
@@ -150,28 +170,68 @@ const buildClient = async (genie: GraphQLGenie) => {
 				data {
 					id
 					name
-					profile {
-						id
-						title
-						text
+					age
+					address {
+						city
+						user {
+							name
+						}
 					}
 				}
 			}
 		}
 		`
 	});
-	console.log(updateZeus);
+	console.log(addAddress);
 
+	const disconnectAddress = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						address: {
+							disconnect: true
+						}
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					address {
+						city
+					}
+				}
+			}
+
+		}
+		`
+	});
+	console.log(disconnectAddress);
 
 	// mutation {
 	// 	updateUser(
 	// 		input: {
 	// 			data: {
-	// 				profile: {
-	// 					disconnect: true
+	// 				age: 43
+	// 				writtenSubmissions: {
+	// 					posts: {
+	// 						update: {
+	// 							data: {
+	// 								title: "Olympus"
+	// 							}
+	// 							where:{
+	// 								id: "id"
+	// 							}
+	// 						}
+	// 					}
+
 	// 				}
 	// 			}
-	// 			where: { 
+	// 			where: {
 	// 				email: "zeus@example.com"
 	// 			}
 	// 		}
@@ -179,18 +239,51 @@ const buildClient = async (genie: GraphQLGenie) => {
 	// 		data {
 	// 			id
 	// 			name
-	// 			profile {
-	// 				id
-	// 				title
-	// 				text
+	// 			age
+	// 			address {
+	// 				city
+	// 				user {
+	// 					name
+	// 				}
 	// 			}
 	// 		}
 	// 	}
-		
 	// }
 
-
-
+	// mutation {
+	// 	upsertUser(
+	// 		input: {
+	// 			create: {
+	// 				name:"zeus"
+	// 				email: "zeus@example.com"
+	// 				age: 43
+	// 				address: {
+	// 					create: {
+	// 						city: "Olympus"
+	// 					}
+	// 				}
+	// 			}
+	// 			update:{
+	// 				age: 44
+	// 			}
+	// 			where: {
+	// 				email: "zeus@example.com"
+	// 			}
+	// 		}
+	// 	) {
+	// 		data {
+	// 			id
+	// 			name
+	// 			age
+	// 			address {
+	// 				city
+	// 				user {
+	// 					name
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 // let createPost = gql`
 // 	mutation createPost($title: String!) {

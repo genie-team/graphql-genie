@@ -6,6 +6,7 @@ import {
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
 import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set } from 'lodash';
+import pluralize from 'pluralize';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -207,55 +208,66 @@ const getValueByUnique = async (dataResolver: DataResolver, returnTypeName: stri
 	} else {
 		currValue = await dataResolver.find(returnTypeName, undefined, { match: args });
 	}
-	if (!currValue || isEmpty(currValue)) {
-		throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(args)}`);
-	}
+
 	return isArray(currValue) ? currValue[0] : currValue;
+};
+
+const setupArgs = (results: any[], args: any[]) => {
+		// setup the arguments to use the new types
+		results.forEach((types: any[]) => {
+			types = types ? types : [];
+			types.forEach(type => {
+				if (type && type.key && type.id && type.index > -1) {
+					const key = type.key;
+					const id = type.id;
+					const arg = args[type.index];
+					if (isArray(arg[key])) {
+						if (isArray(id)) {
+							arg[key] = arg[key].concat(id);
+						} else {
+							arg[key].push(id);
+						}
+					} else {
+						arg[key] = id;
+					}
+				}
+			});
+		});
+		return args;
 };
 
 const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, mutation: Mutation, dataResolver: DataResolver, currRecord: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo): Promise<Array<any>> => {
 	const promises: Array<Promise<any>> = [];
+
 	args.forEach((currArg, index) => {
 		for (const argName in currArg) {
 			let argReturnType: GraphQLOutputType;
 			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
 				argReturnType = returnType.getFields()[argName].type;
 			}
-			const argReturnRootType = getReturnGraphQLType(argReturnType);
+			let argReturnRootType = <GraphQLOutputType>getReturnGraphQLType(argReturnType);
 			if (!isScalarType(argReturnRootType)) {
 				const arg = currArg[argName];
 				if (isObject(arg) && argReturnType) {
-					promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg, _context, _info, index, argName, argReturnType));
 					currArg[argName] = fieldIsArray(argReturnType) ? [] : undefined;
+
+					if (isInterfaceType(argReturnRootType)) {
+						for (const argKey in arg) {
+							const argTypeName = capFirst(pluralize.singular(argKey));
+							argReturnRootType = <GraphQLOutputType>_info.schema.getType(argTypeName);
+							promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, argReturnRootType));
+						}
+					} else {
+						promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg, _context, _info, index, argName, argReturnRootType));
+					}
+
 				}
 			}
 		}
 	});
 
 	const results = await Promise.all(promises);
-	// setup the arguments to use the new types
-	results.forEach((types: Array<any>) => {
-		types = types ? types : [];
-		types.forEach(type => {
-			if (type && type.key && type.id && type.index > -1) {
-				const key = type.key;
-				const id = type.id;
-				const arg = args[type.index];
-				if (isArray(arg[key])) {
-					if (isArray(id)) {
-						arg[key] = arg[key].concat(id);
-					} else {
-						arg[key].push(id);
-					}
-				} else {
-					arg[key] = id;
-				}
-			} else if (type.data) {
-				currRecord = type.data;
-			}
-		});
-
-	});
+	args = setupArgs(results, args);
 
 	return args;
 
@@ -271,11 +283,18 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		}
 		const returnTypeName = getReturnType(returnType);
 		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
+
+
+
+
 		let createArgs = _args.create ? _args.create : mutation === Mutation.Create && get(_args, 'input.data') ? get(_args, 'input.data') : [];
 		createArgs = createArgs && !isArray(createArgs) ? [createArgs] : createArgs;
 
 		let updateArgs = _args.update ? _args.update : mutation === Mutation.Update && get(_args, 'input.data') ? get(_args, 'input.data') : [];
 		updateArgs = updateArgs && !isArray(updateArgs) ? [updateArgs] : updateArgs;
+
+		let upsertArgs = _args.upsert ? _args.upsert : mutation === Mutation.Upsert && get(_args, 'input.data') ? get(_args, 'input.data') : [];
+		upsertArgs = upsertArgs && !isArray(upsertArgs) ? [upsertArgs] : upsertArgs;
 
 		let deleteArgs = _args.delete ? _args.delete : mutation === Mutation.Delete && _args.input ? _args.input : [];
 		deleteArgs = deleteArgs && !isArray(deleteArgs) ? [deleteArgs] : deleteArgs;
@@ -286,26 +305,29 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		let disconnectArgs = _args.disconnect ? _args.disconnect : [];
 		disconnectArgs = disconnectArgs && !isArray(disconnectArgs) ? [disconnectArgs] : disconnectArgs;
 
-		// const disconnectArgs = _args.disconnect ? _args.disconnect : {};
-		let whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
-		if (updateArgs.where && updateArgs.data) {
-			whereArgs = updateArgs.where;
-			updateArgs = updateArgs.data;
-		}
-		if (!isEmpty(updateArgs) || !isEmpty(deleteArgs)) {
-			if (!whereArgs && !currRecord) {
-				throw new Error(`Cannot ${Mutation[mutation]} without where arguments`);
-			} else if (whereArgs) {
+		const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
+
+		if ((mutation === Mutation.Update) && !isEmpty(updateArgs)) {
+			if (whereArgs) {
+				const returnTypeName = getReturnType(returnType);
 				currRecord = await getValueByUnique(dataResolver, returnTypeName, whereArgs);
+				if (!currRecord || isEmpty(currRecord)) {
+					throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+				}
 			} else {
-				currRecord = await dataResolver.find(returnTypeName, currRecord[key]);
+				const updatePromises: Array<Promise<any>> = [];
+				updateArgs.forEach((currArg) => {
+					updatePromises.push(mutateResolver(mutation, dataResolver)(currRecord, {update: currArg.update, where: currArg.where}, _context, _info, index, key, returnType));
+				});
+				const updateResults = await Promise.all(updatePromises);
+				updateArgs = setupArgs(updateResults, updateArgs);
 			}
 		}
 
 
 		[createArgs, updateArgs] = await Promise.all([
-			resolveArgs(createArgs, returnType, mutation, dataResolver, currRecord, _args, _context, _info),
-			resolveArgs(updateArgs, returnType, mutation, dataResolver, currRecord, _args, _context, _info)
+			resolveArgs(createArgs, returnType, Mutation.Create, dataResolver, currRecord, _args, _context, _info),
+			resolveArgs(updateArgs, returnType, Mutation.Update, dataResolver, currRecord, _args, _context, _info)
 		]);
 
 
@@ -379,7 +401,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (!isEmpty(disconnectIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
 				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(data => {
-					resolve({index, key, id: null, data});
+					resolve({index, key, id: data[key], data});
 				});
 			}));
 		}
@@ -392,9 +414,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (recursed) {
 			return dataResult;
 		} else {
+			const defaultVal = (currRecord && updateArgs && updateArgs[0]) ? Object.assign(currRecord, updateArgs[0]) : null;
+
 			return {
 				// if everything was already done on the object (deletions and disconnects) it should be the currRecord
-				data: get(dataResult, '[0].data', currRecord),
+				data: get(dataResult, '[0].data', defaultVal),
 				clientMutationId
 			};
 		}
@@ -408,6 +432,10 @@ export const createResolver = (dataResolver: DataResolver) => {
 
 export const updateResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.Update, dataResolver);
+};
+
+export const upsertResolver = (dataResolver: DataResolver) => {
+	return mutateResolver(Mutation.Upsert, dataResolver);
 };
 
 const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) => {
@@ -519,4 +547,13 @@ export const getPayloadTypeDef = (typeName: string): string => {
 			data: ${typeName}!
 			clientMutationId: String
 		}`;
+};
+
+
+export const  capFirst = (val: string) => {
+	return val ? val.charAt(0).toUpperCase() + val.slice(1) : '';
+};
+
+export const lowerFirst = (val: string) => {
+	return val ? val.charAt(0).toLowerCase() + val.slice(1) : '';
 };

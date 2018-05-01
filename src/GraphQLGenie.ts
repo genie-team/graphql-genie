@@ -198,13 +198,10 @@ export default class GraphQLGenie {
 
 
 		let newTypes = '';
-		console.log(currInputObjectTypes);
 		currInputObjectTypes.forEach(inputObjectType => {
 			// console.log(printType(inputObjectType));
 			newTypes += printType(inputObjectType) + '\n';
 		});
-		console.log(newTypes);
-
 
 		currOutputObjectTypeDefs.forEach(newType => {
 			newTypes += newType + '\n';

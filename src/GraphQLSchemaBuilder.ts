@@ -65,12 +65,13 @@ export default class GraphQLSchemaBuilder {
 				requireResolversForResolveType: false
 			}
 		});
+		const typeMap = this.schema.getTypeMap();
+
 		if (this.typeDefs.includes('@model')) {
 			SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
 				model: ModelDirective
 			});
 		} else {
-			const typeMap = this.schema.getTypeMap();
 			Object.keys(typeMap).forEach(name => {
 				const type = typeMap[name];
 				if (isObjectType(type) && !type.name.includes('__') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
@@ -79,6 +80,7 @@ export default class GraphQLSchemaBuilder {
 				}
 			});
 		}
+
 
 		return this.schema;
 	}

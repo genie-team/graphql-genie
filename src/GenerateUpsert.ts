@@ -2,7 +2,7 @@
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
 	GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import {Relations,  getPayloadTypeDef, getPayloadTypeName, updateResolver} from './TypeGeneratorUtils';
+import {Relations,  getPayloadTypeDef, getPayloadTypeName, upsertResolver} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
 
 export class GenerateUpsert implements TypeGenerator {
@@ -41,27 +41,28 @@ export class GenerateUpsert implements TypeGenerator {
 			const args = {};
 
 			const generator = new InputGenerator(this.schema.getType(type.name), this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
-			const updateInputName = `Update${type.name}MutationInput`;
-			const updateInput =  new GraphQLInputObjectType({
-				name: updateInputName,
+			const upsertInputName = `Upsert${type.name}MutationInput`;
+			const upsertInput =  new GraphQLInputObjectType({
+				name: upsertInputName,
 				fields: {
-					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
+					create: {type: new GraphQLNonNull(generator.generateCreateInput())},
+					update: {type: new GraphQLNonNull(generator.generateUpdateInput())},
 					where: {type: new GraphQLNonNull(generator.generateWhereUniqueInput())},
 					clientMutationId: {type: GraphQLString}
 				}
 			});
-			this.currInputObjectTypes.set(updateInputName, updateInput);
+			this.currInputObjectTypes.set(upsertInputName, upsertInput);
 			args['input'] = {
-				type: new GraphQLNonNull(updateInput)
+				type: new GraphQLNonNull(upsertInput)
 			};
 
 			const outputTypeName = getPayloadTypeName(type.name);
-			this.fields[`update${type.name}`] = {
+			this.fields[`upsert${type.name}`] = {
 				type: outputTypeName,
 				args: args
 			};
 			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
-			this.resolvers.set(`update${type.name}`, updateResolver(this.dataResolver));
+			this.resolvers.set(`upsert${type.name}`, upsertResolver(this.dataResolver));
 		});
 
 	}
