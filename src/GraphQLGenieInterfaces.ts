@@ -7,9 +7,9 @@ export interface TypeGenerator {
 
 export interface DataResolver {
 	getLink(graphQLTypeName: string, field: string): string;
-	delete(graphQLTypeName: string, ids?: [string], include?, meta?): Promise<any>;
+	delete(graphQLTypeName: string, ids?: string[], include?, meta?): Promise<any>;
 	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
-	find(graphQLTypeName: string, ids?: [string], options?, include?, meta?): Promise<any>;
+	find(graphQLTypeName: string, ids?: string[], options?, include?, meta?): Promise<any>;
 	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
 }
 

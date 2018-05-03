@@ -36,18 +36,19 @@ type User {
 	id: ID! @unique
 	email: String! @unique
   name : String!
-  address: Address @relation(name: "UserAddress")
+  address: Address
 	writtenSubmissions: [Submission] @relation(name: "WrittenSubmissions")
 	age: Int
 	birthday: Date
 	likedPosts: [Post!] @relation(name: "LikedPosts")
-	family: User
+	family: [User]
+	match: User
 }
 
 type Address {
   id: ID! @unique
   city: String!
-  user: User @relation(name: "UserAddress")
+  user: User
 }
 
 `;
@@ -59,7 +60,7 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateGetAll: true,
 	generateCreate: true,
 	generateUpdate: true,
-	generateDelete: false,
+	generateDelete: true,
 	generateUpsert: true,
 	includeSubscription: false
 }});
@@ -109,6 +110,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 					id
 					name
 					writtenSubmissions {
+						id
 						title
 					}
 				}
@@ -212,44 +214,371 @@ const buildClient = async (genie: GraphQLGenie) => {
 	});
 	console.log(disconnectAddress);
 
-	// mutation {
-	// 	updateUser(
-	// 		input: {
-	// 			data: {
-	// 				age: 43
-	// 				writtenSubmissions: {
-	// 					posts: {
-	// 						update: {
-	// 							data: {
-	// 								title: "Olympus"
-	// 							}
-	// 							where:{
-	// 								id: "id"
-	// 							}
-	// 						}
-	// 					}
+	const secondPostId = zeus.data.createUser.data.writtenSubmissions[1].id;
+	const updatePostOnUser = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						age: 23
+						writtenSubmissions: {
+              posts: {
+                update: [
+                  {
+                    data: {
+                      title: "My Updated Post"
+                    }
+                    where: {
+                      id: "${secondPostId}"
+                    }
+                  }
+                ]
+              }
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					writtenSubmissions {
+            title
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(updatePostOnUser);
 
-	// 				}
-	// 			}
-	// 			where: {
-	// 				email: "zeus@example.com"
-	// 			}
-	// 		}
-	// 	) {
-	// 		data {
-	// 			id
-	// 			name
-	// 			age
-	// 			address {
-	// 				city
-	// 				user {
-	// 					name
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 
+	const upsertCreate = await client.mutate({
+		mutation: gql`mutation {
+			upsertUser(
+				input: {
+					create: {
+            name: "Corey"
+						email: "corey@genie.com"
+					}
+          update: {
+            age: 30
+          }
+					where: {
+						email: "corey@genie.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+          email
+					age
+				}
+			}
+		}
+		`
+	});
+	console.log(upsertCreate);
+
+	const upsertUpdate = await client.mutate({
+		mutation: gql`mutation {
+			upsertUser(
+				input: {
+					create: {
+            name: "Corey"
+						email: "corey@genie.com"
+					}
+          update: {
+            age: 30
+          }
+					where: {
+						email: "corey@genie.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+          email
+					age
+				}
+			}
+		}
+		`
+	});
+	console.log(upsertUpdate);
+
+
+	const nestedUpsertCreate = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						family: {
+              upsert: [
+                {
+                  update: {
+                    age: 5000
+                  }
+                  create: {
+                    name: "Loki"
+                    email: "loki@example.com"
+                  }
+                  where:{
+                    email: "loki@example.com"
+                  }
+                }
+              ]
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					family {
+            name
+            email
+            age
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(nestedUpsertCreate);
+
+	const nestedUpsertUpdate = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						family: {
+              upsert: [
+                {
+                  update: {
+                    age: 5000
+                  }
+                  create: {
+                    name: "Loki"
+                    email: "loki@example.com"
+                  }
+                  where:{
+                    email: "loki@example.com"
+                  }
+                }
+              ]
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					family {
+            name
+            email
+            age
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(nestedUpsertUpdate);
+
+	const nestedUpsertCreateSingle = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						address: {
+              upsert: {
+                create: {
+                	city: "New York"
+                }
+                update: {
+                  city: "Olympus"
+                }
+              }
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					address {
+            id
+            city
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(nestedUpsertCreateSingle);
+
+	const nestedUpsertUpdateSingle = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						address: {
+              upsert: {
+                create: {
+                	city: "New York"
+                }
+                update: {
+                  city: "Olympus"
+                }
+              }
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					address {
+            id
+            city
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(nestedUpsertUpdateSingle);
+
+	const nestedUpdateSingle = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						address: {
+              update: {
+                city: "ec"
+              }
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					address {
+            id
+            city
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(nestedUpdateSingle);
+
+
+	const deleteUser = await client.mutate({
+		mutation: gql`mutation {
+			deleteUser(input: {
+				where: {
+					email: "corey@genie.com"
+				}
+			}) {
+				data {
+					id
+					name
+					email
+				}
+			}
+		}
+		`
+	});
+	console.log(deleteUser);
+
+	const deleteAddressFromUser = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						address: {
+              delete: true
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					address {
+            id
+            city
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(deleteAddressFromUser);
+
+	const deletePostFromUser = await client.mutate({
+		mutation: gql`mutation {
+			updateUser(
+				input: {
+					data: {
+						writtenSubmissions: {
+              posts: {
+                delete: [{    id: "${secondPostId}"}]
+              }
+            }
+					}
+					where: {
+						email: "zeus@example.com"
+					}
+				}
+			) {
+				data {
+					id
+					name
+					age
+					writtenSubmissions {
+            title
+          }
+				}
+			}
+		}
+		`
+	});
+	console.log(deletePostFromUser);
 	// mutation {
 	// 	upsertUser(
 	// 		input: {

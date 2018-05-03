@@ -78,7 +78,7 @@ export default class FortuneGraph implements DataResolver {
 		return isArray(records) ? results : results[0];
 	}
 
-	public delete = async (graphQLTypeName: string, ids?: [string], meta?) => {
+	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		await this.store.delete(fortuneType, ids, meta);
 		return true;
@@ -172,10 +172,7 @@ export default class FortuneGraph implements DataResolver {
 						let inverse: string;
 						if (isString(currType)) {
 							currType = this.getFortuneTypeName(currType);
-							const relation = get(field, 'metadata.relation');
-							if (!isEmpty(relation) && relation.name) {
-								inverse = relations.getInverse(relation.name, currType, field.name);
-							}
+							inverse = relations.getInverseWithoutName(currType, field.name);
 						}
 						currType = isArray ? Array(currType) : currType;
 						if (inverse) {

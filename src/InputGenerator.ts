@@ -224,8 +224,8 @@ export class InputGenerator {
 		const name = fieldType.name + 'CreateManyInput';
 		if (!this.currInputObjectTypes.has(name)) {
 			const fields = {};
-			fields['create'] = new GraphQLList(new GraphQLNonNull(this.generateCreateWithoutInput(fieldType)));
-			fields['connect'] = new GraphQLList(new GraphQLNonNull(this.generateWhereUniqueInput(fieldType)));
+			fields['create'] = {type: new GraphQLList(new GraphQLNonNull(this.generateCreateWithoutInput(fieldType)))};
+			fields['connect'] = {type: new GraphQLList(new GraphQLNonNull(this.generateWhereUniqueInput(fieldType)))};
 			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
@@ -298,8 +298,7 @@ export class InputGenerator {
 					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update);
 					merge(fields, this.generateFieldForInput(
 						field.name,
-						inputType,
-						get(field, 'metadata.defaultValue')));
+						inputType));
 				}
 			});
 
@@ -423,8 +422,7 @@ export class InputGenerator {
 					}
 					merge(fields, this.generateFieldForInput(
 						field.name,
-						inputType,
-						get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
+						inputType));
 				}
 			});
 
