@@ -17,12 +17,16 @@ comments: []};
 
 
 const createUser = gql`
-mutation createUser($name: String!, $age: Int, $birthday: Date) {
-	createUser(name: $name, age: $age, birthday: $birthday) {
-		id
-		name
-		age
-		birthday
+mutation createUser($input: CreateUserMutationInput!) {
+	createUser(input: $input) {
+		data {
+			id
+			name
+			age
+			birthday
+			email
+		}
+		clientMutationId
 	}
 }
 `;
@@ -33,48 +37,54 @@ describe('genie', () => {
 		const $name = 'Corey J';
 		const $age = 30;
 		const $birthday = '1988-02-23';
+		const $email = 'coreyj@example.com';
 
 
 		const user = await client.mutate({
 			mutation: createUser,
-			variables: { name: $name, age: $age, birthday: $birthday }
+			variables: { input: {clientMutationId: 'create simple user', data: { name: $name, age: $age, birthday: $birthday, email: $email }}}
 		});
-		testData.users.push(user.data.createUser);
-		expect(user.data.createUser.name).toBe($name);
-		expect(user.data.createUser.age).toBe($age);
-		expect(user.data.createUser.birthday).toBe($birthday);
+		testData.users.push(user.data.createUser.data);
+		expect(user.data.createUser.clientMutationId).toBe('create simple user');
+		expect(user.data.createUser.data.name).toBe($name);
+		expect(user.data.createUser.data.age).toBe($age);
+		expect(user.data.createUser.data.birthday).toBe($birthday);
+		expect(user.data.createUser.data.email).toBe($email);
 	});
 
 
-	test('create - post under existing user', async () => {
-		const title = 'Genie is great';
+	test('create - post on existing user', async () => {
+		const $title = 'Genie is great';
 		const createPost = gql`
-			mutation createPost($title: String!, $authorId: ID) {
-				createPost(title: $title, authorId: $authorId) {
-					id
-					title
-					author {
+			mutation createPost($input: CreatePostMutationInput!) {
+				createPost(input: $input) {
+					data {
 						id
-						name
+						title
+						author {
+							id
+							name
+							email
+						}
 					}
 				}
 			}
 			`;
 		const result = await client.mutate({
 			mutation: createPost,
-			variables: { title: title, authorId: testData.users[0].id}
+			variables: { input: {data: { title: $title, author: {connect: {id: testData.users[0].id}}}}}
 		});
-		testData.posts.push(result.data.createPost);
-		expect(result.data.createPost.title).toBe(title);
-		expect(result.data.createPost.author.id).toBe(testData.users[0].id);
-		expect(result.data.createPost.author.name).toBe(testData.users[0].name);
+		testData.posts.push(result.data.createPost.data);
+		expect(result.data.createPost.data.title).toBe($title);
+		expect(result.data.createPost.data.author.id).toBe(testData.users[0].id);
+		expect(result.data.createPost.data.author.name).toBe(testData.users[0].name);
 	});
 
 
 	test('find - make sure user also has post', async () => {
-		const user = gql`
-			query User($id: ID!) {
-				User(id: $id) {
+		const users = gql`
+			query users($filter: JSON) {
+				users(filter: $filter) {
 					id
 					writtenSubmissions {
 						id
@@ -82,98 +92,103 @@ describe('genie', () => {
 				}
 			}
 			`;
-		const result = await client.query({
-			query: user,
-			variables: { id: testData.users[0].id}
-		});
 
-		expect(result.data['User'].writtenSubmissions[0].id).toBe(testData.posts[0].id);
+		const result = await client.query({
+			query: users,
+			variables: {filter: { match: {id: testData.users[0].id}}}
+		});
+		expect(result.data['users'][0].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
 
 	test('create - post with new user', async () => {
-		const title = 'Genie is more than great';
-		const authorName = 'Totally Real Person';
+		const $title = 'Genie is more than great';
+		const $authorName = 'Totally Real Person';
+		const $email = 'real@example.com';
 		const createPost = gql`
-			mutation createPost($title: String!, $author: UserInput) {
-				createPost(title: $title, author: $author) {
-					id
-					title
-					author {
+			mutation createPost($input: CreatePostMutationInput!) {
+				createPost(input: $input) {
+					data {
 						id
-						name
+						title
+						author {
+							id
+							name
+							email
+						}
 					}
 				}
 			}
 			`;
+
 		const result = await client.mutate({
 			mutation: createPost,
-			variables: { title: title, author: {
-				name: authorName,
-			}}
+			variables: { input: {data: { title: $title, author: {create: {name: $authorName, email: $email}}}}}
 		});
-		testData.posts.push(result.data.createPost);
-		testData.users.push(result.data.createPost.author);
-		expect(result.data.createPost.title).toBe(title);
-		expect(result.data.createPost.author.id).toBeDefined();
-		expect(result.data.createPost.author.name).toBe(authorName);
+		testData.posts.push(result.data.createPost.data);
+		testData.users.push(result.data.createPost.data.author);
+		expect(result.data.createPost.data.title).toBe($title);
+		expect(result.data.createPost.data.author.id).toBeDefined();
+		expect(result.data.createPost.data.author.name).toBe($authorName);
+		expect(result.data.createPost.data.author.email).toBe($email);
 	});
 
 	test('create - simple address', async () => {
-		const city = 'Eau Claire';
+		const $city = 'Eau Claire';
 		const createAddress = gql`
-			mutation createAddress($city: String!) {
-				createAddress(city: $city) {
-					id
-					city
+			mutation createAddress($input: CreateAddressMutationInput!) {
+				createAddress(input: $input) {
+					data {
+						id
+						city
+					}
 				}
 			}
 			`;
 		const result = await client.mutate({
 			mutation: createAddress,
-			variables: { city: city}
+			variables: {input: { data: {city: $city}}}
 		});
-		testData.addresses.push(result.data.createAddress);
-		expect(result.data.createAddress.city).toBe(city);
+		testData.addresses.push(result.data.createAddress.data);
+		expect(result.data.createAddress.data.city).toBe($city);
 	});
 
 	test('set - set user address', async () => {
-		const setUserAddress = gql`
-			mutation setUserAddress($addressAddressId: ID!, $userUserId: ID!) {
-				setUserAddress(addressAddressId: $addressAddressId, userUserId: $userUserId	) {
-					addressAddress {
-						id
-						city
-						user {
-							name
-						}
-					}
-					userUser {
+		const updateUser = gql`
+			mutation updateUser($input: UpdateUserMutationInput!) {
+				updateUser(input: $input	) {
+					data {
 						id
 						name
 						address {
+							id
 							city
+							user {
+								name
+							}
 						}
 					}
 				}
 			}
 			`;
 		const result = await client.mutate({
-			mutation: setUserAddress,
-			variables: { userUserId: testData.users[0].id, addressAddressId: testData.addresses[0].id}
+			mutation: updateUser,
+			variables: {input : {
+				where: {id: testData.users[0].id},
+				data: {address: {connect: {id: testData.addresses[0].id}}}
+			}}
 		});
 
-		expect(result.data.setUserAddress.addressAddress.id).toBe(testData.addresses[0].id);
-		expect(result.data.setUserAddress.addressAddress.city).toBe(testData.addresses[0].city);
-		expect(result.data.setUserAddress.addressAddress.user.name).toBe(testData.users[0].name);
-		expect(result.data.setUserAddress.userUser.id).toBe(testData.users[0].id);
-		expect(result.data.setUserAddress.userUser.name).toBe(testData.users[0].name);
-		expect(result.data.setUserAddress.userUser.address.city).toBe(testData.addresses[0].city);
+		expect(result.data.updateUser.data.id).toBe(testData.users[0].id);
+		expect(result.data.updateUser.data.name).toBe(testData.users[0].name);
+		expect(result.data.updateUser.data.address.id).toBe(testData.addresses[0].id);
+		expect(result.data.updateUser.data.address.city).toBe(testData.addresses[0].city);
+		expect(result.data.updateUser.data.address.user.name).toBe(testData.users[0].name);
 	});
 
 	test('find - make sure setting address worked', async () => {
-		const user = gql`
-			query User($id: ID!) {
-				User(id: $id) {
+		const users = gql`
+			query users($filter: JSON) {
+				users(filter: $filter) {
 					id
 					address {
 						id
@@ -183,12 +198,11 @@ describe('genie', () => {
 			}
 			`;
 		const result = await client.query({
-			query: user,
-			variables: { id: testData.users[0].id}
+			query: users,
+			variables: {filter: { match: {id: testData.users[0].id}}}
 		});
-
-		expect(result.data['User'].address.id).toBe(testData.addresses[0].id);
-		expect(result.data['User'].address.city).toBe(testData.addresses[0].city);
+		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
+		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
 	});
 
 	test('find - try out some fragments', async () => {
@@ -199,9 +213,9 @@ describe('genie', () => {
 				title
 			}
 		}`;
-		const user = gql`
-			query User($id: ID!) {
-				User(id: $id) {
+		const users = gql`
+		query users($filter: JSON) {
+			users(filter: $filter) {
 					id
 					address {
 						id
@@ -215,47 +229,46 @@ describe('genie', () => {
 			${fragment}
 			`;
 		const result = await client.query({
-			query: user,
-			variables: { id: testData.users[0].id}
+			query: users,
+			variables: {filter: { match: {id: testData.users[0].id}}}
 		});
-		console.log(result.data);
-		expect(result.data['User'].address.id).toBe(testData.addresses[0].id);
-		expect(result.data['User'].address.city).toBe(testData.addresses[0].city);
-		expect(result.data['User'].address.user.writtenSubmissions[0].id).toBe(testData.posts[0].id);
+		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
+		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
+		expect(result.data['users'][0].address.user.writtenSubmissions[0].id).toBe(testData.posts[0].id);
 
 	});
 
 
-	test('unset - unset user address', async () => {
-		const unsetUserAddress = gql`
-			mutation unsetUserAddress($addressAddressId: ID!, $userUserId: ID!) {
-				unsetUserAddress(addressAddressId: $addressAddressId, userUserId: $userUserId	) {
-					addressAddress {
+	test('disconnect - disconnect user address', async () => {
+		const updateAddress = gql`
+			mutation updateAddress($input: UpdateAddressMutationInput!) {
+				updateAddress(input: $input	) {
+					data {
 						id
 						city
-					}
-					userUser {
-						id
-						name
+						user {
+							id
+						}
 					}
 				}
 			}
 			`;
 		const result = await client.mutate({
-			mutation: unsetUserAddress,
-			variables: { userUserId: testData.users[0].id, addressAddressId: testData.addresses[0].id}
+			mutation: updateAddress,
+			variables: {input: {
+				where: {id: testData.addresses[0].id},
+				data: {user: {disconnect: true}}
+			}}
 		});
-
-		expect(result.data.unsetUserAddress.addressAddress.id).toBe(testData.addresses[0].id);
-		expect(result.data.unsetUserAddress.addressAddress.city).toBe(testData.addresses[0].city);
-		expect(result.data.unsetUserAddress.userUser.id).toBe(testData.users[0].id);
-		expect(result.data.unsetUserAddress.userUser.name).toBe(testData.users[0].name);
+		expect(result.data.updateAddress.data.id).toBe(testData.addresses[0].id);
+		expect(result.data.updateAddress.data.city).toBe(testData.addresses[0].city);
+		expect(result.data.updateAddress.data.user).toBeNull();
 	});
 
-	test('find - make sure unsetting address worked', async () => {
-		const user = gql`
-			query User($id: ID!) {
-				User(id: $id) {
+	test('find - make sure disconnect address worked', async () => {
+		const users = gql`
+			query users($filter: JSON) {
+				users(filter: $filter) {
 					id
 					address {
 						id
@@ -265,104 +278,156 @@ describe('genie', () => {
 			}
 			`;
 		const result = await client.query({
-			query: user,
-			variables: { id: testData.users[0].id}
+			query: users,
+			variables: {filter: { match: {id: testData.users[0].id}}}
 		});
 
-		expect(result.data['User'].address).toBeNull();
-
+		expect(result.data['users'][0].address).toBeNull();
 	});
 
 	test('create - create comment on user', async () => {
-		const title = 'Nice post';
+		const $title = 'Nice post';
 		const createComment = gql`
-			mutation createComment($title: String!, $authorId: ID) {
-				createComment(title: $title, authorId: $authorId) {
-					id
-					title
-					author {
+			mutation createComment($input: CreateCommentMutationInput!) {
+				createComment(input: $input) {
+					data {
 						id
-						name
+						title
+						approved
+						author {
+							id
+							name
+							email
+						}
 					}
 				}
 			}
 			`;
 		const result = await client.mutate({
 			mutation: createComment,
-			variables: { title: title, authorId: testData.users[0].id}
+			variables: { input: {data: { title: $title, author: {connect: {id: testData.users[0].id}}}}}
 		});
-		testData.comments.push(result.data.createComment);
-		expect(result.data.createComment.title).toBe(title);
-		expect(result.data.createComment.author.id).toBe(testData.users[0].id);
-		expect(result.data.createComment.author.name).toBe(testData.users[0].name);
+		testData.comments.push(result.data.createComment.data);
+		expect(result.data.createComment.data.title).toBe($title);
+		expect(result.data.createComment.data.approved).toBe(true);
+		expect(result.data.createComment.data.author.id).toBe(testData.users[0].id);
+		expect(result.data.createComment.data.author.name).toBe(testData.users[0].name);
 	});
 
-	test('find - comment is on user with default approval status', async () => {
-		const user = gql`
-			query User($id: ID!) {
-				User(id: $id) {
-					name
-					writtenSubmissions {
+	test('create - create another comment on user', async () => {
+		const $title = 'Bad post';
+		const createComment = gql`
+			mutation createComment($input: CreateCommentMutationInput!) {
+				createComment(input: $input) {
+					data {
 						id
 						title
-						... on Comment {
-							approved
+						approved
+						author {
+							id
+							name
+							email
 						}
 					}
 				}
 			}
 			`;
+		const result = await client.mutate({
+			mutation: createComment,
+			variables: { input: {data: { approved: false, title: $title, author: {connect: {id: testData.users[0].id}}}}}
+		});
+		testData.comments.push(result.data.createComment.data);
+		expect(result.data.createComment.data.title).toBe($title);
+		expect(result.data.createComment.data.approved).toBe(false);
+
+		expect(result.data.createComment.data.author.id).toBe(testData.users[0].id);
+		expect(result.data.createComment.data.author.name).toBe(testData.users[0].name);
+	});
+
+	test('find - comment is on user with default approval status', async () => {
+		const users = gql`
+		query users($filter: JSON) {
+			users(filter: $filter) {
+				id
+				writtenSubmissions {
+					id
+					title
+					... on Comment {
+						approved
+					}
+				}
+			}
+		}
+		`;
+
 		const result = await client.query({
-			query: user,
-			variables: { id: testData.users[0].id}
+			query: users,
+			variables: {filter: { match: {id: testData.users[0].id}}}
 		});
 
-
-		expect(result.data['User'].writtenSubmissions).toHaveLength(2);
-		expect(result.data['User'].writtenSubmissions[1].title).toBe(testData.comments[0].title);
-		expect(result.data['User'].writtenSubmissions[1].approved).toBe(true);
+		expect(result.data['users'][0].writtenSubmissions).toHaveLength(3);
+		expect(result.data['users'][0].writtenSubmissions[1].title).toBe(testData.comments[0].title);
+		expect(result.data['users'][0].writtenSubmissions[1].approved).toBe(true);
 
 
 	});
 
-	test('addTo - add comment to post', async () => {
-		const addToCommentsOnPost = gql`
-			mutation addToCommentsOnPost($commentsCommentId: ID!, $postPostId: ID!) {
-				addToCommentsOnPost(commentsCommentId: $commentsCommentId, postPostId: $postPostId) {
-					commentsComment {
+	test('addTo - add comment to post and create a new one', async () => {
+		const updatePost = gql`
+			mutation updatePost($input: UpdatePostMutationInput!) {
+				updatePost(input: $input	) {
+					data {
 						id
 						title
-					}
-					postPost {
-						id
-						title
+						comments {
+							id
+							title
+							approved
+							author {
+								name
+							}
+						}
 					}
 				}
 			}
 			`;
 		const result = await client.mutate({
-			mutation: addToCommentsOnPost,
-			variables: { commentsCommentId: testData.comments[0].id, postPostId: testData.posts[0].id}
+			mutation: updatePost,
+			variables: {input: {
+				where: {id: testData.posts[0].id},
+				data: {comments: {
+					connect: [
+						{id: testData.comments[0].id},
+						{id: testData.comments[1].id}
+					],
+					create: [
+						{title: 'best post ever'}
+					]
+				}}
+			}}
 		});
 
-		expect(result.data.addToCommentsOnPost.commentsComment.id).toBe(testData.comments[0].id);
-		expect(result.data.addToCommentsOnPost.commentsComment.title).toBe(testData.comments[0].title);
-		expect(result.data.addToCommentsOnPost.postPost.id).toBe(testData.posts[0].id);
-		expect(result.data.addToCommentsOnPost.postPost.title).toBe(testData.posts[0].title);
+		expect(result.data.updatePost.data.comments).toHaveLength(3);
+		expect(result.data.updatePost.data.comments[1].id).toBe(testData.comments[0].id);
+		expect(result.data.updatePost.data.comments[1].author.name).toBe(testData.users[0].name);
+		expect(result.data.updatePost.data.comments[2].id).toBe(testData.comments[1].id);
+		expect(result.data.updatePost.data.comments[0].title).toBe('best post ever');
+		expect(result.data.updatePost.data.comments[0].author).toBeNull();
+		expect(result.data.updatePost.data.comments[0].approved).toBe(true);
 	});
 
 	test('all filter - filter by age', async () => {
 		const zain = await client.mutate({
 			mutation: createUser,
-			variables: { name: 'Zain', age: 22, birthday: '1996-01-22' }
+			variables: { input: {data: { name: 'Zain', age: 22, birthday: '1996-01-22', email: 'zain@example.com'}}}
 		});
 		const steve = await client.mutate({
 			mutation: createUser,
-			variables: { name: 'Steve', age: 26, birthday: '1992-06-02' }
+			variables: { input: {data: { name: 'Steve', age: 26, birthday: '1992-06-02', email: 'steve@example.com' }}}
 		});
 
-		testData.users.push(zain.data.createUser);
-		testData.users.push(steve.data.createUser);
+		testData.users.push(zain.data.createUser.data);
+		testData.users.push(steve.data.createUser.data);
 
 
 		const users = gql`
@@ -424,9 +489,9 @@ describe('genie', () => {
 //       writtenSubmissions: true
 //     }
 //     writtenSubmissions: {
-//       match: {
-//         title: "Genie is great"
-//       }
+		// match: {
+		//   title: "Genie is great"
+		// }
 //     }
 //   }) {
 //     name

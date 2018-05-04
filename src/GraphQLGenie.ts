@@ -15,6 +15,7 @@ import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 import { Relations, computeRelations, getReturnType } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 import { GenerateUpsert } from './GenerateUpsert';
+import { GenerateConnections } from './GenerateConnections';
 
 
 export default class GraphQLGenie {
@@ -25,6 +26,7 @@ export default class GraphQLGenie {
 		generateUpdate: true,
 		generateDelete: true,
 		generateUpsert: true,
+		generateConnectionQueries: true,
 		includeSubscription: true
 	};
 	private generators: Array<TypeGenerator>;
@@ -180,6 +182,9 @@ export default class GraphQLGenie {
 		if (this.config.generateGetAll) {
 			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema));
 		}
+		if (this.config.generateConnectionQueries) {
+			this.generators.push(new GenerateConnections(this.graphQLFortune, 'Query', nodeTypes, this.schema, currOutputObjectTypeDefs));
+		}
 		if (this.config.generateCreate) {
 			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
@@ -229,7 +234,7 @@ export default class GraphQLGenie {
 		fieldsOnObject.forEach((fields, objName) => {
 			newTypes += printType(new GraphQLObjectType({ name: objName, fields: fields })) + '\n';
 		});
-		console.log(newTypes);
+		// console.log(newTypes);
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 

@@ -579,38 +579,67 @@ const buildClient = async (genie: GraphQLGenie) => {
 		`
 	});
 	console.log(deletePostFromUser);
+
+	const createComment = gql`
+	mutation createComment($input: CreatePostMutationInput!) {
+		createComment(input: $input) {
+			data {
+				id
+				title
+				approved
+				author {
+					id
+					name
+					email
+				}
+			}
+		}
+	}
+	`;
+const result = await client.mutate({
+	mutation: createComment,
+	variables: { input: {data: { title: 'nice post', author: {connect: {email: 'zeus@example.com'}}}}}
+});
+console.log(result);
 	// mutation {
-	// 	upsertUser(
+	// 	createUser(
 	// 		input: {
-	// 			create: {
-	// 				name:"zeus"
+	// 			data: {
+	// 				age: 42
 	// 				email: "zeus@example.com"
-	// 				age: 43
-	// 				address: {
-	// 					create: {
-	// 						city: "Olympus"
-	// 					}
-	// 				}
+	// 				name: "Zeus"
 	// 			}
-	// 			update:{
-	// 				age: 44
-	// 			}
-	// 			where: {
-	// 				email: "zeus@example.com"
-	// 			}
+	// 			clientMutationId: "Test"
 	// 		}
 	// 	) {
 	// 		data {
 	// 			id
 	// 			name
-	// 			age
-	// 			address {
-	// 				city
-	// 				user {
-	// 					name
+	// 		}
+	// 		clientMutationId
+	// 	}
+	// }
+
+	// mutation {
+	// 	createPost(
+	// 		input: {
+	// 			data: {
+	// 				title: "should not create"
+	// 				author: {
+	// 					create: {
+	// 						name: "zeus"
+	// 						email: "zeus@example.com"
+	// 					}
 	// 				}
 	// 			}
+	// 			clientMutationId: "Test"
 	// 		}
+	// 	) {
+	// 		data {
+	// 			id
+	// 			title
+	// 		}
+	// 		clientMutationId
 	// 	}
 	// }
 

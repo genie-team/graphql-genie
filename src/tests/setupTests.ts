@@ -6,22 +6,23 @@ import GraphQLGenie  from '../GraphQLGenie';
 const typeDefs = `
 
 interface Submission {
-	id: ID! @isUnique
+	id: ID! @unique
 	title: String!
 	text: String
 }
 
-type Post implements Submission @model {
-  id: ID! @isUnique
+type Post implements Submission {
+  id: ID! @unique
 	title: String!
 	text: String
   author: User @relation(name: "WrittenSubmissions")
-	likedBy: [User!]! @relation(name: "LikedPosts")
+	likedBy: [User!] @relation(name: "LikedPosts")
 	comments: [Comment] @relation(name: "CommentsOnPost")
+	published: Boolean @default(value: "true")
 }
 
-type Comment implements Submission @model {
-  id: ID! @isUnique
+type Comment implements Submission {
+  id: ID! @unique
 	title: String!
 	text: String
   author: User @relation(name: "WrittenSubmissions")
@@ -30,21 +31,23 @@ type Comment implements Submission @model {
 }
 
 
-type User @model {
-  id: ID! @isUnique
+type User {
+	id: ID! @unique
+	email: String! @unique
   name : String!
-  address: Address @relation(name: "UserAddress")
+  address: Address
 	writtenSubmissions: [Submission] @relation(name: "WrittenSubmissions")
 	age: Int
 	birthday: Date
-	likedPosts: [Post!]! @relation(name: "LikedPosts")
+	likedPosts: [Post!] @relation(name: "LikedPosts")
+	family: [User]
 	match: User
 }
 
-type Address @model {
-  id: ID! @isUnique
+type Address {
+  id: ID! @unique
   city: String!
-  user: User @relation(name: "UserAddress")
+  user: User
 }
 `;
 process['testSetup'] = {};

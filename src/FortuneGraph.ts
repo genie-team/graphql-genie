@@ -1,7 +1,7 @@
 import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
-import { each, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
+import { each, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import { DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
@@ -26,20 +26,22 @@ export default class FortuneGraph implements DataResolver {
 		} else {
 			currValue = await this.find(returnTypeName, undefined, { match: args });
 		}
-	
 		return isArray(currValue) ? currValue[0] : currValue;
-	};
+	}
 
-	private ensureNoDuplicates = async (fortuneTypeName: string, records: Object): Promise<boolean> => {
+	public canAdd = async (graphQLTypeName: string, inputRecords: object[]): Promise<boolean> => {
+		const fortuneTypeName = this.getFortuneTypeName(graphQLTypeName);
 		let canAdd = true;
-		if (records && this.uniqueIndexes.has(fortuneTypeName)) {			
+		if (inputRecords && this.uniqueIndexes.has(fortuneTypeName)) {
 			await Promise.all(this.uniqueIndexes.get(fortuneTypeName).map(async (fieldName) => {
-				if (canAdd && records.hasOwnProperty(fieldName)) {					
-					const record = await this.getValueByUnique(fortuneTypeName, {[fieldName]: records[fieldName]});
-					if (record) {
-						canAdd = false;
+				await Promise.all(inputRecords.map(async (inputRecord) => {
+					if (canAdd && inputRecord[fieldName]) {
+						const dbRecord = await this.getValueByUnique(fortuneTypeName, {[fieldName]: inputRecord[fieldName]});
+						if (dbRecord) {
+							canAdd = false;
+						}
 					}
-				}
+				}));
 			}));
 		}
 		return canAdd;
@@ -47,35 +49,78 @@ export default class FortuneGraph implements DataResolver {
 
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const canAdd = await this.ensureNoDuplicates(fortuneType, records);
-		if (canAdd) {
-			records['__typename'] = graphQLTypeName;
-			let results = await this.store.create(fortuneType, records, include, meta);
-			results = results.payload.records;
-			return isArray(records) ? results : results[0];
-		} else {
-			throw new Error('can not create record with duplicate on unique field on type ' + graphQLTypeName + ' ' + JSON.stringify(records));
+		records['__typename'] = graphQLTypeName;
+		let results = await this.store.create(fortuneType, records, include, meta);
+		results = results.payload.records;
+		return isArray(records) ? results : results[0];
+	}
+
+	private edgesToReturn = (allEdges: any[], before: string, after: string, first: number, last: number): any[] => {
+		let edges = this.applyCursorsToEdges(allEdges, before, after);
+		if (typeof first !== undefined) {
+			if (first < 0) {
+				throw new Error('first must be greater than 0');
+			} else if (edges.length > first) {
+				edges = edges.slice(0, first);
+			}
 		}
-		
+		if (typeof last !== undefined) {
+			if (last < 0) {
+				throw new Error('first must be greater than 0');
+			} else if (edges.length > last) {
+				edges = edges.slice(edges.length - last, edges.length);
+			}
+		}
+		return edges;
+	}
+
+	private applyCursorsToEdges = (allEdges: any[], before: string, after: string): any[] => {
+		let edges = allEdges;
+		if (after) {
+			const afterEdgeIndex = findIndex(edges, ['id', after]);
+			if (afterEdgeIndex) {
+				edges = edges.slice(afterEdgeIndex + 1, edges.length);
+			}
+		}
+
+		if (before) {
+			const beforeEdgeIndex = findIndex(edges, ['id', before]);
+			if (beforeEdgeIndex) {
+				edges = edges.slice(0, beforeEdgeIndex);
+			}
+		}
+
+		return edges;
 	}
 
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
+		if (get(options, 'match.id')) {
+			ids = [get(options, 'match.id')];
+			delete options.match.id;
+		}
 		if (!ids || ids.length < 1) {
 			set(options, 'match.__typename', graphQLTypeName);
 		}
+
+		const {first, last, before, after} = options;
+		delete options.first;
+		delete options.last;
+		delete options.before;
+		delete options.after;
+
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 
 		let graphReturn = results.payload.records;
-
+		graphReturn = this.edgesToReturn(graphReturn, before, after, first, last);
 
 		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
 		if (!graphReturn) {
-			console.log('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids));
+			console.log('Nothing Found ' + graphQLTypeName + ' ' + JSON.stringify(ids) + ' ' + JSON.stringify(options));
 		}
 		return graphReturn;
 
@@ -104,17 +149,10 @@ export default class FortuneGraph implements DataResolver {
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
-		
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const canAdd = await this.ensureNoDuplicates(fortuneType, updates['replace']);
-
-		if (canAdd) {
-			let results = await this.store.update(fortuneType, updates, meta);
-			results = results.payload.records;
-			return isArray(records) ? results : results[0];
-		} else {
-			throw new Error('can not create record with duplicate on unique field on type ' + graphQLTypeName + ' ' + JSON.stringify(records));
-		}
+		let results = await this.store.update(fortuneType, updates, meta);
+		results = results.payload.records;
+		return isArray(records) ? results : results[0];
 	}
 
 	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {

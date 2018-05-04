@@ -74,7 +74,7 @@ export default class GraphQLSchemaBuilder {
 		} else {
 			Object.keys(typeMap).forEach(name => {
 				const type = typeMap[name];
-				if (isObjectType(type) && !type.name.includes('__') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+				if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
 					type['_interfaces'].push(typeMap.Node);
 					has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(type) : set(this.schema, '_implementations.Node', [type]);
 				}

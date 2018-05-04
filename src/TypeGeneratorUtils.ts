@@ -1,8 +1,8 @@
 import {
 	GraphQLError, GraphQLInputType, GraphQLNamedType,
 	GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo,
-	GraphQLScalarType, GraphQLType,
-	IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
+	GraphQLScalarType, GraphQLSchema,
+	GraphQLType, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
 } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
 import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
@@ -321,9 +321,6 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const returnTypeName = getReturnType(returnType);
 		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
 
-
-
-
 		let createArgs = _args.create ? _args.create : mutation === Mutation.Create && get(_args, 'input.data') ? get(_args, 'input.data') : [];
 		createArgs = createArgs && !isArray(createArgs) ? [createArgs] : createArgs;
 
@@ -343,6 +340,15 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		disconnectArgs = disconnectArgs && !isArray(disconnectArgs) ? [disconnectArgs] : disconnectArgs;
 
 		const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
+
+		// lets make sure we are able to add this (prevent duplicates on unique fields, etc)
+
+		const canAddResults = await Promise.all([dataResolver.canAdd(returnTypeName, createArgs),
+				dataResolver.canAdd(returnTypeName, updateArgs)]);
+		const cannotAdd = canAddResults.includes(false);
+		if (cannotAdd) {
+			throw new Error('can not create record with duplicate on unique field on type ' + returnTypeName + ' ' + JSON.stringify(createArgs) + ' ' + JSON.stringify(updateArgs));
+		}
 
 		const dataResolverPromises: Array<Promise<any>> = [];
 
@@ -460,7 +466,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					if (data && data['id']) {
 						resolve({ index, key, id: data['id'], data });
 					} else {
-						reject();
+						reject(new Error('tried to connect using unique value that does not exist'));
 					}
 				});
 			}));
@@ -582,6 +588,51 @@ export const deleteResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.Delete, dataResolver);
 };
 
+export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema, type: IntrospectionObjectType, _returnCollection = false) => {
+	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo) => {
+
+		let options = {};
+		let filter = null;
+		let schemaType: GraphQLNamedType = null;
+		if (_args && _args.filter) {
+			schemaType = schema.getType(type.name);
+			filter = _args.filter;
+			options = parseFilter(_args.filter, schemaType);
+		}
+
+		set(options, 'sort', _args.sort);
+		set(options, 'offset', _args.skip);
+		set(options, 'first', _args.first);
+		set(options, 'last', _args.last);
+		set(options, 'before', _args.before);
+		set(options, 'after', _args.after);
+
+		let result = [];
+		let fortuneReturn = await dataResolver.find(type.name, null, options);
+		if (fortuneReturn && !isEmpty(fortuneReturn)) {
+			fortuneReturn = isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
+			const cache = new Map<string, object>();
+			fortuneReturn.forEach(result => {
+				cache.set(result.id, result);
+			});
+			if (filter && isObjectType(schemaType) || isInterfaceType(schemaType)) {
+				const pullIds = await filterNested(filter, _args.sort, schemaType, fortuneReturn, cache, dataResolver);
+				fortuneReturn = fortuneReturn.filter(result => !pullIds.has(result.id));
+			}
+			result = fortuneReturn.map((result) => {
+				if (!result) { return result; }
+				return {
+					fortuneReturn: result,
+					cache: cache,
+					filter,
+					__typename: result.__typename
+				};
+			});
+		}
+
+		return result;
+	};
+};
 const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) => {
 	if (!filter || !isObject(filter) || isArray(filter)) {
 		return filter;
@@ -613,13 +664,14 @@ export const filterArgs = {
 	'sort': { type: 'JSON' },
 	'first': { type: 'Int' },
 	'last': { type: 'Int' },
-	'offset': { type: 'Int' },
+	'skip': { type: 'Int' },
 	'before': { type: 'String' },
 	'after': { type: 'String' }
 };
 
-
+const fortuneFilters = ['not', 'or', 'and', 'range', 'match'];
 export const parseFilter = (filter: object, type: GraphQLNamedType) => {
+
 	if (!isObjectType(type) && !isInterfaceType(type)) {
 		return filter;
 	}
@@ -628,7 +680,7 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 	}
 	const fieldMap = new Map<string, GraphQLScalarType>();
 	each(type.getFields(), field => {
-		if (filter[field.name]) {
+		if (!fortuneFilters.includes(field.name) && filter[field.name]) {
 			if (filter['and']) {
 				filter['and'].push({ exists: { [field.name]: true } });
 			} else {
@@ -641,7 +693,7 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 		}
 	});
 
-	const scalarsParsed = parseScalars(pick(filter, ['not', 'or', 'and', 'range', 'match']), fieldMap);
+	const scalarsParsed = parseScalars(pick(filter, fortuneFilters), fieldMap);
 	return Object.assign(filter, scalarsParsed);
 
 

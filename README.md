@@ -13,8 +13,23 @@ npm start
 
 
 TODO:
-investigate fragments and inline fragments on computing includes
-unique fields
+split out fortunegraph crud operations into micro service for specific handling with different adapters
+connections
+subscriptions
 filters
 
 pass in authorization function, takes in any User (or whatever name passed in) field defined on a type and returns boolean of allowed or not.
+
+mutation {
+	createPost(
+    input: {
+      data: {
+        title:"bam"
+      }
+    }
+  ) {
+    data {
+      id
+    }
+  }
+}

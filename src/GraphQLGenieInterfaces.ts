@@ -12,6 +12,7 @@ export interface DataResolver {
 	find(graphQLTypeName: string, ids?: string[], options?, include?, meta?): Promise<any>;
 	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
 	getValueByUnique(returnTypeName: string, args): Promise<Object>;
+	canAdd(graphQLTypeName: string, records: Object): Promise<boolean>;
 }
 
 export interface GenerateConfig {
@@ -20,6 +21,7 @@ export interface GenerateConfig {
 	generateUpdate?: boolean;
 	generateDelete?: boolean;
 	generateUpsert?: boolean;
+	generateConnectionQueries?: boolean;
 	includeSubscription?: boolean;
 }
 
