@@ -8,23 +8,55 @@ import { computeRelations } from './TypeGeneratorUtils';
 export default class FortuneGraph implements DataResolver {
 	private fortuneOptions: FortuneOptions;
 	private fortuneTypeNames: Map<string, string>;
+	private uniqueIndexes: Map<string, string[]>;
 	private schemaInfo: IntrospectionType[];
 	private store;
 	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]) {
 		this.fortuneOptions = fortuneOptions;
 		this.schemaInfo = schemaInfo;
-
+		this.uniqueIndexes = new Map<string, string[]>();
 		this.store = this.buildFortune();
 	}
 
+	public getValueByUnique = async (returnTypeName: string, args): Promise<Object> => {
+		let currValue;
+		// tslint:disable-next-line:prefer-conditional-expression
+		if (args.id) {
+			currValue = await this.find(returnTypeName, [args.id]);
+		} else {
+			currValue = await this.find(returnTypeName, undefined, { match: args });
+		}
+	
+		return isArray(currValue) ? currValue[0] : currValue;
+	};
+
+	private ensureNoDuplicates = async (fortuneTypeName: string, records: Object): Promise<boolean> => {
+		let canAdd = true;
+		if (records && this.uniqueIndexes.has(fortuneTypeName)) {			
+			await Promise.all(this.uniqueIndexes.get(fortuneTypeName).map(async (fieldName) => {
+				if (canAdd && records.hasOwnProperty(fieldName)) {					
+					const record = await this.getValueByUnique(fortuneTypeName, {[fieldName]: records[fieldName]});
+					if (record) {
+						canAdd = false;
+					}
+				}
+			}));
+		}
+		return canAdd;
+	}
 
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		records['__typename'] = graphQLTypeName;
-		let results = await this.store.create(fortuneType, records, include, meta);
-		results = results.payload.records;
-
-		return isArray(records) ? results : results[0];
+		const canAdd = await this.ensureNoDuplicates(fortuneType, records);
+		if (canAdd) {
+			records['__typename'] = graphQLTypeName;
+			let results = await this.store.create(fortuneType, records, include, meta);
+			results = results.payload.records;
+			return isArray(records) ? results : results[0];
+		} else {
+			throw new Error('can not create record with duplicate on unique field on type ' + graphQLTypeName + ' ' + JSON.stringify(records));
+		}
+		
 	}
 
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
@@ -72,10 +104,17 @@ export default class FortuneGraph implements DataResolver {
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
+		
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		let results = await this.store.update(fortuneType, updates, meta);
-		results = results.payload.records;
-		return isArray(records) ? results : results[0];
+		const canAdd = await this.ensureNoDuplicates(fortuneType, updates['replace']);
+
+		if (canAdd) {
+			let results = await this.store.update(fortuneType, updates, meta);
+			results = results.payload.records;
+			return isArray(records) ? results : results[0];
+		} else {
+			throw new Error('can not create record with duplicate on unique field on type ' + graphQLTypeName + ' ' + JSON.stringify(records));
+		}
 	}
 
 	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {
@@ -149,6 +188,7 @@ export default class FortuneGraph implements DataResolver {
 				const fields = {};
 				forOwn(type.fields, (field) => {
 					if (field.name !== 'id') {
+
 						let currType = field.type;
 						let isArray = false;
 						while (currType.kind === 'NON_NULL' || currType.kind === 'LIST') {
@@ -156,6 +196,15 @@ export default class FortuneGraph implements DataResolver {
 								isArray = true;
 							}
 							currType = currType.ofType;
+						}
+						if (get(field, 'metadata.unique') === true) {
+							if (isArray) {
+								console.error('Unique may not work on list types', name, field.name);
+							}
+							if (!this.uniqueIndexes.has(name)) {
+								this.uniqueIndexes.set(name, []);
+							}
+							this.uniqueIndexes.get(name).push(field.name);
 						}
 						currType = currType.kind === 'ENUM' ? 'String' : currType.name;
 						if (currType === 'ID' || currType === 'String') {

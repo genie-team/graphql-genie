@@ -11,6 +11,7 @@ export interface DataResolver {
 	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
 	find(graphQLTypeName: string, ids?: string[], options?, include?, meta?): Promise<any>;
 	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
+	getValueByUnique(returnTypeName: string, args): Promise<Object>;
 }
 
 export interface GenerateConfig {

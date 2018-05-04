@@ -248,17 +248,6 @@ const clean = (obj) => {
 	}
 };
 
-const getValueByUnique = async (dataResolver: DataResolver, returnTypeName: string, args) => {
-	let currValue;
-	// tslint:disable-next-line:prefer-conditional-expression
-	if (args.id) {
-		currValue = await dataResolver.find(returnTypeName, [args.id]);
-	} else {
-		currValue = await dataResolver.find(returnTypeName, undefined, { match: args });
-	}
-
-	return isArray(currValue) ? currValue[0] : currValue;
-};
 
 const setupArgs = (results: any[], args: any[]) => {
 		// setup the arguments to use the new types
@@ -363,7 +352,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				// pass true to where args if currRecord is already the one we want
 				if (whereArgs !== true) {
 					const returnTypeName = getReturnType(returnType);
-					currRecord = await getValueByUnique(dataResolver, returnTypeName, whereArgs);
+					currRecord = await dataResolver.getValueByUnique(returnTypeName, whereArgs);
 					if (!currRecord || isEmpty(currRecord)) {
 						throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 					}
@@ -387,7 +376,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				updateArgs = [];
 			} else if (key && currRecord) {
 				// this is a nested input on a single field so we already know the where
-				const recordToUpdate = await getValueByUnique(dataResolver, returnTypeName, {id: currRecord[key]});
+				const recordToUpdate = await dataResolver.getValueByUnique(returnTypeName, {id: currRecord[key]});
 				if (recordToUpdate) {
 					currRecord = recordToUpdate;
 				} else {
@@ -403,10 +392,10 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				let upsertRecord = currRecord;
 				if (whereArg) {
 					// this is a root upsert or nested upsert with a where field
-					upsertRecord = await getValueByUnique(dataResolver, returnTypeName, whereArg);
+					upsertRecord = await dataResolver.getValueByUnique(returnTypeName, whereArg);
 				} else if (upsertRecord && key) {
 					// this is a nested upsert on a single field so we already have the where
-					upsertRecord = upsertRecord[key] ? await getValueByUnique(dataResolver, returnTypeName, {id: upsertRecord[key]}) : null;
+					upsertRecord = upsertRecord[key] ? await dataResolver.getValueByUnique(returnTypeName, {id: upsertRecord[key]}) : null;
 				}
 
 				let newArgs: object = {create: currArg.create};
@@ -467,7 +456,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// now add the connect types
 		connectArgs.forEach(connectArg => {
 			dataResolverPromises.push(new Promise((resolve, reject) => {
-				getValueByUnique(dataResolver, returnTypeName, connectArg).then(data => {
+				dataResolver.getValueByUnique(returnTypeName, connectArg).then(data => {
 					if (data && data['id']) {
 						resolve({ index, key, id: data['id'], data });
 					} else {
@@ -488,7 +477,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else {
 				disconnectPromises.push(new Promise((resolve, reject) => {
-					getValueByUnique(dataResolver, returnTypeName, disconnectArg).then(data => {
+					dataResolver.getValueByUnique(returnTypeName, disconnectArg).then(data => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
@@ -520,7 +509,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else if (whereArgs && !currRecord) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					getValueByUnique(dataResolver, returnTypeName, whereArgs).then(whereData => {
+					dataResolver.getValueByUnique(returnTypeName, whereArgs).then(whereData => {
 						currRecord = whereData;
 						if (!currRecord || isEmpty(currRecord)) {
 							throw new GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
@@ -532,7 +521,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else {
 				deletePromises.push(new Promise((resolve, reject) => {
-					getValueByUnique(dataResolver, dataResolver.getLink(currRecord.__typename, key), deleteArg).then(data => {
+					dataResolver.getValueByUnique(dataResolver.getLink(currRecord.__typename, key), deleteArg).then(data => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
