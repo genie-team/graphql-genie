@@ -5,6 +5,35 @@ export interface TypeGenerator {
 	getFieldsOnObject(): Map<string, object>;
 }
 
+export interface Aggregate {
+	count: number;
+}
+
+export interface PageInfo {
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+	startCursor?: string;
+	endCursor?: string;
+}
+export class Connection {
+	edges: any[];
+	aggregate: Aggregate;
+	pageInfo: PageInfo;
+
+
+	constructor() {
+		this.aggregate = {
+			count: -1
+		};
+		this.pageInfo = {
+			hasNextPage: false,
+			hasPreviousPage: false,
+			startCursor: '',
+			endCursor: ''
+		};
+	}
+
+}
 export interface DataResolver {
 	getLink(graphQLTypeName: string, field: string): string;
 	delete(graphQLTypeName: string, ids?: string[], include?, meta?): Promise<any>;
@@ -13,6 +42,8 @@ export interface DataResolver {
 	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
 	getValueByUnique(returnTypeName: string, args): Promise<Object>;
 	canAdd(graphQLTypeName: string, records: Object): Promise<boolean>;
+	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
+
 }
 
 export interface GenerateConfig {

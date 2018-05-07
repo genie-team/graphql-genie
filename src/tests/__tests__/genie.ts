@@ -444,6 +444,8 @@ describe('genie', () => {
 				}
 		`;
 
+
+
 // {
 // 	users(filter:{
 // 		or: [{
@@ -502,6 +504,30 @@ describe('genie', () => {
 //   }
 // }
 
+// {
+
+//   postsConnection(first: 1, after: "1ZN8GkZUASdEtHQ") {
+//     edges {
+//       cursor
+//       node {
+//         id
+//         title
+//         author {
+//           name
+//         }
+//       }
+//     }
+//     pageInfo {
+//       hasNextPage
+//       hasPreviousPage
+//       startCursor
+//       endCursor
+//     }
+//     aggregate {
+//       count
+//     }
+//   }
+// }
 
 		const result = await client.query({
 			query: users

@@ -11,6 +11,7 @@ export class GenerateConnections implements TypeGenerator {
 	private dataResolver: DataResolver;
 	private fields: object;
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
+	private edgeResolvers: Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
 	private currOutputObjectTypeDefs: Set<string>;
 
 	constructor(dataResolver: DataResolver, objectName: string,
@@ -23,6 +24,8 @@ export class GenerateConnections implements TypeGenerator {
 		this.currOutputObjectTypeDefs = $currOutputObjectTypeDefs;
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
+		this.edgeResolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
+
 		this.currOutputObjectTypeDefs.add(`
 			type PageInfo {
 				hasNextPage: Boolean!
@@ -66,12 +69,30 @@ export class GenerateConnections implements TypeGenerator {
 			};
 
 			this.resolvers.set(fieldName, getAllResolver(this.dataResolver, this.schema, type, true));
+
+			const edgeFieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
+			// edgeFieldResolvers.set('node', getTypeResolver(this.dataResolver, this.schema, {type: type, name: `${type.name}Edge`}));
+			edgeFieldResolvers.set('node', (
+				root: any
+			): any => {
+				const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+				return fortuneReturn;
+			});
+
+			edgeFieldResolvers.set('cursor', (
+				root: any
+			): any => {
+				const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+				return fortuneReturn.id;
+			});
+
+			this.edgeResolvers.set(`${type.name}Edge`, edgeFieldResolvers);
 		});
 	}
 
 
 	public getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>> {
-		return new Map([[this.objectName, this.resolvers]]);
+		return new Map([[this.objectName, this.resolvers], ...this.edgeResolvers]);
 	}
 
 	public getFieldsOnObject(): Map<string, object> {

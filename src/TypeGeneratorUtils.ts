@@ -2,10 +2,10 @@ import {
 	GraphQLError, GraphQLInputType, GraphQLNamedType,
 	GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo,
 	GraphQLScalarType, GraphQLSchema,
-	GraphQLType, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
+	GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
 } from 'graphql';
-import { DataResolver } from './GraphQLGenieInterfaces';
-import { each, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
+import { Connection, DataResolver } from './GraphQLGenieInterfaces';
+import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
 import pluralize from 'pluralize';
 export class Relation {
 	public type0: string;
@@ -240,37 +240,44 @@ export enum Mutation {
 	Upsert
 }
 
-const clean = (obj) => {
+const clean = (obj): any => {
+	const returnObj = {};
 	for (const propName in obj) {
-		if (obj[propName] === null || obj[propName] === undefined || (isArray(obj[propName]) && obj[propName].length < 1)) {
-			delete obj[propName];
+		if (obj[propName] !== null && obj[propName] !== undefined) {
+			// tslint:disable-next-line:prefer-conditional-expression
+			if (isObject(obj[propName]) && !isEmpty(obj[propName])) {
+				returnObj[propName] = obj[propName];
+			} else {
+				returnObj[propName] = obj[propName];
+			}
 		}
 	}
+	return returnObj;
 };
 
 
 const setupArgs = (results: any[], args: any[]) => {
-		// setup the arguments to use the new types
-		results.forEach((types: any[]) => {
-			types = types ? types : [];
-			types.forEach(type => {
-				if (type && type.key && type.id && type.index > -1) {
-					const key = type.key;
-					const id = type.id;
-					const arg = args[type.index];
-					if (isArray(arg[key])) {
-						if (isArray(id)) {
-							arg[key] = union(id, arg[key]);
-						} else if (!arg[key].includes(id)) {
-							arg[key].push(id);
-						}
-					} else {
-						arg[key] = id;
+	// setup the arguments to use the new types
+	results.forEach((types: any[]) => {
+		types = types ? types : [];
+		types.forEach(type => {
+			if (type && type.key && type.id && type.index > -1) {
+				const key = type.key;
+				const id = type.id;
+				const arg = args[type.index];
+				if (isArray(arg[key])) {
+					if (isArray(id)) {
+						arg[key] = union(id, arg[key]);
+					} else if (!arg[key].includes(id)) {
+						arg[key].push(id);
 					}
+				} else {
+					arg[key] = id;
 				}
-			});
+			}
 		});
-		return args;
+	});
+	return args;
 };
 
 const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, mutation: Mutation, dataResolver: DataResolver, currRecord: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo): Promise<Array<any>> => {
@@ -344,7 +351,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// lets make sure we are able to add this (prevent duplicates on unique fields, etc)
 
 		const canAddResults = await Promise.all([dataResolver.canAdd(returnTypeName, createArgs),
-				dataResolver.canAdd(returnTypeName, updateArgs)]);
+		dataResolver.canAdd(returnTypeName, updateArgs)]);
 		const cannotAdd = canAddResults.includes(false);
 		if (cannotAdd) {
 			throw new Error('can not create record with duplicate on unique field on type ' + returnTypeName + ' ' + JSON.stringify(createArgs) + ' ' + JSON.stringify(updateArgs));
@@ -369,7 +376,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				updateArgs.forEach((currArg) => {
 					dataResolverPromises.push(
 						new Promise((resolve) => {
-							mutateResolver(mutation, dataResolver)(currRecord, {update: currArg.data, where: currArg.where}, _context, _info, index, key, returnType).then((result) => {
+							mutateResolver(mutation, dataResolver)(currRecord, { update: currArg.data, where: currArg.where }, _context, _info, index, key, returnType).then((result) => {
 								if (recursed) {
 									resolve();
 								} else {
@@ -382,7 +389,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				updateArgs = [];
 			} else if (key && currRecord) {
 				// this is a nested input on a single field so we already know the where
-				const recordToUpdate = await dataResolver.getValueByUnique(returnTypeName, {id: currRecord[key]});
+				const recordToUpdate = await dataResolver.getValueByUnique(returnTypeName, { id: currRecord[key] });
 				if (recordToUpdate) {
 					currRecord = recordToUpdate;
 				} else {
@@ -401,21 +408,21 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					upsertRecord = await dataResolver.getValueByUnique(returnTypeName, whereArg);
 				} else if (upsertRecord && key) {
 					// this is a nested upsert on a single field so we already have the where
-					upsertRecord = upsertRecord[key] ? await dataResolver.getValueByUnique(returnTypeName, {id: upsertRecord[key]}) : null;
+					upsertRecord = upsertRecord[key] ? await dataResolver.getValueByUnique(returnTypeName, { id: upsertRecord[key] }) : null;
 				}
 
-				let newArgs: object = {create: currArg.create};
+				let newArgs: object = { create: currArg.create };
 				if (upsertRecord && !isEmpty(upsertRecord)) {
 					// pass true to where args if currRecord will already be the one we want
-					newArgs = {where: true, update: currArg.update};
+					newArgs = { where: true, update: currArg.update };
 				}
 				dataResolverPromises.push(
 					new Promise((resolve) => {
 						mutateResolver(mutation, dataResolver)(upsertRecord, newArgs, _context, _info, index, key, returnType).then((result) => {
-							if (recursed && !newArgs['create']) {
-								resolve();
-							} else {
+							if (result[0]) {
 								resolve(result[0]);
+							} else {
+								resolve();
 							}
 						});
 					})
@@ -432,7 +439,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// could be creating more than 1 type
 		createArgs.forEach((createArg) => {
 			createArg = createArg.hasOwnProperty ? createArg : Object.assign({}, createArg);
-			clean(createArg);
+			createArg = clean(createArg);
 			if (createArg && !isEmpty(createArg)) {
 				dataResolverPromises.push(new Promise((resolve) => {
 					dataResolver.create(returnTypeName, createArg).then(data => {
@@ -446,15 +453,27 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// now updates
 		updateArgs.forEach((updateArg) => {
 			updateArg = updateArg.hasOwnProperty ? updateArg : Object.assign({}, updateArg);
-			clean(updateArg);
-			if (updateArg && !isEmpty(updateArg)) {
+			// only do updates on new values
+			for (const updateArgKey in updateArg) {
+				const currArg = updateArg[updateArgKey];
+				const currRecordArg = currRecord[updateArgKey];
+				if (eq(currRecordArg, currArg)) {
+					delete currRecord[updateArgKey];
+				} else if (isArray(currArg) && isArray(currRecordArg)) {
+					updateArg[updateArgKey] = difference(currArg, currRecordArg);
+				}
+			}
+			const cleanArg = clean(updateArg);
+			if (cleanArg && !isEmpty(cleanArg)) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					updateArg.id = currRecord.id;
-					dataResolver.update(returnTypeName, updateArg).then(data => {
+					cleanArg.id = currRecord.id;
+					dataResolver.update(returnTypeName, cleanArg).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					});
 				}));
+			} else if (currRecord) {
+				currRecord = Object.assign(currRecord, updateArg);
 			}
 		});
 
@@ -478,7 +497,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			if (disconnectArg === true) {
 				dataResolverPromises.push(new Promise((resolve) => {
 					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(data => {
-						resolve({index, key, id: null, data});
+						resolve({ index, key, id: null, data });
 					});
 				}));
 			} else {
@@ -498,7 +517,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (!isEmpty(disconnectIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
 				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(data => {
-					resolve({index, key, id: data[key], data});
+					resolve({ index, key, id: data[key], data });
 				});
 			}));
 		}
@@ -510,7 +529,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			if (deleteArg === true) {
 				dataResolverPromises.push(new Promise((resolve) => {
 					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]]).then(data => {
-						resolve({index, key, id: null, data});
+						resolve({ index, key, id: null, data });
 					});
 				}));
 			} else if (whereArgs && !currRecord) {
@@ -521,7 +540,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 							throw new GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 						}
 						dataResolver.delete(currRecord.__typename, [currRecord.id]).then(() => {
-							resolve({index, key, id: null, currRecord});
+							resolve({ index, key, id: null, currRecord });
 						});
 					});
 				}));
@@ -542,7 +561,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (!isEmpty(deleteIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
 				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds).then(data => {
-					resolve({index, key, id: data[key], data});
+					resolve({ index, key, id: data[key], data });
 				});
 			}));
 		}
@@ -555,12 +574,12 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (recursed) {
 			return dataResult;
 		} else {
-			let data =  get(dataResult, '[0].data');
+			let data = get(dataResult, '[0].data');
 			if (!data && mutation === Mutation.Delete) {
 				data = currRecord;
 			} else if (!data) {
 				// if everything was already done on the object (updates, deletions and disconnects) it should be the currRecord but with changes
-				data = await dataResolver.find(returnTypeName, [currRecord.id]);
+				data = currRecord;
 			}
 
 			return {
@@ -588,7 +607,81 @@ export const deleteResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.Delete, dataResolver);
 };
 
-export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema, type: IntrospectionObjectType, _returnCollection = false) => {
+export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchema, field: any) => {
+	const graphQLType = schema.getType(getReturnType(field.type));
+	let resolver;
+	if (!isScalarType(graphQLType)) {
+		resolver = async (
+			root: any,
+			_args: { [key: string]: any },
+			_context: any,
+			_info: GraphQLResolveInfo
+		): Promise<any> => {
+			const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+
+			if (!fortuneReturn) { return fortuneReturn; }
+
+			const cache = root && root.cache ? root.cache : new Map<string, object>();
+			const typeName = getReturnType(field.type);
+
+			let result = [];
+			let returnArray = false;
+			let fieldValue = fortuneReturn[field.name];
+			returnArray = isArray(fieldValue);
+			fieldValue = returnArray ? fieldValue : [fieldValue];
+			const ids = [];
+			fieldValue.forEach(id => {
+				if (id) {
+					if (cache.has(id)) {
+						result.push({
+							fortuneReturn: cache.get(id),
+							cache: cache,
+							__typename: cache.get(id).__typename
+						});
+					} else {
+						ids.push(id);
+					}
+				}
+			});
+			if (!isEmpty(ids)) {
+				let findResult = await dataResolver.find(typeName, ids);
+				if (findResult) {
+					findResult = isArray(findResult) ? findResult : [findResult];
+					findResult.forEach(result => {
+						cache.set(result.id, result);
+					});
+
+					findResult = findResult.map((result) => {
+						return {
+							fortuneReturn: result,
+							cache: cache,
+							__typename: result.__typename
+						};
+					});
+					result = result.concat(findResult);
+				}
+			}
+			return result.length === 0 ? null : returnArray ? result : result[0];
+		};
+
+	} else {
+		resolver = async (
+			root: any,
+			_args: { [key: string]: any },
+			_context: any,
+			_info: GraphQLResolveInfo
+		): Promise<any> => {
+			const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+			const result = await defaultFieldResolver.apply(this, [fortuneReturn, _args, _context, _info]);
+			return result;
+		};
+
+	}
+	return resolver;
+};
+
+
+export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema, type: IntrospectionObjectType, returnConnection = false) => {
 	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo) => {
 
 		let options = {};
@@ -602,15 +695,14 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 
 		set(options, 'sort', _args.sort);
 		set(options, 'offset', _args.skip);
-		set(options, 'first', _args.first);
-		set(options, 'last', _args.last);
-		set(options, 'before', _args.before);
-		set(options, 'after', _args.after);
-
-		let result = [];
+		let connection: Connection;
+		let result: any;
 		let fortuneReturn = await dataResolver.find(type.name, null, options);
 		if (fortuneReturn && !isEmpty(fortuneReturn)) {
 			fortuneReturn = isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
+			connection = dataResolver.getConnection(fortuneReturn, _args.before, _args.after, _args.first, _args.last);
+			fortuneReturn = connection.edges;
+
 			const cache = new Map<string, object>();
 			fortuneReturn.forEach(result => {
 				cache.set(result.id, result);
@@ -628,6 +720,14 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 					__typename: result.__typename
 				};
 			});
+		}
+
+		if (returnConnection) {
+			result = {
+				edges: result,
+				pageInfo: connection.pageInfo,
+				aggregate: connection.aggregate
+			};
 		}
 
 		return result;
@@ -716,6 +816,7 @@ export const filterNested = async (filter: object, sort: object, type: GraphQLNa
 							options.sort = currSort;
 						}
 						let childReturn = await dataResolver.find(childType.name, childIds, options);
+						childReturn = dataResolver.getConnection(childReturn, options.before, options.after, options.first, options.last).edges;
 						if (isArray(childReturn)) {
 							const recursePullIds = await filterNested(options, currSort, childType, childReturn, cache, dataResolver);
 							childReturn = childReturn ? childReturn.filter(result => !recursePullIds.has(result.id)) : childReturn;
@@ -746,7 +847,7 @@ export const getPayloadTypeDef = (typeName: string): string => {
 };
 
 
-export const  capFirst = (val: string) => {
+export const capFirst = (val: string) => {
 	return val ? val.charAt(0).toUpperCase() + val.slice(1) : '';
 };
 

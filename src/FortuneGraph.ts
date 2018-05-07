@@ -2,7 +2,7 @@ import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
 
 import { each, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
-import { DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
 export default class FortuneGraph implements DataResolver {
@@ -55,37 +55,62 @@ export default class FortuneGraph implements DataResolver {
 		return isArray(records) ? results : results[0];
 	}
 
-	private edgesToReturn = (allEdges: any[], before: string, after: string, first: number, last: number): any[] => {
-		let edges = this.applyCursorsToEdges(allEdges, before, after);
-		if (typeof first !== undefined) {
+	public getConnection = (allEdges: any[], before: string, after: string, first: number, last: number): Connection => {
+		const connection: Connection = new Connection();
+		const edgesWithCursorApplied = this.applyCursorsToEdges(allEdges, before, after);
+		connection.aggregate.count = allEdges.length;
+		connection.edges = this.edgesToReturn(edgesWithCursorApplied, first, last);
+		if (typeof last !== 'undefined') {
+			if (edgesWithCursorApplied.length > last) {
+				connection.pageInfo.hasPreviousPage = true;
+			}
+		} else if (typeof after !== 'undefined' && get(allEdges, '[0].id', 'id0') !== get(edgesWithCursorApplied, '[0].id', 'id1')) {
+			connection.pageInfo.hasPreviousPage = true;
+		}
+
+		if (typeof first !== 'undefined') {
+			if (edgesWithCursorApplied.length > first) {
+				connection.pageInfo.hasNextPage = true;
+			}
+		} else if (typeof before !== 'undefined' && get(allEdges, `[${allEdges.length - 1}].id`, 'id0') !== get(edgesWithCursorApplied, `[${edgesWithCursorApplied.length - 1}].id`, 'id1')) {
+			connection.pageInfo.hasNextPage = true;
+		}
+		connection.pageInfo.startCursor = get(connection.edges, '[0].id');
+		connection.pageInfo.endCursor = get(connection.edges, `[${connection.edges.length - 1}].id`);
+		return connection;
+	}
+
+
+	private edgesToReturn = (edgesWithCursorApplied: any[], first: number, last: number): any[] => {
+		if (typeof first !== 'undefined') {
 			if (first < 0) {
 				throw new Error('first must be greater than 0');
-			} else if (edges.length > first) {
-				edges = edges.slice(0, first);
+			} else if (edgesWithCursorApplied.length > first) {
+				edgesWithCursorApplied = edgesWithCursorApplied.slice(0, first);
 			}
 		}
-		if (typeof last !== undefined) {
+		if (typeof last !== 'undefined') {
 			if (last < 0) {
 				throw new Error('first must be greater than 0');
-			} else if (edges.length > last) {
-				edges = edges.slice(edges.length - last, edges.length);
+			} else if (edgesWithCursorApplied.length > last) {
+				edgesWithCursorApplied = edgesWithCursorApplied.slice(edgesWithCursorApplied.length - last, edgesWithCursorApplied.length);
 			}
 		}
-		return edges;
+		return edgesWithCursorApplied;
 	}
 
 	private applyCursorsToEdges = (allEdges: any[], before: string, after: string): any[] => {
 		let edges = allEdges;
 		if (after) {
 			const afterEdgeIndex = findIndex(edges, ['id', after]);
-			if (afterEdgeIndex) {
+			if (afterEdgeIndex > -1) {
 				edges = edges.slice(afterEdgeIndex + 1, edges.length);
 			}
 		}
 
 		if (before) {
 			const beforeEdgeIndex = findIndex(edges, ['id', before]);
-			if (beforeEdgeIndex) {
+			if (beforeEdgeIndex > -1) {
 				edges = edges.slice(0, beforeEdgeIndex);
 			}
 		}
@@ -104,16 +129,11 @@ export default class FortuneGraph implements DataResolver {
 			set(options, 'match.__typename', graphQLTypeName);
 		}
 
-		const {first, last, before, after} = options;
-		delete options.first;
-		delete options.last;
-		delete options.before;
-		delete options.after;
+		delete options.first; delete options.last; delete options.before; delete options.after;
 
 		const results = await this.store.find(fortuneType, ids, options, include, meta);
 
 		let graphReturn = results.payload.records;
-		graphReturn = this.edgesToReturn(graphReturn, before, after, first, last);
 
 		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array

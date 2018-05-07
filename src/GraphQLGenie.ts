@@ -1,18 +1,18 @@
 
 import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLResolveInfo, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
+	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
 } from 'graphql';
-import { assign, forOwn, get, isArray, isEmpty} from 'lodash';
+import { assign, forOwn, get} from 'lodash';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import FortuneGraph from './FortuneGraph';
 import { GenerateGetAll } from './GenerateGetAll';
 import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import { defaultFieldResolver, isScalarType, printType } from 'graphql';
+import { printType } from 'graphql';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateDelete } from './GenerateDelete';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
-import { Relations, computeRelations, getReturnType } from './TypeGeneratorUtils';
+import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 import { GenerateUpsert } from './GenerateUpsert';
 import { GenerateConnections } from './GenerateConnections';
@@ -85,76 +85,7 @@ export default class GraphQLGenie {
 
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
 				forOwn(type.fields, (field) => {
-					const graphQLType = this.schema.getType(getReturnType(field.type));
-					let resolver;
-					if (!isScalarType(graphQLType)) {
-						resolver = async (
-							root: any,
-							_args: { [key: string]: any },
-							_context: any,
-							_info: GraphQLResolveInfo
-						): Promise<any> => {
-							const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
-
-							if (!fortuneReturn) {return fortuneReturn; }
-
-							const cache = root && root.cache ? root.cache : new Map<string, object>();
-							const typeName = getReturnType(field.type);
-
-							let result = [];
-							let returnArray = false;
-							let fieldValue = fortuneReturn[field.name];
-							returnArray = isArray(fieldValue);
-							fieldValue = returnArray ? fieldValue : [fieldValue];
-							const ids = [];
-							fieldValue.forEach(element => {
-								if (element) {
-									if (cache.has(element)) {
-										result.push({fortuneReturn: cache.get(element),
-											cache: cache,
-											__typename: cache.get(element).__typename
-										});
-									} else {
-										ids.push(element);
-									}
-								}
-							});
-							if (!isEmpty(ids)) {
-								let findResult = await this.graphQLFortune.find(typeName, ids);
-								if (findResult) {
-									findResult = isArray(findResult) ? findResult : [findResult];
-									findResult.forEach(result => {
-										cache.set(result.id, result);
-									});
-
-									findResult = findResult.map((result) => {
-										return {fortuneReturn: result,
-											cache: cache,
-											__typename: result.__typename
-										};
-									});
-									result = result.concat(findResult);
-								}
-							}
-							return result.length === 0 ? null : returnArray ? result : result[0];
-						};
-
-					} else {
-						resolver  = async (
-							root: any,
-							_args: { [key: string]: any },
-							_context: any,
-							_info: GraphQLResolveInfo
-						): Promise<any> => {
-							const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
-							const result = await defaultFieldResolver.apply(this, [fortuneReturn, _args, _context, _info]);
-							return result;
-						};
-
-					}
-					fieldResolvers.set(field.name, resolver);
-
-
+					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field));
 				});
 				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
 			}
