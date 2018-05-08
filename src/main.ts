@@ -1,8 +1,8 @@
-import  GraphQLGenie  from './GraphQLGenie';
-import { ApolloClient } from 'apollo-client';
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
+import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import gql from 'graphql-tag';
+import GraphQLGenie from './GraphQLGenie';
 
 const typeDefs = `
 
@@ -17,7 +17,7 @@ type Post implements Submission {
 	title: String!
 	text: String
   author: User @relation(name: "WrittenSubmissions")
-	likedBy: [User!] @relation(name: "LikedPosts")
+	likedBy: [User!] @relation(name: "LikedPosts") @connection
 	comments: [Comment] @relation(name: "CommentsOnPost")
 	published: Boolean @default(value: "true")
 }
@@ -40,7 +40,7 @@ type User {
 	writtenSubmissions: [Submission] @relation(name: "WrittenSubmissions")
 	age: Int
 	birthday: Date
-	likedPosts: [Post!] @relation(name: "LikedPosts")
+	likedPosts: [Post!] @relation(name: "LikedPosts") @connection
 	family: [User]
 	match: User
 }
@@ -62,7 +62,7 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateUpdate: true,
 	generateDelete: true,
 	generateUpsert: true,
-	includeSubscription: false
+	generateSubscriptions: false
 }});
 const buildClient = async (genie: GraphQLGenie) => {
 	const schema = await genie.getSchema();
@@ -120,10 +120,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 		`
 	});
 
-
-
 	console.log(zeus);
-
 
 	const addPost = await client.mutate({
 		mutation: gql`mutation {
@@ -214,6 +211,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 	});
 	console.log(disconnectAddress);
 
+	const firstPostId = zeus.data.createUser.data.writtenSubmissions[0].id;
 	const secondPostId = zeus.data.createUser.data.writtenSubmissions[1].id;
 	const updatePostOnUser = await client.mutate({
 		mutation: gql`mutation {
@@ -254,7 +252,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		`
 	});
 	console.log(updatePostOnUser);
-
 
 	const upsertCreate = await client.mutate({
 		mutation: gql`mutation {
@@ -311,7 +308,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		`
 	});
 	console.log(upsertUpdate);
-
 
 	const nestedUpsertCreate = await client.mutate({
 		mutation: gql`mutation {
@@ -502,7 +498,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	});
 	console.log(nestedUpdateSingle);
 
-
 	const deleteUser = await client.mutate({
 		mutation: gql`mutation {
 			deleteUser(input: {
@@ -596,12 +591,100 @@ const buildClient = async (genie: GraphQLGenie) => {
 		}
 	}
 	`;
-const result = await client.mutate({
+let result = await client.mutate({
 	mutation: createComment,
 	variables: { input: {data: { title: 'nice post', author: {connect: {email: 'zeus@example.com'}}}}}
 });
 console.log(result);
-	// mutation {
+
+const createUser = gql`
+mutation createUser($input: CreateUserMutationInput!) {
+	createUser(input: $input) {
+		data {
+			name
+		}
+	}
+}
+`;
+
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Hela', email: 'hela@example.com'}}}
+});
+
+const updatePost = gql`
+mutation updatePost($input: UpdatePostMutationInput!) {
+	updatePost(input: $input) {
+		data {
+			title
+		}
+	}
+}
+`;
+result = await client.mutate({
+	mutation: updatePost,
+	variables: { input: {
+		data: { likedBy: { connect: [{email: 'loki@example.com'}, {email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
+		where: { id: firstPostId}
+	}}
+});
+
+// create some users
+const newUsers = [];
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Test 1', email: 'test1@example.com'}}}
+});
+newUsers.push(result.data.createUser.data);
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Test 2', email: 'test2@example.com'}}}
+});
+newUsers.push(result.data.createUser.data);
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Test 3', email: 'test3@example.com'}}}
+});
+newUsers.push(result.data.createUser.data);
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Test 4', email: 'test4@example.com'}}}
+});
+newUsers.push(result.data.createUser.data);
+result = await client.mutate({
+	mutation: createUser,
+	variables: { input: {data: { name: 'Test 4', email: 'test5@example.com'}}}
+});
+newUsers.push(result.data.createUser.data);
+
+// mutation {
+//   updateManyUsers(input: {
+//     filter: {
+//       exists: {
+//         age: false
+//       }
+//     }
+//     data: {
+//       age: 12
+//     }
+//   }) {
+//     count
+//   }
+// }
+
+// mutation {
+//   deleteManyUsers(input: {
+//     filter: {
+//       match: {
+//         age: 12
+//       }
+//     }
+//   }) {
+//     count
+//   }
+// }
+
+// mutation {
 	// 	createUser(
 	// 		input: {
 	// 			data: {
@@ -723,7 +806,6 @@ console.log(result);
 // 	});
 // 	console.log(result);
 
-
 // 	const title = 'Genie is great';
 // 	createPost = gql`
 // 		mutation createPost($title: String!, $authorId: ID) {
@@ -742,7 +824,6 @@ console.log(result);
 // 		variables: { title: title, authorId: testData.users[0].id}
 // 	});
 // 	testData.posts.push(result.data.createPost);
-
 
 // 	const createComment = gql`
 // 		mutation createComment($title: String!, $postId: ID!, $authorId: ID!, $text: String) {
@@ -819,5 +900,3 @@ console.log(result);
 };
 
 buildClient(genie);
-
-

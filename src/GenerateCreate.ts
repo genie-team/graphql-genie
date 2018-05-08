@@ -1,8 +1,8 @@
 
-import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import { Relations, createResolver, getPayloadTypeDef, getPayloadTypeName} from './TypeGeneratorUtils';
+import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
+import { Relations, createResolver, getPayloadTypeDef, getPayloadTypeName } from './TypeGeneratorUtils';
 
 export class GenerateCreate implements TypeGenerator {
 	private objectName: string;
@@ -61,10 +61,7 @@ export class GenerateCreate implements TypeGenerator {
 			};
 			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
 
-
-
 			this.resolvers.set(`create${type.name}`, createResolver(this.dataResolver));
-
 
 		});
 

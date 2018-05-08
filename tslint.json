@@ -3,6 +3,7 @@
   "rules": {
 		"no-import-side-effect": false,
 		"indent": [true, "tabs", 4],
-		"no-unused-variable": [true, {"ignore-pattern": "^_"}]
+		"no-unused-variable": [true, {"ignore-pattern": "^_"}],
+		"no-consecutive-blank-lines": [true, 1]
   }
 }

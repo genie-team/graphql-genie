@@ -1,14 +1,17 @@
 
-import {IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
-import {has, set} from 'lodash';
-import { GraphQLFieldResolver, GraphQLSchema, isListType, isNonNullType, isObjectType, isScalarType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLNonNull, GraphQLSchema, GraphQLType, isListType, isNonNullType, isObjectType, isScalarType } from 'graphql';
+import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
+import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
-import {GraphQLDate, GraphQLDateTime, GraphQLTime} from 'graphql-iso-date';
+import { has, set } from 'lodash';
+import { GenerateConfig } from './GraphQLGenieInterfaces';
+import { getReturnType, typeIsList } from './TypeGeneratorUtils';
 export default class GraphQLSchemaBuilder {
 	private schema: GraphQLSchema;
 	private typeDefs: string;
+	private config: GenerateConfig;
 	private resolveFunctions: IResolvers<any, any>;
-	constructor(typeDefs = '') {
+	constructor(typeDefs = '', $config: GenerateConfig) {
 		this.typeDefs = `
 		scalar JSON
 		scalar Date
@@ -29,7 +32,7 @@ export default class GraphQLSchemaBuilder {
 		directive @unique on FIELD_DEFINITION
 
 		interface Node {
-			id: ID! @isUnique
+			id: ID! @unique
 		}
 		` + typeDefs;
 		this.resolveFunctions = {
@@ -38,20 +41,39 @@ export default class GraphQLSchemaBuilder {
 			Time: GraphQLTime,
 			DateTime: GraphQLDateTime
 		};
+
+		this.config = $config;
 	}
 
-	public addTypeDefsToSchema = (typeDefs?: string): GraphQLSchema => {
-		let newTypeDefs: string;
-		if (!typeDefs && this.typeDefs.indexOf('Query') < 0) {
-			newTypeDefs = this.typeDefs + 'type Query {noop:Int}';
-		} else {
+	public addTypeDefsToSchema = (typeDefs = ''): GraphQLSchema => {
+		if (typeDefs) {
 			this.typeDefs += typeDefs;
-			newTypeDefs = this.typeDefs;
 		}
 		if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
 			this.typeDefs = 'directive @model on OBJECT ' + this.typeDefs;
-			newTypeDefs = 'directive @model on OBJECT ' + newTypeDefs;
 		}
+
+		if (this.typeDefs.includes('@connection') && !this.typeDefs.includes('directive @connection')) {
+			this.typeDefs = 'directive @connection on FIELD_DEFINITION' + this.typeDefs;
+		}
+
+		if (this.config.generateSubscriptions && !this.typeDefs.includes('MutationType')) {
+			this.typeDefs += `
+			enum MutationType {
+				CREATED
+				UPDATED
+				DELETED
+				CONNECTED
+				DISCONNECTED
+			}
+			`;
+		}
+
+		let newTypeDefs = this.typeDefs;
+		if (!this.typeDefs.includes('type Query')) {
+			newTypeDefs += 'type Query {noop:Int}';
+		}
+
 		this.schema = makeExecutableSchema({
 			typeDefs: newTypeDefs,
 			resolvers: this.resolveFunctions,
@@ -65,6 +87,19 @@ export default class GraphQLSchemaBuilder {
 				requireResolversForResolveType: false
 			}
 		});
+
+		if (this.typeDefs.includes('@connection')) {
+			if (!this.config.generateConnections) {
+				throw new Error('Generate Connections must be true to use connection directive');
+			}
+			// don't want to attempt this if we didn't create the necessary types yet
+			if (this.typeDefs.includes('Connection') && this.typeDefs.includes('Edge') && this.typeDefs.includes('PageInfo')) {
+				SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
+					connection: ConnectionDirective
+				});
+			}
+		}
+
 		const typeMap = this.schema.getTypeMap();
 
 		if (this.typeDefs.includes('@model')) {
@@ -80,7 +115,6 @@ export default class GraphQLSchemaBuilder {
 				}
 			});
 		}
-
 
 		return this.schema;
 	}
@@ -111,11 +145,6 @@ export default class GraphQLSchemaBuilder {
 		return this.schema;
 	}
 }
-
-
-
-
-
 
 class DisplayDirective extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field) {
@@ -157,7 +186,6 @@ class RelationDirective extends SchemaDirectiveVisitor {
 	}
 }
 
-
 class DefaultDirective extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field) {
 		let type = field.type;
@@ -184,7 +212,6 @@ class DefaultDirective extends SchemaDirectiveVisitor {
 			field.defaultValue = value;
 		}
 
-
   }
 }
 
@@ -195,21 +222,33 @@ class ModelDirective extends SchemaDirectiveVisitor {
 	}
 }
 
-
 class UniqueDirective extends SchemaDirectiveVisitor {
 	public visitFieldDefinition(field) {
 		field.unique = true;
 	}
 }
 
+class ConnectionDirective extends SchemaDirectiveVisitor {
+	public visitFieldDefinition(field) {
+		const fieldType = field.type;
 
-
-
-
-
-
-
-
+		if (typeIsList(fieldType)) {
+			const connectionName = getReturnType(fieldType) + 'Connection';
+			let connectionType: GraphQLType = this.schema.getType(connectionName);
+			if (!connectionType) {
+				throw new Error('Connections must be enabled and output type must be part of model');
+			}
+			if (isNonNullType(fieldType)) {
+				connectionType = new GraphQLNonNull(connectionType);
+			}
+			field.type = connectionType;
+		} else {
+			throw new Error('Can\'t make connection on non list field');
+		}
+		console.log('connection directive');
+	 console.log(field);
+	}
+}
 
 // {
 //   __type(name: "GraphQLInputType") {
@@ -246,7 +285,6 @@ class UniqueDirective extends SchemaDirectiveVisitor {
 //     }
 //   }
 // }
-
 
 // {
 //   allGraphQLDirectives {

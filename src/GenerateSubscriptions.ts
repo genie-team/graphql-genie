@@ -1,12 +1,10 @@
 
-import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import { merge } from 'lodash';
+import { GraphQLFieldResolver, GraphQLSchema, IntrospectionObjectType } from 'graphql';
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
-import { InputGenerator } from './InputGenerator';
-import { Relations, getAllResolver, queryArgs } from './TypeGeneratorUtils';
+import { getAllResolver, queryArgs } from './TypeGeneratorUtils';
 
-export class GenerateConnections implements TypeGenerator {
+export class GenerateSubscriptions implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
 	private schema: GraphQLSchema;
@@ -15,40 +13,31 @@ export class GenerateConnections implements TypeGenerator {
 	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 	private edgeResolvers: Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
 	private currOutputObjectTypeDefs: Set<string>;
-	private currInputObjectTypes: Map<string, GraphQLInputType>;
-	private schemaInfo: IntrospectionType[];
-	private relations: Relations;
+
 	constructor(dataResolver: DataResolver, objectName: string,
 		types: IntrospectionObjectType[], $schema: GraphQLSchema,
-		$currOutputObjectTypeDefs: Set<string>,
-		$currInputObjectTypes: Map<string, GraphQLInputType>,
-		$schemaInfo: IntrospectionType[],
-		$relations: Relations) {
+		$currOutputObjectTypeDefs: Set<string>) {
 		this.dataResolver = dataResolver;
 		this.objectName = objectName;
 		this.types = types;
 		this.schema = $schema;
 		this.currOutputObjectTypeDefs = $currOutputObjectTypeDefs;
-		this.currInputObjectTypes = $currInputObjectTypes;
-		this.schemaInfo = $schemaInfo;
-		this.relations = $relations;
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 		this.edgeResolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
-
-		this.currOutputObjectTypeDefs.add(`
-			type PageInfo {
-				hasNextPage: Boolean!
-				hasPreviousPage: Boolean!
-				startCursor: String
-				endCursor: String
-			}
-		`);
-
 		this.generate();
 	}
 
 	generate() {
+
+		this.currOutputObjectTypeDefs.add(`
+		type PageInfo {
+			hasNextPage: Boolean!
+			hasPreviousPage: Boolean!
+			startCursor: String
+			endCursor: String
+		}
+	`);
 		this.types.forEach(type => {
 			const fieldName = `${pluralize(type.name.toLowerCase())}Connection`;
 			this.currOutputObjectTypeDefs.add(`
@@ -72,14 +61,9 @@ export class GenerateConnections implements TypeGenerator {
 				}
 			`);
 
-			const schemaType = this.schema.getType(type.name);
-			const generator = new InputGenerator(schemaType, null, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
-			const args = queryArgs;
-			merge(args, {filter: {type: generator.generateFilterInput()}});
-
 			this.fields[fieldName] = {
 				type: `${type.name}Connection`,
-				args
+				args: queryArgs
 			};
 
 			this.resolvers.set(fieldName, getAllResolver(this.dataResolver, this.schema, type, true));

@@ -1,9 +1,9 @@
 
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
-	GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import {Relations,  deleteResolver, getPayloadTypeDef, getPayloadTypeName} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
+import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter } from './TypeGeneratorUtils';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
@@ -61,6 +61,49 @@ export class GenerateDelete implements TypeGenerator {
 			};
 			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
 			this.resolvers.set(`delete${type.name}`, deleteResolver(this.dataResolver));
+
+			// DELETE MANY
+			const deleteManyInputName = `DeleteMany${pluralize(type.name)}MutationInput`;
+			const deleteManyInput =  new GraphQLInputObjectType({
+				name: deleteManyInputName,
+				fields: {
+					filter: {type: new GraphQLNonNull(generator.generateFilterInput())},
+					clientMutationId: {type: GraphQLString}
+				}
+			});
+			this.currInputObjectTypes.set(deleteManyInputName, deleteManyInput);
+
+			const manyArgs = {};
+			manyArgs['input'] = {
+				type: new GraphQLNonNull(deleteManyInput)
+			};
+			this.fields[`deleteMany${pluralize(type.name)}`] = {
+				type: 'BatchPayload',
+				args: manyArgs
+			};
+
+			this.resolvers.set(`deleteMany${pluralize(type.name)}`, async (
+				_root: any,
+				_args: { [key: string]: any }
+			): Promise<any> => {
+				let count = 0;
+				const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
+				const filter = _args.input && _args.input.filter ? _args.input.filter : '';
+				if (filter) {
+					const schemaType = this.schema.getType(type.name);
+					const options = parseFilter(filter, schemaType);
+					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					count = fortuneReturn.length;
+					fortuneReturn = fortuneReturn.map((value) => {
+						return value.id;
+					});
+					await this.dataResolver.delete(type.name, fortuneReturn);
+				}
+				return {
+					count,
+					clientMutationId
+				};
+			});
 		});
 
 	}

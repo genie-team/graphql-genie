@@ -1,31 +1,25 @@
-import {
-	GraphQLError, GraphQLInputType, GraphQLNamedType,
-	GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo,
-	GraphQLScalarType, GraphQLSchema,
-	GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType
-} from 'graphql';
-import { Connection, DataResolver } from './GraphQLGenieInterfaces';
+import { GraphQLError, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
 import pluralize from 'pluralize';
+import { Connection, DataResolver } from './GraphQLGenieInterfaces';
 export class Relation {
 	public type0: string;
 	public field0: string;
-	public field0isArray: boolean;
+	public field0isList: boolean;
 	public type1: string;
 	public field1: string;
-	public field1isArray: boolean;
+	public field1isList: boolean;
 
-
-	constructor($type: string, $field: string, $field0isArray: boolean) {
+	constructor($type: string, $field: string, $field0isList: boolean) {
 		this.type0 = $type;
 		this.field0 = $field;
-		this.field0isArray = $field0isArray;
+		this.field0isList = $field0isList;
 	}
 
 	setRelative(relation: Relation) {
 		this.type1 = relation.type0;
 		this.field1 = relation.field0;
-		this.field1isArray = relation.field0isArray;
+		this.field1isList = relation.field0isList;
 	}
 
 	isValidRelative(relation: Relation) {
@@ -37,7 +31,7 @@ export class Relation {
 	}
 
 	isSameRelative(relation: Relation): boolean {
-		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isArray === relation.field0isArray;
+		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isList === relation.field0isList;
 	}
 
 	getInverse(type: string, field: string): string {
@@ -91,8 +85,8 @@ export class Relations {
 		return inverse;
 	}
 
-	public setRelation(name: string, type: string, field: string, fieldIsArray: boolean) {
-		const newRelation = new Relation(type, field, fieldIsArray);
+	public setRelation(name: string, type: string, field: string, fieldIsList: boolean) {
+		const newRelation = new Relation(type, field, fieldIsList);
 		if (!this.relations.has(name)) {
 			this.relations.set(name, newRelation);
 		} else {
@@ -107,8 +101,8 @@ export class Relations {
 		}
 	}
 
-	public setSelfRelation(name: string, type: string, field: string, fieldIsArray: boolean) {
-		const newRelation = new Relation(type, field, fieldIsArray);
+	public setSelfRelation(name: string, type: string, field: string, fieldIsList: boolean) {
+		const newRelation = new Relation(type, field, fieldIsList);
 		newRelation.setRelative(newRelation);
 		this.relations.set(name, newRelation);
 	}
@@ -120,7 +114,6 @@ export class Relations {
 			'curr field', primaryField, '\n',
 			'other field', relatedField);
 	}
-
 
 }
 
@@ -160,9 +153,9 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 			const fieldTypeName = getReturnType(field.type);
 			const reslovedTypeName = typeNameResolver(fieldTypeName);
 			if (typeName === fieldTypeName) {
-				relations.setSelfRelation(`${field.name}On${typeName}`, reslovedTypeName, field.name, fieldIsArray(field.type));
+				relations.setSelfRelation(`${field.name}On${typeName}`, reslovedTypeName, field.name, typeIsList(field.type));
 			} else if (relation) {
-				relations.setRelation(relation.name, reslovedTypeName, field.name, fieldIsArray(field.type));
+				relations.setRelation(relation.name, reslovedTypeName, field.name, typeIsList(field.type));
 			} else {
 				const fieldTypeInfo = schemaInfo[fieldTypeName];
 				if (type && fieldTypeInfo) {
@@ -171,7 +164,7 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 					if (numFields === 1 && reverseNumFields === 1) {
 						const possibleTypes = [typeName, fieldTypeName];
 						possibleTypes.sort();
-						relations.setRelation(possibleTypes.join('_'), reslovedTypeName, field.name, fieldIsArray(field.type));
+						relations.setRelation(possibleTypes.join('_'), reslovedTypeName, field.name, typeIsList(field.type));
 					}
 				}
 			}
@@ -180,7 +173,6 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 	});
 	return relations;
 };
-
 
 export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInputType[], defaultValue?: string): object => {
 	const fields = {};
@@ -205,16 +197,19 @@ export const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
 	}
 };
 
-export const fieldIsArray = (fieldInfo) => {
-	let isArray = false;
-	while (isListType(fieldInfo) || isNonNullType(fieldInfo) || fieldInfo.kind === 'NON_NULL' || fieldInfo.kind === 'LIST') {
-		if (isListType(fieldInfo) || fieldInfo.kind === 'LIST') {
-			isArray = true;
+export const typeIsList = (type) => {
+	let isList = false;
+	if (type.name && type.name.endsWith('Connection')) {
+		isList = true;
+	}
+	while (!isList && (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST')) {
+		if (isListType(type) || type.kind === 'LIST') {
+			isList = true;
 			break;
 		}
-		fieldInfo = fieldInfo.ofType;
+		type = type.ofType;
 	}
-	return isArray;
+	return isList;
 };
 
 export const getReturnType = (type): string => {
@@ -255,7 +250,6 @@ const clean = (obj): any => {
 	return returnObj;
 };
 
-
 const setupArgs = (results: any[], args: any[]) => {
 	// setup the arguments to use the new types
 	results.forEach((types: any[]) => {
@@ -293,7 +287,7 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 			if (!isScalarType(argReturnRootType)) {
 				const arg = currArg[argName];
 				if (isObject(arg) && argReturnType) {
-					currArg[argName] = fieldIsArray(argReturnType) ? [] : undefined;
+					currArg[argName] = typeIsList(argReturnType) ? [] : undefined;
 
 					if (isInterfaceType(argReturnRootType)) {
 						for (const argKey in arg) {
@@ -435,7 +429,6 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			resolveArgs(updateArgs, returnType, Mutation.Update, dataResolver, currRecord, _args, _context, _info)
 		]);
 
-
 		// could be creating more than 1 type
 		createArgs.forEach((createArg) => {
 			createArg = createArg.hasOwnProperty ? createArg : Object.assign({}, createArg);
@@ -477,7 +470,6 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			}
 		});
 
-
 		// now add the connect types
 		connectArgs.forEach(connectArg => {
 			dataResolverPromises.push(new Promise((resolve, reject) => {
@@ -485,7 +477,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					if (data && data['id']) {
 						resolve({ index, key, id: data['id'], data });
 					} else {
-						reject(new Error('tried to connect using unique value that does not exist'));
+						reject(new Error('tried to connect using unique value that does not exist ' + JSON.stringify(connectArg)));
 					}
 				});
 			}));
@@ -590,7 +582,6 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 	};
 };
 
-
 export const createResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.Create, dataResolver);
 };
@@ -607,10 +598,11 @@ export const deleteResolver = (dataResolver: DataResolver) => {
 	return mutateResolver(Mutation.Delete, dataResolver);
 };
 
-export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchema, field: any) => {
-	const graphQLType = schema.getType(getReturnType(field.type));
+export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchema, field: any, returnConnection = false) => {
+	const schemaType = schema.getType(getReturnType(field.type));
+
 	let resolver;
-	if (!isScalarType(graphQLType)) {
+	if (!isScalarType(schemaType)) {
 		resolver = async (
 			root: any,
 			_args: { [key: string]: any },
@@ -623,45 +615,71 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 
 			const cache = root && root.cache ? root.cache : new Map<string, object>();
 			const typeName = getReturnType(field.type);
-
-			let result = [];
+			let result: any = [];
 			let returnArray = false;
 			let fieldValue = fortuneReturn[field.name];
 			returnArray = isArray(fieldValue);
 			fieldValue = returnArray ? fieldValue : [fieldValue];
 			const ids = [];
+
+			let options = {};
+			let filter = null;
+			if (_args && _args.filter) {
+				filter = _args.filter;
+				options = parseFilter(_args.filter, schemaType);
+			}
+			set(options, 'sort', _args.sort);
+			set(options, 'offset', _args.skip);
+			let connection: Connection;
+
 			fieldValue.forEach(id => {
 				if (id) {
 					if (cache.has(id)) {
-						result.push({
-							fortuneReturn: cache.get(id),
-							cache: cache,
-							__typename: cache.get(id).__typename
-						});
+						result.push(cache.get(id));
 					} else {
 						ids.push(id);
 					}
 				}
 			});
 			if (!isEmpty(ids)) {
-				let findResult = await dataResolver.find(typeName, ids);
+				let findResult = await dataResolver.find(typeName, ids, options);
 				if (findResult) {
 					findResult = isArray(findResult) ? findResult : [findResult];
+
 					findResult.forEach(result => {
 						cache.set(result.id, result);
 					});
 
-					findResult = findResult.map((result) => {
-						return {
-							fortuneReturn: result,
-							cache: cache,
-							__typename: result.__typename
-						};
-					});
 					result = result.concat(findResult);
 				}
 			}
-			return result.length === 0 ? null : returnArray ? result : result[0];
+
+			if (filter && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
+				const pullIds = await filterNested(filter, _args.sort, schemaType, fortuneReturn, cache, dataResolver);
+				result = result.filter(entry => !pullIds.has(entry.id));
+			}
+
+			connection = dataResolver.getConnection(result, _args.before, _args.after, _args.first, _args.last);
+			result = connection.edges;
+
+			result = result.map((entry) => {
+				return {
+					fortuneReturn: entry,
+					cache: cache,
+					__typename: entry.__typename
+				};
+			});
+
+			result = result.length === 0 ? null : returnArray ? result : result[0];
+			if (returnConnection) {
+				result = {
+					edges: result,
+					pageInfo: connection.pageInfo,
+					aggregate: connection.aggregate
+				};
+			}
+
+			return result;
 		};
 
 	} else {
@@ -679,7 +697,6 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 	}
 	return resolver;
 };
-
 
 export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema, type: IntrospectionObjectType, returnConnection = false) => {
 	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo) => {
@@ -707,7 +724,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 			fortuneReturn.forEach(result => {
 				cache.set(result.id, result);
 			});
-			if (filter && isObjectType(schemaType) || isInterfaceType(schemaType)) {
+			if (filter && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
 				const pullIds = await filterNested(filter, _args.sort, schemaType, fortuneReturn, cache, dataResolver);
 				fortuneReturn = fortuneReturn.filter(result => !pullIds.has(result.id));
 			}
@@ -759,8 +776,7 @@ const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) 
 	});
 };
 
-export const filterArgs = {
-	'filter': { type: 'JSON' },
+export const queryArgs: Object = {
 	'sort': { type: 'JSON' },
 	'first': { type: 'Int' },
 	'last': { type: 'Int' },
@@ -769,7 +785,7 @@ export const filterArgs = {
 	'after': { type: 'String' }
 };
 
-const fortuneFilters = ['not', 'or', 'and', 'range', 'match'];
+export const fortuneFilters = ['not', 'or', 'and', 'range', 'match', 'exists'];
 export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 
 	if (!isObjectType(type) && !isInterfaceType(type)) {
@@ -796,13 +812,12 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 	const scalarsParsed = parseScalars(pick(filter, fortuneFilters), fieldMap);
 	return Object.assign(filter, scalarsParsed);
 
-
 };
 
 export const filterNested = async (filter: object, sort: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver): Promise<Set<string>> => {
 	// if they have nested filters on types we need to get that data now so we can filter at this root query
 	const pullIds = new Set<string>();
-	if (filter && isObjectType(type) || isInterfaceType(type)) {
+	if (filter && (isObjectType(type) || isInterfaceType(type))) {
 		await Promise.all(map(type.getFields(), async (field) => {
 			const currFilter = filter[field.name] ? filter[field.name] : filter[`f_${field.name}`] ? filter[`f_${field.name}`] : null;
 			const currSort = sort && sort[field.name] ? sort[field.name] : sort && sort[`f_${field.name}`] ? sort[`f_${field.name}`] : null;
@@ -822,7 +837,9 @@ export const filterNested = async (filter: object, sort: object, type: GraphQLNa
 							childReturn = childReturn ? childReturn.filter(result => !recursePullIds.has(result.id)) : childReturn;
 						}
 						if (childReturn && !isEmpty(childReturn)) {
-							cache.set(childReturn.id, childReturn);
+							if (cache) {
+								cache.set(childReturn.id, childReturn);
+							}
 						} else {
 							pullIds.add(result.id);
 						}
@@ -845,7 +862,6 @@ export const getPayloadTypeDef = (typeName: string): string => {
 			clientMutationId: String
 		}`;
 };
-
 
 export const capFirst = (val: string) => {
 	return val ? val.charAt(0).toUpperCase() + val.slice(1) : '';

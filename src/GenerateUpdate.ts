@@ -1,9 +1,9 @@
 
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLOutputType, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
-	GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import {Relations,  getPayloadTypeDef, getPayloadTypeName, updateResolver} from './TypeGeneratorUtils';
 import { InputGenerator } from './InputGenerator';
+import { Relations, getPayloadTypeDef, getPayloadTypeName, parseFilter, updateResolver } from './TypeGeneratorUtils';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
@@ -39,8 +39,9 @@ export class GenerateUpdate implements TypeGenerator {
 	generate() {
 		this.types.forEach(type => {
 			const args = {};
+			const schemaType = this.schema.getType(type.name);
 
-			const generator = new InputGenerator(this.schema.getType(type.name), this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
+			const generator = new InputGenerator(schemaType, this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
 			const updateInputName = `Update${type.name}MutationInput`;
 			const updateInput =  new GraphQLInputObjectType({
 				name: updateInputName,
@@ -62,6 +63,52 @@ export class GenerateUpdate implements TypeGenerator {
 			};
 			this.currOutputObjectTypeDefs.add(getPayloadTypeDef(type.name));
 			this.resolvers.set(`update${type.name}`, updateResolver(this.dataResolver));
+
+			// UPDATE MANY
+			const updateManyInputName = `UpdateMany${pluralize(type.name)}MutationInput`;
+			const updateManyInput =  new GraphQLInputObjectType({
+				name: updateManyInputName,
+				fields: {
+					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
+					filter: {type: new GraphQLNonNull(generator.generateFilterInput())},
+					clientMutationId: {type: GraphQLString}
+				}
+			});
+			this.currInputObjectTypes.set(updateManyInputName, updateManyInput);
+
+			const manyArgs = {};
+			manyArgs['input'] = {
+				type: new GraphQLNonNull(updateManyInput)
+			};
+			this.fields[`updateMany${pluralize(type.name)}`] = {
+				type: 'BatchPayload',
+				args: manyArgs
+			};
+
+			this.resolvers.set(`updateMany${pluralize(type.name)}`, async (
+				_root: any,
+				_args: { [key: string]: any },
+				_context: any,
+				_info: any
+			): Promise<any> => {
+				let count = 0;
+				const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
+				const filter = _args.input && _args.input.filter ? _args.input.filter : '';
+				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';
+				if (filter && updateArgs) {
+					const options = parseFilter(filter, schemaType);
+					const fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					count = fortuneReturn.length;
+					await Promise.all(fortuneReturn.map(async (fortuneRecord) => {
+						return await updateResolver(this.dataResolver)(fortuneRecord, {update: updateArgs, where: true}, _context, _info, null, null, <GraphQLOutputType>schemaType);
+					}));
+				}
+				return {
+					count,
+					clientMutationId
+				};
+			});
+
 		});
 
 	}

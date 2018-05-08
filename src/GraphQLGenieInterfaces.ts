@@ -1,4 +1,4 @@
-import {GraphQLFieldResolver } from 'graphql';
+import { GraphQLFieldResolver } from 'graphql';
 import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
 export interface TypeGenerator {
 	getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
@@ -19,7 +19,6 @@ export class Connection {
 	edges: any[];
 	aggregate: Aggregate;
 	pageInfo: PageInfo;
-
 
 	constructor() {
 		this.aggregate = {
@@ -52,8 +51,8 @@ export interface GenerateConfig {
 	generateUpdate?: boolean;
 	generateDelete?: boolean;
 	generateUpsert?: boolean;
-	generateConnectionQueries?: boolean;
-	includeSubscription?: boolean;
+	generateConnections?: boolean;
+	generateSubscriptions?: boolean;
 }
 
 export interface GraphQLGenieOptions {

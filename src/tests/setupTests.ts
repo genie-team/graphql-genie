@@ -1,7 +1,7 @@
-import { ApolloClient } from 'apollo-client';
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
+import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import GraphQLGenie  from '../GraphQLGenie';
+import GraphQLGenie from '../GraphQLGenie';
 
 const typeDefs = `
 
@@ -71,4 +71,3 @@ export const getClient = async () => {
 	}
 	return process['testSetup']['client'];
 };
-

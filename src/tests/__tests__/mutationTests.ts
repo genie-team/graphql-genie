@@ -1,6 +1,6 @@
-import {getClient} from '../setupTests';
-import gql from 'graphql-tag';
 import { ApolloClient } from 'apollo-client';
+import gql from 'graphql-tag';
+import { getClient } from '../setupTests';
 let client: ApolloClient<any>;
 beforeAll(async () => {
 	client = await getClient();
@@ -14,8 +14,6 @@ const testData = {users: [],
 posts: [],
 addresses: [],
 comments: []};
-
-
 
 describe('mutationTests', () => {
 

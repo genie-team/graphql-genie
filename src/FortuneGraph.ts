@@ -1,6 +1,5 @@
-import { IntrospectionType } from 'graphql';
 import fortune from 'fortune';
-
+import { IntrospectionType } from 'graphql';
 import { each, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import { Connection, DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
@@ -30,13 +29,12 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public canAdd = async (graphQLTypeName: string, inputRecords: object[]): Promise<boolean> => {
-		const fortuneTypeName = this.getFortuneTypeName(graphQLTypeName);
 		let canAdd = true;
-		if (inputRecords && this.uniqueIndexes.has(fortuneTypeName)) {
-			await Promise.all(this.uniqueIndexes.get(fortuneTypeName).map(async (fieldName) => {
+		if (inputRecords && this.uniqueIndexes.has(graphQLTypeName)) {
+			await Promise.all(this.uniqueIndexes.get(graphQLTypeName).map(async (fieldName) => {
 				await Promise.all(inputRecords.map(async (inputRecord) => {
 					if (canAdd && inputRecord[fieldName]) {
-						const dbRecord = await this.getValueByUnique(fortuneTypeName, {[fieldName]: inputRecord[fieldName]});
+						const dbRecord = await this.getValueByUnique(graphQLTypeName, {[fieldName]: inputRecord[fieldName]});
 						if (dbRecord) {
 							canAdd = false;
 						}
@@ -80,7 +78,6 @@ export default class FortuneGraph implements DataResolver {
 		return connection;
 	}
 
-
 	private edgesToReturn = (edgesWithCursorApplied: any[], first: number, last: number): any[] => {
 		if (typeof first !== 'undefined') {
 			if (first < 0) {
@@ -118,6 +115,12 @@ export default class FortuneGraph implements DataResolver {
 		return edges;
 	}
 
+	private getDataTypeName (graphQLTypeName: string): string {
+		graphQLTypeName = graphQLTypeName.endsWith('Connection') ? graphQLTypeName.replace(/Connection$/g, '') : graphQLTypeName;
+		graphQLTypeName = graphQLTypeName.endsWith('Edge') ? graphQLTypeName.replace(/Edge$/g, '') : graphQLTypeName;
+		return graphQLTypeName;
+	}
+
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		options = options ? options : {};
@@ -126,7 +129,7 @@ export default class FortuneGraph implements DataResolver {
 			delete options.match.id;
 		}
 		if (!ids || ids.length < 1) {
-			set(options, 'match.__typename', graphQLTypeName);
+			set(options, 'match.__typename', this.getDataTypeName(graphQLTypeName));
 		}
 
 		delete options.first; delete options.last; delete options.before; delete options.after;
@@ -234,6 +237,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public getFortuneTypeName = (name: string): string => {
+		name = this.getDataTypeName(name);
 		return this.fortuneTypeNames.has(name) ? this.fortuneTypeNames.get(name) : name;
 	}
 
@@ -320,7 +324,4 @@ export default class FortuneGraph implements DataResolver {
 		return store;
 	}
 
-
-
 }
-

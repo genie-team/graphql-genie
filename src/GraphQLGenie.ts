@@ -1,33 +1,29 @@
 
-import {
-	GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql,
-} from 'graphql';
-import { assign, forOwn, get} from 'lodash';
-import SchemaInfoBuilder from './SchemaInfoBuilder';
-import FortuneGraph from './FortuneGraph';
-import { GenerateGetAll } from './GenerateGetAll';
-import { FortuneOptions, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import { printType } from 'graphql';
-import { GenerateCreate } from './GenerateCreate';
-import { GenerateUpdate } from './GenerateUpdate';
-import { GenerateDelete } from './GenerateDelete';
-import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
-import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtils';
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
-import { GenerateUpsert } from './GenerateUpsert';
+import { GraphQLFieldResolver, GraphQLInputType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, isObjectType, printType } from 'graphql';
+import { assign, find, forOwn, get } from 'lodash';
+import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
-
+import { GenerateCreate } from './GenerateCreate';
+import { GenerateDelete } from './GenerateDelete';
+import { GenerateGetAll } from './GenerateGetAll';
+import { GenerateUpdate } from './GenerateUpdate';
+import { GenerateUpsert } from './GenerateUpsert';
+import { FortuneOptions, GenerateConfig, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
+import SchemaInfoBuilder from './SchemaInfoBuilder';
+import { Relations, computeRelations, getReturnType, getTypeResolver, typeIsList } from './TypeGeneratorUtils';
 
 export default class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
-	private config = {
+	private config: GenerateConfig = {
 		generateGetAll: true,
 		generateCreate: true,
 		generateUpdate: true,
 		generateDelete: true,
 		generateUpsert: true,
-		generateConnectionQueries: true,
-		includeSubscription: true
+		generateConnections: true,
+		generateSubscriptions: true
 	};
 	private generators: Array<TypeGenerator>;
 
@@ -46,23 +42,38 @@ export default class GraphQLGenie {
 			this.fortuneOptions = options.fortuneOptions;
 		}
 
-		if (options.schemaBuilder) {
-			this.schemaBuilder = options.schemaBuilder;
-		} else if (options.typeDefs) {
-			this.schemaBuilder = new GraphQLSchemaBuilder(options.typeDefs);
-		} else {
-			throw new Error('Need a schemaBuilder or typeDefs');
-		}
-
 		if (options.generatorOptions) {
 			this.config = Object.assign(this.config, options.generatorOptions);
 		}
 
+		if (options.schemaBuilder) {
+			this.schemaBuilder = options.schemaBuilder;
+		} else if (options.typeDefs) {
+			this.schemaBuilder = new GraphQLSchemaBuilder(options.typeDefs, this.config);
+		} else {
+			throw new Error('Need a schemaBuilder or typeDefs');
+		}
+
 		this.schema = this.schemaBuilder.getSchema();
+		this.validate();
 		this.initialized = this.init();
 	}
 
-
+	private validate = () => {
+		const typeMap = this.schema.getTypeMap();
+		Object.keys(typeMap).forEach(name => {
+			const type = typeMap[name];
+			if (isObjectType(type) && !type.name.includes('__')  && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+				if (type.name.endsWith('Connection')) {
+					throw new Error( `${type.name} is invalid because it ends with Connection which could intefere with necessary generated types and genie logic`);
+				} else if (type.name.endsWith('Edge')) {
+					throw new Error( `${type.name} is invalid because it ends with Edge which could intefere with necessary generated types and genie logic`);
+				} else if (this.config.generateConnections && type.name === 'PageInfo') {
+					throw new Error( `${type.name} is invalid. PageInfo type is auto generated for connections`);
+				}
+			}
+		});
+	}
 
 	private init = async () => {
 		this.generators = [];
@@ -80,12 +91,26 @@ export default class GraphQLGenie {
 	}
 
 	private buildResolvers = async () => {
+		const queryTypeFields = (<GraphQLObjectType>this.schema.getType('Query')).getFields();
+		const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
+		const fullArgs = queryField.args;
+		const filterArg = find(fullArgs, ['name', 'filter']);
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
-
-			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
+			const schemaType = this.schema.getType(type.name);
+			if (isObjectType(schemaType) && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
+				const fieldMap = schemaType.getFields();
 				forOwn(type.fields, (field) => {
-					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field));
+					const graphQLfield = fieldMap[field.name];
+					graphQLfield.args = graphQLfield.args ? graphQLfield.args : [];
+					if (typeIsList(graphQLfield.type)) {
+						graphQLfield.args = graphQLfield.args.concat(fullArgs);
+					} else {
+						graphQLfield.args.push(filterArg);
+					}
+					const returnConnection = getReturnType(graphQLfield.type).endsWith('Connection');
+
+					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field, returnConnection));
 				});
 				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
 			}
@@ -111,10 +136,10 @@ export default class GraphQLGenie {
 		const currOutputObjectTypeDefs = new Set<string>();
 
 		if (this.config.generateGetAll) {
-			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema));
+			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema, currInputObjectTypes, this.schemaInfo, this.relations));
 		}
-		if (this.config.generateConnectionQueries) {
-			this.generators.push(new GenerateConnections(this.graphQLFortune, 'Query', nodeTypes, this.schema, currOutputObjectTypeDefs));
+		if (this.config.generateConnections) {
+			this.generators.push(new GenerateConnections(this.graphQLFortune, 'Query', nodeTypes, this.schema, currOutputObjectTypeDefs, currInputObjectTypes, this.schemaInfo, this.relations));
 		}
 		if (this.config.generateCreate) {
 			this.generators.push(new GenerateCreate(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
@@ -130,8 +155,17 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 
-
-
+		if (this.config.generateDelete || this.config.generateUpdate) {
+			currOutputObjectTypeDefs.add(`
+			type BatchPayload {
+				"""
+				The number of nodes that have been affected by the Batch operation.
+				"""
+				count: Int!
+				clientMutationId: String
+			}
+		`);
+		}
 
 		let newTypes = '';
 		currInputObjectTypes.forEach(inputObjectType => {
@@ -165,7 +199,7 @@ export default class GraphQLGenie {
 		fieldsOnObject.forEach((fields, objName) => {
 			newTypes += printType(new GraphQLObjectType({ name: objName, fields: fields })) + '\n';
 		});
-		// console.log(newTypes);
+		console.log(newTypes);
 
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
@@ -176,8 +210,6 @@ export default class GraphQLGenie {
 		this.schema = this.schemaBuilder.getSchema();
 
 	}
-
-
 
 	public getSchema = async (): Promise<GraphQLSchema> => {
 		await this.initialized;
@@ -211,11 +243,6 @@ export default class GraphQLGenie {
 
 }
 
-
-
-
-
-
 // cache.writeData({ data });
 
 // cache.writeData({
@@ -241,7 +268,6 @@ export default class GraphQLGenie {
 //     description
 //   }
 // }
-
 
 // {
 //   allGraphQLDirectives {
