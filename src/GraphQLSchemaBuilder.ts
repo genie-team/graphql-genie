@@ -59,7 +59,7 @@ export default class GraphQLSchemaBuilder {
 
 		if (this.config.generateSubscriptions && !this.typeDefs.includes('MutationType')) {
 			this.typeDefs += `
-			enum MutationType {
+			enum MUTATION_TYPE {
 				CREATED
 				UPDATED
 				DELETED

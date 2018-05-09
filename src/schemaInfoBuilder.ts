@@ -1,9 +1,7 @@
 import { GraphQLSchema, IntrospectionType, getIntrospectionQuery, graphql } from 'graphql';
-
-import {concat, each, findIndex, get, includes, keys, mapKeys, omit, omitBy, set, startsWith} from 'lodash';
+import { concat, each, findIndex, get, includes, keys, mapKeys, omit, omitBy, set, startsWith } from 'lodash';
 
 export default class SchemaInfoBuilder {
-
 
 	private schema: GraphQLSchema;
 	private schemaInfo: IntrospectionType[];
@@ -54,7 +52,6 @@ export default class SchemaInfoBuilder {
 				});
 			});
 
-
 			// metadata on type
 			set(schemaInfo, `${typeName}.metadata`, omit(get(schema, `_typeMap.${typeName}`), ['astNode', 'name', 'description', 'extensionASTNodes', 'isTypeOf', '_fields', '_interfaces', '_typeConfig', 'getFields', 'getInterfaces', 'toString', 'inspect', 'toJSON', '_enumConfig', 'getValue', 'getValues', 'parseLiteral', 'parseValue', 'getValue', 'serialize', '_getNameLookup', '_getValueLookup', '_values', 'resolveType', 'getTypes', '_types']));
 			// metadata of fields
@@ -62,7 +59,6 @@ export default class SchemaInfoBuilder {
 				const fieldIndex = findIndex(get(schemaInfo, `${typeName}.fields`), { 'name': field.name });
 				set(schemaInfo, `${typeName}.fields[${fieldIndex}].metadata`, omit(field, ['type', 'description', 'args', 'deprecationReason', 'astNode', 'isDeprecated', 'name']));
 			});
-
 
 			// add unions to types
 			if (type.kind === 'UNION') {
@@ -76,5 +72,3 @@ export default class SchemaInfoBuilder {
 		return schemaInfo;
 	}
 }
-
-

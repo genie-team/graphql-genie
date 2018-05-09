@@ -67,7 +67,7 @@ export class GenerateDelete implements TypeGenerator {
 			const deleteManyInput =  new GraphQLInputObjectType({
 				name: deleteManyInputName,
 				fields: {
-					filter: {type: new GraphQLNonNull(generator.generateFilterInput())},
+					filter: {type: new GraphQLNonNull(generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators))},
 					clientMutationId: {type: GraphQLString}
 				}
 			});

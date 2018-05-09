@@ -70,7 +70,7 @@ export class GenerateUpdate implements TypeGenerator {
 				name: updateManyInputName,
 				fields: {
 					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
-					filter: {type: new GraphQLNonNull(generator.generateFilterInput())},
+					filter: {type: new GraphQLNonNull(generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators))},
 					clientMutationId: {type: GraphQLString}
 				}
 			});

@@ -1,10 +1,11 @@
 import fortune from 'fortune';
 import { IntrospectionType } from 'graphql';
 import { each, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
-import { Connection, DataResolver, FortuneOptions } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
 export default class FortuneGraph implements DataResolver {
+
 	private fortuneOptions: FortuneOptions;
 	private fortuneTypeNames: Map<string, string>;
 	private uniqueIndexes: Map<string, string[]>;
@@ -322,6 +323,10 @@ export default class FortuneGraph implements DataResolver {
 		const store = fortune(fortuneConfig, this.fortuneOptions);
 		window['store'] = store;
 		return store;
+	}
+
+	getFeatures(): Features {
+		return this.store.adapter.features;
 	}
 
 }

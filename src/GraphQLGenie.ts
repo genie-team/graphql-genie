@@ -155,6 +155,15 @@ export default class GraphQLGenie {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 
+		if (this.config.generateGetAll || this.config.generateConnections) {
+			currOutputObjectTypeDefs.add(`
+			enum SORT_OPTIONS {
+				ASCENDING
+				DESCENDING
+			}
+		`);
+		}
+
 		if (this.config.generateDelete || this.config.generateUpdate) {
 			currOutputObjectTypeDefs.add(`
 			type BatchPayload {

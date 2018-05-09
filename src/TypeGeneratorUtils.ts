@@ -777,7 +777,6 @@ const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) 
 };
 
 export const queryArgs: Object = {
-	'sort': { type: 'JSON' },
 	'first': { type: 'Int' },
 	'last': { type: 'Int' },
 	'skip': { type: 'Int' },

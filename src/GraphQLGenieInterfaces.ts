@@ -33,6 +33,10 @@ export class Connection {
 	}
 
 }
+
+export interface Features {
+	logicalOperators: boolean;
+}
 export interface DataResolver {
 	getLink(graphQLTypeName: string, field: string): string;
 	delete(graphQLTypeName: string, ids?: string[], include?, meta?): Promise<any>;
@@ -42,7 +46,7 @@ export interface DataResolver {
 	getValueByUnique(returnTypeName: string, args): Promise<Object>;
 	canAdd(graphQLTypeName: string, records: Object): Promise<boolean>;
 	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
-
+	getFeatures(): Features;
 }
 
 export interface GenerateConfig {

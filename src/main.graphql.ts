@@ -1,9 +1,9 @@
-import GraphQLGenie from './GraphQLGenie';
-import gql from 'graphql-tag';
-import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
+import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
+import gql from 'graphql-tag';
 import { keyBy, map } from 'lodash';
+import GraphQLGenie from './GraphQLGenie';
 
 const typeDefs = `
 """
@@ -180,8 +180,6 @@ type GraphQLSchema @model @display(name: "Schema Root") {
 
 `;
 
-
-
 const genie = new GraphQLGenie({typeDefs});
 
 const buildClient = async (genie: GraphQLGenie) => {
@@ -273,17 +271,16 @@ const buildClient = async (genie: GraphQLGenie) => {
 		}
 	`;
 
-		for(const scalar of scalars) {
+		for (const scalar of scalars) {
 			createScalarsPromises.push(client.mutate({
 				mutation: createGraphQLScalarType,
 				variables: {name: scalar.name, description: scalar.description}
 			}));
-		};
+		}
 
 		const scalarTypes = await Promise.all(createScalarsPromises);
 		const scalarIdMap = keyBy(map(scalarTypes, 'data.createGraphQLScalarType'), 'name');
 		console.log(scalarIdMap);
-
 
 		const createDirectivesPromises = [];
 		const directives = [
@@ -326,12 +323,12 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 		}
 	`;
-		for(const directive of directives) {
+		for (const directive of directives) {
 			createDirectivesPromises.push(client.mutate({
 				mutation: createGraphQLDirective,
 				variables: {name: directive.name, description: directive.description, location: directive.location, args: directive.args}
 			}));
-		};
+		}
 
 		await genie.graphQLFortune.create('GraphQLEnumType', { name: 'test enum', description: 'test' });
 		await genie.graphQLFortune.create('GraphQLObjectType', { name: 'test object', description: 'test' });
