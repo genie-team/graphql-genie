@@ -22,14 +22,12 @@ export var Observable = zenObservable;
 
 /Users/Corey/Documents/workspace/mkr/node_modules/@types/graphql/type/definition.d.ts
 
-export function isOutputType(type: GraphQLType): type is GraphQLOutputType;
-
+export function isScalarType(type: GraphQLType): type is GraphQLScalarType;
 export function isInterfaceType(type: GraphQLType): type is GraphQLInterfaceType;
 export function isListType(type: GraphQLType): type is GraphQLList<any>;
 export function isUnionType(type: GraphQLType): type is GraphQLUnionType;
 export function isNonNullType(type: GraphQLType): type is GraphQLNonNull<any>;
 export function isObjectType(type: GraphQLType): type is GraphQLObjectType;
-
 export function isIntrospectionType(type:any): boolean;
 
 

@@ -1,0 +1,55 @@
+{
+  "name": "graphql-genie-client",
+  "browser": "lib/graphql-genie-client.umd.js",
+  "version": "0.0.1",
+  "description": "GraphQL Genie Client",
+  "files": [
+    "lib/"
+  ],
+  "scripts": {
+    "build": "tsc -p .",
+		"bundle": "rollup -c",
+		"postbuild": "npm run bundle",
+		"prepublishOnly": "npm run build",
+		"dev": "rollup -c -w",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ionic-team/stencil-app-starter.git"
+  },
+  "author": "Maker Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ionic-team/stencil"
+  },
+  "homepage": "https://github.com/ionic-team/stencil",
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
+  "dependencies": {
+		"graphql": "^0.13.1",
+    "apollo-cache-inmemory": "^1.2.1",
+    "apollo-client": "^2.3.1",
+		"apollo-link-schema": "^1.1.0",
+		"graphql-tag": "^2.9.2",
+    "graphql-genie": "^0.0.1"
+  },
+  "devDependencies": {
+    "jest": "^22.4.0",
+    "rollup": "^0.58.2",
+    "@types/graphql": "^0.13.1",
+    "typescript": "^2.8.3"
+  }
+}

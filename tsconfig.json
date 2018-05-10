@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "declaration": false,
+		"allowUnreachableCode": false,
+		"sourceMap": true,
+    "declaration": true,
     "experimentalDecorators": true,
     "lib": [
       "dom",
@@ -15,12 +16,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "jsx": "react",
-    "jsxFactory": "h"
-  },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+		"jsxFactory": "h",
+  }
 }

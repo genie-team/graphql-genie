@@ -1,0 +1,1 @@
+{"version":3,"file":"GraphQLGenieInterfaces.js","sourceRoot":"","sources":["../src/GraphQLGenieInterfaces.ts"],"names":[],"mappings":"AAiBA,MAAM;IAKL;QACC,IAAI,CAAC,SAAS,GAAG;YAChB,KAAK,EAAE,CAAC,CAAC;SACT,CAAC;QACF,IAAI,CAAC,QAAQ,GAAG;YACf,WAAW,EAAE,KAAK;YAClB,eAAe,EAAE,KAAK;YACtB,WAAW,EAAE,EAAE;YACf,SAAS,EAAE,EAAE;SACb,CAAC;IACH,CAAC;CAED"}
