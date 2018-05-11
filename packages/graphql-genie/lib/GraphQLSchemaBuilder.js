@@ -4,7 +4,7 @@ import { SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSche
 import GraphQLJSON from 'graphql-type-json';
 import { has, set } from 'lodash';
 import { getReturnType, typeIsList } from './TypeGeneratorUtils';
-export default class GraphQLSchemaBuilder {
+export class GraphQLSchemaBuilder {
     constructor(typeDefs = '', $config) {
         this.addTypeDefsToSchema = ($typeDefs = '') => {
             if ($typeDefs) {

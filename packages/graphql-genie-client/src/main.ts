@@ -1,7 +1,7 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import GraphQLGenie from 'graphql-genie';
+import { GraphQLGenie } from 'graphql-genie';
 import gql from 'graphql-tag';
 
 const typeDefs = `

@@ -14,26 +14,30 @@ export default [
 	{
 		input: 'src/main.ts',
 		output: {
-			name: 'rollupGraphQLGenie',
+			name: 'graphql-genie-client',
 			file: pkg.browser,
 			format: 'umd'
 		},
 		watch: {
-			include: 'src/**'
+			include: '../graphql-genie/src/**'
 		},
 		onwarn,
 		plugins: [
 			resolve({
 				extensions: ['.mjs', '.js', '.json'],
 				jsnext: true,
-				main: true
+				main: true,
+				browser: true
 			}), // so Rollup can find `ms`
 			commonjs({
-				include: ['node_modules/**', '../../node_modules/**', '../graphql-genie/node_modules'],
+				include: ['node_modules/**', '../graphql-genie/lib/bundle.umd.js', '../../node_modules/**'],
+				exclude: ['../graphql-genie/node_modules/**'],
 				sourceMap: true,
 				namedExports: {
-					'../graphql-genie/node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
+					'node_modules/graphql/index.mjs': [ 'default' ],
+					'../graphql-genie/lib/bundle.umd.js': ['GraphQLGenie'],
 					'../graphql-genie/node_modules/lodash/lodash.js': ['find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
+					'../graphql-genie/node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
 					'../graphql-genie/node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
 					'../graphql-genie/node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime']
 				}

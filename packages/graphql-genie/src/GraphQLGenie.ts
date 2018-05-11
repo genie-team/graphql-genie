@@ -9,12 +9,12 @@ import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateUpsert } from './GenerateUpsert';
-import { FortuneOptions, GenerateConfig, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
-import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
+import { DataResolver, FortuneOptions, GenerateConfig, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getReturnType, getTypeResolver, typeIsList } from './TypeGeneratorUtils';
 
-export default class GraphQLGenie {
+export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
 	private config: GenerateConfig = {
 		generateGetAll: true,
@@ -32,7 +32,7 @@ export default class GraphQLGenie {
 	private schemaInfo: IntrospectionType[];
 	private schemaInfoBuilder: SchemaInfoBuilder;
 	private relations: Relations;
-	public graphQLFortune: FortuneGraph;
+	private graphQLFortune: FortuneGraph;
 
 	private initialized: Promise<boolean>;
 	constructor(options: GraphQLGenieOptions) {
@@ -202,6 +202,11 @@ export default class GraphQLGenie {
 	public getSchema = async (): Promise<GraphQLSchema> => {
 		await this.initialized;
 		return this.schema;
+	}
+
+	public getDataResolver = async (): Promise<DataResolver> => {
+		await this.initialized;
+		return this.graphQLFortune;
 	}
 
 	public getFragmentTypes = async (): Promise<IntrospectionResultData> => {

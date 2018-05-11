@@ -1,5 +1,5 @@
 import { GraphQLFieldResolver } from 'graphql';
-import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
+import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 export interface TypeGenerator {
     getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
     getFieldsOnObject(): Map<string, object>;

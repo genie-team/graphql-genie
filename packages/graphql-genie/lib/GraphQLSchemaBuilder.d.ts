@@ -1,6 +1,6 @@
 import { GraphQLFieldResolver, GraphQLSchema } from 'graphql';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
-export default class GraphQLSchemaBuilder {
+export declare class GraphQLSchemaBuilder {
     private schema;
     private typeDefs;
     private config;

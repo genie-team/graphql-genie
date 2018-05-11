@@ -11,9 +11,13 @@ export default [
 	{
 		input: 'src/index.ts',
 		output: {
-			name: 'rollupGraphQLGenie',
+			name: 'graphql-genie',
 			file: pkg.browser,
-			format: 'umd'
+			format: 'umd',
+			globals: {
+				graphql: 'graphql',
+				lodash: 'lodash'
+			}
 		},
 		watch: {
 			include: 'src/**'
@@ -27,10 +31,10 @@ export default [
 			}), // so Rollup can find `ms`
 			commonjs({
 				include: ['node_modules/**', '../../node_modules/**'],
+				exclude: ['node_modules/lodash/**', '../../node_modules/lodash/**'],
 				sourceMap: true,
 				namedExports: {
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
-					'node_modules/lodash/lodash.js': ['find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
 					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime']
 				}
@@ -42,7 +46,8 @@ export default [
 			}),
 			globals(),
 			builtins()
-		]
+		],
+		external: ['lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 	}
 ];
 

@@ -6,7 +6,7 @@ import GraphQLJSON from 'graphql-type-json';
 import { has, set } from 'lodash';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './TypeGeneratorUtils';
-export default class GraphQLSchemaBuilder {
+export class GraphQLSchemaBuilder {
 	private schema: GraphQLSchema;
 	private typeDefs: string;
 	private config: GenerateConfig;

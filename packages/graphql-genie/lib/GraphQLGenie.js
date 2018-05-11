@@ -15,10 +15,10 @@ import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateUpsert } from './GenerateUpsert';
-import GraphQLSchemaBuilder from './GraphQLSchemaBuilder';
+import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { computeRelations, getReturnType, getTypeResolver, typeIsList } from './TypeGeneratorUtils';
-export default class GraphQLGenie {
+export class GraphQLGenie {
     constructor(options) {
         this.config = {
             generateGetAll: true,
@@ -153,6 +153,10 @@ export default class GraphQLGenie {
         this.getSchema = () => __awaiter(this, void 0, void 0, function* () {
             yield this.initialized;
             return this.schema;
+        });
+        this.getDataResolver = () => __awaiter(this, void 0, void 0, function* () {
+            yield this.initialized;
+            return this.graphQLFortune;
         });
         this.getFragmentTypes = () => __awaiter(this, void 0, void 0, function* () {
             yield this.initialized;
