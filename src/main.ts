@@ -1,8 +1,9 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import { GraphQLGenie } from './index';
 import gql from 'graphql-tag';
+import { GraphQLGenie } from './index';
+import subscriptionPlugin from './subscriptionPlugin/subscriptions';
 
 const typeDefs = `
 
@@ -65,7 +66,9 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateSubscriptions: false
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	const schema = await genie.getSchema();
+	genie.use(subscriptionPlugin);
+	await genie.init();
+	const schema = genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
@@ -77,8 +80,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
-	console.log(schema);
-	console.log(client);
+	window['fortune'] = genie.getDataResolver();
+	window['store'] = window['fortune'].getStore();
+	window['schema'] = schema;
+	window['client'] = client;
 	const zeus = await client.mutate({
 		mutation: gql`
 		mutation {

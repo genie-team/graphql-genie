@@ -1,12 +1,16 @@
 import commonjs from 'rollup-plugin-commonjs';
+import livereload from 'rollup-plugin-livereload';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
+import serve from 'rollup-plugin-serve';
 import typescript from 'rollup-plugin-typescript2';
 import pkg from './package.json';
-import serve from 'rollup-plugin-serve';
-import livereload from 'rollup-plugin-livereload';
+
+const prod = !process.env.ROLLUP_WATCH;
+
+console.log(process.env.buildTarget);
 export default [
 	// browser-friendly UMD build
 	{
@@ -32,7 +36,7 @@ export default [
 			}), // so Rollup can find `ms`
 			commonjs({
 				include: ['node_modules/**'],
-				sourceMap: true,
+				sourceMap: false,
 				namedExports: {
 					'node_modules/lodash/lodash.js': ['find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
@@ -47,15 +51,17 @@ export default [
 			}),
 			globals(),
 			builtins(),
-			serve({
+			!prod && serve({
 				contentBase: 'lib',
 				port: '10001'
-			}),  
-			livereload()
+			}), 
+			!prod && livereload()
 		],
-		//external: ['lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+		external: prod && ['lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+
 	}
 ];
+
 
 function onwarn(message) {
   const suppressed = ['THIS_IS_UNDEFINED'];

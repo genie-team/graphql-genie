@@ -1,6 +1,7 @@
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 import { GraphQLSchema } from 'graphql';
-import { DataResolver, GraphQLGenieOptions } from './GraphQLGenieInterfaces';
+import { DataResolver, GeniePlugin, GraphQLGenieOptions } from './GraphQLGenieInterfaces';
+import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 export declare class GraphQLGenie {
     private fortuneOptions;
     private config;
@@ -11,13 +12,16 @@ export declare class GraphQLGenie {
     private schemaInfoBuilder;
     private relations;
     private graphQLFortune;
-    private initialized;
+    private plugins;
+    ready: boolean;
     constructor(options: GraphQLGenieOptions);
     private validate;
-    private init;
+    init: () => Promise<GraphQLGenie>;
     private buildResolvers;
-    buildQueries: () => Promise<void>;
-    getSchema: () => Promise<GraphQLSchema>;
-    getDataResolver: () => Promise<DataResolver>;
+    private buildQueries;
+    use: (plugin: GeniePlugin) => void;
+    getSchema: () => GraphQLSchema;
+    getDataResolver: () => DataResolver;
+    getSchemaBuilder: () => GraphQLSchemaBuilder;
     getFragmentTypes: () => Promise<IntrospectionResultData>;
 }

@@ -80,7 +80,7 @@ export class GraphQLSchemaBuilder {
 			`;
 		}
 
-		if ((this.config.generateDelete || this.config.generateUpdate) && !this.typeDefs.includes('type BatchPayload')) {
+		if (this.typeDefs.includes('type Query') && (this.config.generateDelete || this.config.generateUpdate) && !this.typeDefs.includes('type BatchPayload')) {
 			this.typeDefs += `
 				type BatchPayload {
 					"""
@@ -149,13 +149,13 @@ export class GraphQLSchemaBuilder {
 		return this.schema;
 	}
 
-	public addResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
+	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
 		const resolverMap = {};
 		resolverMap[typeName] = {};
 		this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
-		fieldResolvers.forEach((resolve, name) => {
-			resolverMap[typeName][name] = resolve;
-			this.resolveFunctions[typeName][name] = resolve; // save in case type defs changed
+		fieldResolvers.forEach((resolveFn, name) => {
+			resolverMap[typeName][name] = resolveFn;
+			this.resolveFunctions[typeName][name] = resolveFn; // save in case type defs changed
 		});
 
 		addResolveFunctionsToSchema({
@@ -170,11 +170,11 @@ export class GraphQLSchemaBuilder {
 }
 
 class DisplayDirective extends SchemaDirectiveVisitor {
-  public visitFieldDefinition(field) {
+	public visitFieldDefinition(field) {
 		this.setDisplay(field);
-  }
+	}
 
-  public visitEnumValue(value) {
+	public visitEnumValue(value) {
 		this.setDisplay(value);
 	}
 
@@ -192,9 +192,9 @@ class DisplayDirective extends SchemaDirectiveVisitor {
 }
 
 class RelationDirective extends SchemaDirectiveVisitor {
-  public visitFieldDefinition(field) {
+	public visitFieldDefinition(field) {
 		this.setRelation(field);
-  }
+	}
 
 	private setRelation(field) {
 		field.relation = {};
@@ -210,7 +210,7 @@ class RelationDirective extends SchemaDirectiveVisitor {
 }
 
 class DefaultDirective extends SchemaDirectiveVisitor {
-  public visitFieldDefinition(field) {
+	public visitFieldDefinition(field) {
 		let type = field.type;
 		while (isListType(type) || isNonNullType(type)) {
 			type = type.ofType;
@@ -235,7 +235,7 @@ class DefaultDirective extends SchemaDirectiveVisitor {
 			field.defaultValue = value;
 		}
 
-  }
+	}
 }
 
 class ModelDirective extends SchemaDirectiveVisitor {

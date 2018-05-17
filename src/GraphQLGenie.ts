@@ -9,7 +9,7 @@ import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateUpsert } from './GenerateUpsert';
-import { DataResolver, FortuneOptions, GenerateConfig, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getReturnType, getTypeResolver, typeIsList } from './TypeGeneratorUtils';
@@ -33,9 +33,11 @@ export class GraphQLGenie {
 	private schemaInfoBuilder: SchemaInfoBuilder;
 	private relations: Relations;
 	private graphQLFortune: FortuneGraph;
+	private plugins: GeniePlugin[];
 
-	private initialized: Promise<boolean>;
+	public ready: boolean;
 	constructor(options: GraphQLGenieOptions) {
+		this.ready = false;
 		if (!options.fortuneOptions) {
 			throw new Error('Fortune Options is required');
 		} else {
@@ -54,9 +56,9 @@ export class GraphQLGenie {
 			throw new Error('Need a schemaBuilder or typeDefs');
 		}
 
+		this.plugins = [];
 		this.schema = this.schemaBuilder.getSchema();
 		this.validate();
-		this.initialized = this.init();
 	}
 
 	private validate = () => {
@@ -75,7 +77,7 @@ export class GraphQLGenie {
 		});
 	}
 
-	private init = async () => {
+	public init = async (): Promise<GraphQLGenie> => {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
@@ -83,11 +85,12 @@ export class GraphQLGenie {
 		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
 		await this.buildResolvers();
-		window['graphql'] = graphql;
-
-		window['schema'] = this.schema;
-
-		return true;
+		this.plugins.forEach(plugin => {
+			plugin(this);
+		});
+		this.plugins = [];
+		this.ready = true;
+		return this;
 	}
 
 	private buildResolvers = async () => {
@@ -112,12 +115,12 @@ export class GraphQLGenie {
 
 					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field, returnConnection));
 				});
-				this.schema = this.schemaBuilder.addResolvers(name, fieldResolvers);
+				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers);
 			}
 		});
 	}
 
-	public buildQueries = async () => {
+	private buildQueries = async () => {
 
 		const nodesResult = await graphql(this.schema, `{
 			__type(name: "Node") {
@@ -192,25 +195,35 @@ export class GraphQLGenie {
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
 		resolvers.forEach((resolverMap, name) => {
-			this.schemaBuilder.addResolvers(name, resolverMap);
+			this.schemaBuilder.setResolvers(name, resolverMap);
 		});
 
 		this.schema = this.schemaBuilder.getSchema();
 
 	}
 
-	public getSchema = async (): Promise<GraphQLSchema> => {
-		await this.initialized;
+	public use = (plugin: GeniePlugin) => {
+		if (!this.ready) {
+			this.plugins.push(plugin);
+		} else {
+				plugin(this);
+		}
+	}
+
+	public getSchema = (): GraphQLSchema => {
 		return this.schema;
 	}
 
-	public getDataResolver = async (): Promise<DataResolver> => {
-		await this.initialized;
+	public getDataResolver = (): DataResolver => {
 		return this.graphQLFortune;
 	}
 
+	public getSchemaBuilder = (): GraphQLSchemaBuilder => {
+		return this.schemaBuilder;
+	}
+
 	public getFragmentTypes = async (): Promise<IntrospectionResultData> => {
-		await this.initialized;
+		await this.ready;
 		const result = await graphql(this.schema, `{
 			__schema {
 				types {

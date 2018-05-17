@@ -8,7 +8,7 @@ export declare class GraphQLSchemaBuilder {
     constructor(typeDefs: string, $config: GenerateConfig);
     addTypeDefsToSchema: ($typeDefs?: string) => GraphQLSchema;
     getSchema: () => GraphQLSchema;
-    addResolvers: (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any, {
+    setResolvers: (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any, {
         [argName: string]: any;
     }>>) => GraphQLSchema;
 }

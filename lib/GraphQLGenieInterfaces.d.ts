@@ -1,4 +1,5 @@
 import { GraphQLFieldResolver } from 'graphql';
+import { GraphQLGenie } from '.';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 export interface TypeGenerator {
     getResolvers(): Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
@@ -33,6 +34,7 @@ export interface DataResolver {
     getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
     getFeatures(): Features;
     applyOptions(graphQLTypeName: string, records: any, options: any, meta?: any): any;
+    getStore(): any;
 }
 export interface GenerateConfig {
     generateGetAll?: boolean;
@@ -59,4 +61,7 @@ export interface FortuneOptions {
     hooks?: object;
     documentation?: object;
     settings: FortuneSettings;
+}
+export interface GeniePlugin {
+    (genie: GraphQLGenie): any;
 }

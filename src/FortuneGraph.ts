@@ -19,6 +19,32 @@ export default class FortuneGraph implements DataResolver {
 		this.store = this.buildFortune();
 	}
 
+	private getReturnResults = (results: any[], fortuneType: string ) => {
+		return results.map(value => {
+			value.id = this.computeReturnId(value.id, fortuneType);
+			return value;
+		});
+	}
+
+	private getFortuneIds = (ids: any[]) => {
+		ids = isArray(ids) ? ids : [ids];
+		return ids.map(id => {
+			return this.getFortuneId(id);
+		});
+	}
+
+	private computeReturnId = (id: string, fortuneType: string) => {
+		return btoa(`id=${id}&ftype=${fortuneType}`);
+	}
+
+	private getFortuneId = (inputId: string) => {
+		return new URLSearchParams(atob(inputId)).get('id');
+	}
+
+	private getTypeFromId = (inputId: string) => {
+		return new URLSearchParams(atob(inputId)).get('ftype');
+	}
+
 	public getValueByUnique = async (returnTypeName: string, args): Promise<Object> => {
 		let currValue;
 		// tslint:disable-next-line:prefer-conditional-expression
@@ -52,6 +78,7 @@ export default class FortuneGraph implements DataResolver {
 		records['__typename'] = graphQLTypeName;
 		let results = await this.store.create(fortuneType, records, include, meta);
 		results = results.payload.records;
+		results = this.getReturnResults(results, fortuneType);
 		return isArray(records) ? results : results[0];
 	}
 
@@ -124,15 +151,21 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
-		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		// pull the id out of the match options
-		if (get(options, 'match.id')) {
-			ids = get(options, 'match.id');
-			delete options.match.id;
+		let results;
+		if (graphQLTypeName === 'Node') {
+			results = await this.store.find(this.getTypeFromId(ids[0]), this.getFortuneId(ids[0]), options, include, meta);
+		} else {
+			const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+			// pull the id out of the match options
+			if (get(options, 'match.id')) {
+				ids = get(options, 'match.id');
+				delete options.match.id;
+			}
+			ids = this.getFortuneIds(ids);
+			options = this.generateOptions(options, graphQLTypeName, ids);
+			results = await this.store.find(fortuneType, ids, options, include, meta);
 		}
-		options = this.generateOptions(options, graphQLTypeName, ids);
-		const results = await this.store.find(fortuneType, ids, options, include, meta);
-		let graphReturn = results.payload.records;
+		let graphReturn = get(results, 'payload.records');
 		if (graphReturn) {
 			// if one id sent in we just want to return the value not an array
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
@@ -145,7 +178,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	private generateUpdates = (record, options: object = {}) => {
-		const updates = {id: record['id'], replace: {}, push: {}, pull: {}};
+		const updates = {id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {}};
 
 		for (const argName in record) {
 			const arg = record[argName];
@@ -315,11 +348,10 @@ export default class FortuneGraph implements DataResolver {
 
 		});
 		const store = fortune(fortuneConfig, this.fortuneOptions);
-		window['store'] = store;
 		return store;
 	}
 
-	getFeatures(): Features {
+	public getFeatures(): Features {
 		return this.store.adapter.features;
 	}
 
@@ -347,9 +379,10 @@ export default class FortuneGraph implements DataResolver {
 		return options;
 	}
 
-	applyOptions(graphQLTypeName: string, records, options, meta?) {
+	public applyOptions(graphQLTypeName: string, records, options, meta?) {
 		options = this.generateOptions(options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		return fortuneCommon.applyOptions(this.store.recordTypes[fortuneType], records, options, meta);
 	}
+
 }

@@ -9,6 +9,7 @@ export {
 	Connection,
 	PageInfo,
 	Aggregate,
-	TypeGenerator
+	TypeGenerator,
+	GeniePlugin
 } from './GraphQLGenieInterfaces';
 export { GraphQLGenie } from './GraphQLGenie';

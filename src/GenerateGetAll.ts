@@ -33,8 +33,8 @@ export class GenerateGetAll implements TypeGenerator {
 	}
 
 	generate() {
-		this.types.forEach(type => {
 
+		this.types.forEach(type => {
 			const schemaType = this.schema.getType(type.name);
 			const generator = new InputGenerator(schemaType, null, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
 			const args = Object.assign({
@@ -50,6 +50,30 @@ export class GenerateGetAll implements TypeGenerator {
 			};
 
 			this.resolvers.set(fieldName, getAllResolver(this.dataResolver, this.schema, type));
+		});
+
+		// basic node query
+		this.fields['node'] = {
+			type: 'Node',
+			args: {
+				id: {type: 'ID!'}
+			}
+		};
+
+		this.resolvers.set('node', async (_root: any, _args: { [key: string]: any }) => {
+			const id = _args.id;
+			const fortuneReturn = await this.dataResolver.find('Node', [id]);
+			if (fortuneReturn) {
+				const cache = new Map<string, object>();
+				cache.set(id, fortuneReturn);
+				return {
+					fortuneReturn: fortuneReturn,
+					cache: cache,
+					__typename: fortuneReturn.__typename
+				};
+			} else {
+				return null;
+			}
 		});
 	}
 

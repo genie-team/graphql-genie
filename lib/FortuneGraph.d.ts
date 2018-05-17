@@ -7,6 +7,11 @@ export default class FortuneGraph implements DataResolver {
     private schemaInfo;
     private store;
     constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]);
+    private getReturnResults;
+    private getFortuneIds;
+    private computeReturnId;
+    private getFortuneId;
+    private getTypeFromId;
     getValueByUnique: (returnTypeName: string, args: any) => Promise<Object>;
     canAdd: (graphQLTypeName: string, inputRecords: object[]) => Promise<boolean>;
     create: (graphQLTypeName: string, records: any, include?: any, meta?: any) => Promise<any>;
