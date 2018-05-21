@@ -1,5 +1,5 @@
 
-import { GraphQLFieldResolver, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
@@ -76,7 +76,9 @@ export class GenerateConnections implements TypeGenerator {
 			const args = Object.assign({
 				filter: {type: generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators)},
 				orderBy: {type: generator.generateOrderByInput()}
-			}, queryArgs);
+			},
+			queryArgs,
+			(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields());
 
 			this.fields[fieldName] = {
 				type: `${type.name}Connection`,

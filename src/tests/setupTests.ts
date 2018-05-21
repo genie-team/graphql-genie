@@ -1,7 +1,7 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import GraphQLGenie from '../index';
+import { GraphQLGenie } from '../index';
 
 const typeDefs = `
 
@@ -58,7 +58,8 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 
 export const getClient = async () => {
 	if (!process['testSetup']['client']) {
-		const schema = await genie.getSchema();
+		await genie.init();
+		const schema = genie.getSchema();
 		const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 		const fragmentMatcher = new IntrospectionFragmentMatcher({
 			introspectionQueryResultData

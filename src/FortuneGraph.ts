@@ -1,6 +1,6 @@
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
-import { each, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
+import { each, find, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
@@ -19,10 +19,28 @@ export default class FortuneGraph implements DataResolver {
 		this.store = this.buildFortune();
 	}
 
-	private getReturnResults = (results: any[], fortuneType: string ) => {
-		return results.map(value => {
-			value.id = this.computeReturnId(value.id, fortuneType);
-			return value;
+	private getReturnResults = (results: any[], fortuneType: string, graphQLTypeName: string ) => {
+		return results.map(record => {
+			if (!record) {
+				return record;
+			}
+			const currTypeName = record['__typename'] || graphQLTypeName;
+			record.id = this.computeReturnId(record.id, currTypeName);
+			for (const argName in record) {
+				const link = get(this.store, `recordTypes.${fortuneType}.${argName}.link`);
+				let arg = record[argName];
+				if (arg && link && argName !== 'id') {
+					if (isArray(arg)) {
+							arg = arg.map(currId => {
+								return this.computeReturnId(currId, currTypeName);
+							});
+					} else {
+							arg = this.computeReturnId(arg, currTypeName);
+					}
+					record[argName] = arg;
+				}
+			}
+			return record;
 		});
 	}
 
@@ -33,17 +51,30 @@ export default class FortuneGraph implements DataResolver {
 		});
 	}
 
-	private computeReturnId = (id: string, fortuneType: string) => {
-		return btoa(`id=${id}&ftype=${fortuneType}`);
+	private computeReturnId = (id: string, graphType: string) => {
+		return btoa(`${id}:${graphType}`);
 	}
 
-	private getFortuneId = (inputId: string) => {
-		return new URLSearchParams(atob(inputId)).get('id');
+	public getFortuneId = (inputId: string): string => {
+		let result: string;
+		try {
+			result = atob(inputId).split(':')[0];
+		} catch (e) {
+			result = inputId;
+		}
+
+		return result;
 	}
 
-	private getTypeFromId = (inputId: string) => {
-		return new URLSearchParams(atob(inputId)).get('ftype');
-	}
+	private getTypeFromId = (inputId: string): string => {
+		let result: string;
+		try {
+			result = atob(inputId).split(':')[1];
+		} catch (e) {
+			result = inputId;
+		}
+
+		return result;	}
 
 	public getValueByUnique = async (returnTypeName: string, args): Promise<Object> => {
 		let currValue;
@@ -71,15 +102,6 @@ export default class FortuneGraph implements DataResolver {
 			}));
 		}
 		return canAdd;
-	}
-
-	public create = async (graphQLTypeName: string, records, include?, meta?) => {
-		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		records['__typename'] = graphQLTypeName;
-		let results = await this.store.create(fortuneType, records, include, meta);
-		results = results.payload.records;
-		results = this.getReturnResults(results, fortuneType);
-		return isArray(records) ? results : results[0];
 	}
 
 	public getConnection = (allEdges: any[], before: string, after: string, first: number, last: number): Connection => {
@@ -150,23 +172,71 @@ export default class FortuneGraph implements DataResolver {
 		return graphQLTypeName;
 	}
 
+	public create = async (graphQLTypeName: string, records, include?, meta?) => {
+		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		records = isArray(records) ? records.map(value => this.generateCreateRecords(fortuneType, value)) : this.generateCreateRecords(fortuneType, records);
+
+		records['__typename'] = graphQLTypeName;
+
+		let results = await this.store.create(fortuneType, records, include, meta);
+		results = results.payload.records;
+		results = this.getReturnResults(results, fortuneType, graphQLTypeName);
+		return isArray(records) ? results : results[0];
+	}
+
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
 		let results;
+		let fortuneType: string;
 		if (graphQLTypeName === 'Node') {
-			results = await this.store.find(this.getTypeFromId(ids[0]), this.getFortuneId(ids[0]), options, include, meta);
+			fortuneType = this.getFortuneTypeName(this.getTypeFromId(ids[0]));
+			results = await this.store.find(fortuneType, this.getFortuneId(ids[0]), options, include, meta);
 		} else {
-			const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+			fortuneType = this.getFortuneTypeName(graphQLTypeName);
 			// pull the id out of the match options
 			if (get(options, 'match.id')) {
 				ids = get(options, 'match.id');
 				delete options.match.id;
 			}
-			ids = this.getFortuneIds(ids);
+			ids = ids && this.getFortuneIds(ids);
 			options = this.generateOptions(options, graphQLTypeName, ids);
 			results = await this.store.find(fortuneType, ids, options, include, meta);
 		}
-		let graphReturn = get(results, 'payload.records');
+		let graphReturn: any[] = get(results, 'payload.records');
 		if (graphReturn) {
+			if (ids) {
+				const newReturn = [];
+				ids.forEach((value) => {
+					const foundResult = find(graphReturn, ['id', value]);
+					if (foundResult) {
+						newReturn.push(foundResult);
+					} else {
+						newReturn.push(null);
+					}
+				});
+				graphReturn = newReturn;
+			} else {
+				const matches: object = options.match;
+				if (matches['__typename']) {
+					delete matches['__typename'];
+				}
+				const matchesKeys = Object.keys(matches);
+				if (matchesKeys.length === 1) {
+					const key = matchesKeys[0];
+					const theMatch = isArray(matches[key]) ? matches[key] : [matches[key]];
+					const newReturn = [];
+					theMatch.forEach((value) => {
+						const foundResult = find(graphReturn, [key, value]);
+						if (foundResult) {
+							newReturn.push(foundResult);
+						} else {
+							newReturn.push(null);
+						}
+					});
+					graphReturn = newReturn;
+				}
+			}
+
+			graphReturn = this.getReturnResults(graphReturn, fortuneType, graphQLTypeName);
 			// if one id sent in we just want to return the value not an array
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;
 		}
@@ -177,39 +247,69 @@ export default class FortuneGraph implements DataResolver {
 
 	}
 
-	private generateUpdates = (record, options: object = {}) => {
-		const updates = {id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {}};
-
-		for (const argName in record) {
-			const arg = record[argName];
-			if (argName !== 'id') {
-				if (isArray(arg)) {
-					if (options['pull']) {
-						updates.pull[argName] = arg;
-					} else {
-						updates.push[argName] = arg;
-					}
-
-				} else {
-					updates.replace[argName] = arg;
-				}
-			}
-		}
-		return updates;
-	}
-
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
-		const updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		const updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
 		let results = await this.store.update(fortuneType, updates, meta);
 		results = results.payload.records;
+		this.getReturnResults(results, fortuneType, graphQLTypeName);
 		return isArray(records) ? results : results[0];
 	}
 
 	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
+		ids = isArray(ids) ? ids.map(value => this.getFortuneId(value)) : [this.getFortuneId(ids)];
+
 		await this.store.delete(fortuneType, ids, meta);
 		return true;
+	}
+
+	private generateCreateRecords = (fortuneTypeName: string, record) => {
+		for (const argName in record) {
+			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
+			let arg = record[argName];
+			if (arg && link && argName !== 'id') {
+				if (isArray(arg)) {
+						arg = arg.map(currId => {
+							return this.getFortuneId(currId);
+						});
+				} else {
+						arg = this.getFortuneId(arg);
+				}
+				record[argName] = arg;
+			}
+		}
+		return record;
+	}
+
+	private generateUpdates = (fortuneTypeName: string, record, options: object = {}) => {
+		const updates = {id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {}};
+		for (const argName in record) {
+			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
+			let arg = record[argName];
+			if (argName !== 'id') {
+				if (isArray(arg)) {
+					if (link && arg) {
+						arg = arg.map(currId => {
+							return this.getFortuneId(currId);
+						});
+					}
+					if (options['pull']) {
+						updates.pull[argName] = arg;
+					} else {
+						updates.push[argName] = arg;
+					}
+				} else {
+					if (link && arg) {
+						arg = this.getFortuneId(arg);
+					}
+					updates.replace[argName] = arg;
+				}
+			} else {
+				arg = this.getFortuneId(arg);
+			}
+		}
+		return updates;
 	}
 
 	public getLink = (graphQLTypeName: string, field: string): string => {

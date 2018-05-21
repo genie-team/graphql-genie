@@ -628,6 +628,8 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 			const ids = [];
 
 			let options = {};
+			_args = moveArgsIntoFilter(_args);
+
 			let filter = null;
 			if (_args && _args.filter) {
 				filter = _args.filter;
@@ -734,6 +736,8 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 
 		let options = {};
 		let filter = null;
+		_args = moveArgsIntoFilter(_args);
+
 		const schemaType: GraphQLNamedType = schema.getType(type.name);
 		if (_args && _args.filter) {
 			filter = _args.filter;
@@ -752,11 +756,13 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 
 			const cache = new Map<string, object>();
 			fortuneReturn.forEach(result => {
-				cache.set(result.id, result);
+				if (result && result.id) {
+					cache.set(result.id, result);
+				}
 			});
 			if ((_args.orderBy || filter)  && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
 				const pullIds = await filterNested(filter, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
-				fortuneReturn = fortuneReturn.filter(result => !pullIds.has(result.id));
+				fortuneReturn = pullIds.size > 0  ? fortuneReturn.filter(result => !pullIds.has(result ? result.id : '')) : fortuneReturn;
 			}
 			result = fortuneReturn.map((result) => {
 				if (!result) { return result; }
@@ -815,6 +821,22 @@ export const queryArgs: Object = {
 };
 
 export const fortuneFilters = ['not', 'or', 'and', 'range', 'match', 'exists'];
+
+const genieFindArgs = ['filter', 'orderBy', 'local', 'last', 'skip', 'before', 'after'];
+
+export const moveArgsIntoFilter = (args: object): object => {
+	if (!args) {
+		return args;
+	}
+	Object.keys(args).forEach((argKey) => {
+		if (!genieFindArgs.includes(argKey)) {
+			set(args, 'filter.match.' + argKey, args[argKey]);
+			delete args[argKey];
+		}
+	});
+	return args;
+};
+
 export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 
 	if (!isObjectType(type) && !isInterfaceType(type)) {
@@ -853,6 +875,7 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 			const childType = getReturnGraphQLType(field.type);
 
 			if (!isScalarType(childType) && (currFilter || currOrderBy)) {
+
 				const options = currFilter ? parseFilter(currFilter, childType) : {};
 				await Promise.all(fortuneReturn.map(async (result) => {
 					const childIds = result[field.name];

@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getPayloadTypeDef, getPayloadTypeName, parseFilter, updateResolver } from './TypeGeneratorUtils';
+import { Relations, getPayloadTypeDef, getPayloadTypeName, moveArgsIntoFilter, parseFilter, updateResolver } from './TypeGeneratorUtils';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
@@ -43,12 +43,12 @@ export class GenerateUpdate implements TypeGenerator {
 
 			const generator = new InputGenerator(schemaType, this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
 			const updateInputName = `Update${type.name}MutationInput`;
-			const updateInput =  new GraphQLInputObjectType({
+			const updateInput = new GraphQLInputObjectType({
 				name: updateInputName,
 				fields: {
-					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
-					where: {type: new GraphQLNonNull(generator.generateWhereUniqueInput())},
-					clientMutationId: {type: GraphQLString}
+					data: { type: new GraphQLNonNull(generator.generateUpdateInput()) },
+					where: { type: new GraphQLNonNull(generator.generateWhereUniqueInput()) },
+					clientMutationId: { type: GraphQLString }
 				}
 			});
 			this.currInputObjectTypes.set(updateInputName, updateInput);
@@ -66,13 +66,17 @@ export class GenerateUpdate implements TypeGenerator {
 
 			// UPDATE MANY
 			const updateManyInputName = `UpdateMany${pluralize(type.name)}MutationInput`;
-			const updateManyInput =  new GraphQLInputObjectType({
+			const updateManyInput = new GraphQLInputObjectType({
 				name: updateManyInputName,
-				fields: {
-					data: {type: new GraphQLNonNull(generator.generateUpdateInput())},
-					filter: {type: new GraphQLNonNull(generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators))},
-					clientMutationId: {type: GraphQLString}
-				}
+				fields: Object.assign({
+					data: { type: new GraphQLNonNull(generator.generateUpdateInput()) },
+					filter: Object.assign(
+						{ type: new GraphQLNonNull(generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators)) },
+					),
+					clientMutationId: { type: GraphQLString }
+				},
+					(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields()
+				)
 			});
 			this.currInputObjectTypes.set(updateManyInputName, updateManyInput);
 
@@ -92,6 +96,7 @@ export class GenerateUpdate implements TypeGenerator {
 				_info: any
 			): Promise<any> => {
 				let count = 0;
+				_args = moveArgsIntoFilter(_args);
 				const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
 				const filter = _args.input && _args.input.filter ? _args.input.filter : '';
 				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';
@@ -100,7 +105,7 @@ export class GenerateUpdate implements TypeGenerator {
 					const fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
 					count = fortuneReturn.length;
 					await Promise.all(fortuneReturn.map(async (fortuneRecord) => {
-						return await updateResolver(this.dataResolver)(fortuneRecord, {update: updateArgs, where: true}, _context, _info, null, null, <GraphQLOutputType>schemaType);
+						return await updateResolver(this.dataResolver)(fortuneRecord, { update: updateArgs, where: true }, _context, _info, null, null, <GraphQLOutputType>schemaType);
 					}));
 				}
 				return {

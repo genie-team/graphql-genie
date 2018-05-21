@@ -27,6 +27,20 @@
     "start": "rollup -c -w",
     "test": "jest"
   },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
     "@types/jest": "^21.1.10",
@@ -53,7 +67,7 @@
     "rollup-plugin-uglify": "^3.0.0",
     "ts-jest": "^22.4.4",
     "tslint": "^5.9.1",
-    "tslint-genie-rules": "latest",
+    "tslint-genie-rules": "^1.2.0",
     "typescript": "^2.8.3"
   },
   "peerDependencies": {
