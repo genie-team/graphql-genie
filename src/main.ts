@@ -44,6 +44,7 @@ type User {
 	likedPosts: [Post!] @relation(name: "LikedPosts") @connection
 	family: [User]
 	match: User
+	orderBy: String
 }
 
 type Address {
@@ -218,6 +219,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 
 	const firstPostId = zeus.data.createUser.data.writtenSubmissions[0].id;
 	const secondPostId = zeus.data.createUser.data.writtenSubmissions[1].id;
+	const thirdPostId = zeus.data.createUser.data.writtenSubmissions[2].id;
 	const updatePostOnUser = await client.mutate({
 		mutation: gql`mutation {
 			updateUser(
@@ -631,6 +633,14 @@ result = await client.mutate({
 	variables: { input: {
 		data: { likedBy: { connect: [{email: 'loki@example.com'}, {email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
 		where: { id: firstPostId}
+	}}
+});
+
+result = await client.mutate({
+	mutation: updatePost,
+	variables: { input: {
+		data: { likedBy: { connect: [{email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
+		where: { id: thirdPostId}
 	}}
 });
 

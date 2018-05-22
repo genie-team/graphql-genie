@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getAllResolver, queryArgs } from './TypeGeneratorUtils';
+import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtils';
 
 export class GenerateGetAll implements TypeGenerator {
 	private objectName: string;
@@ -42,7 +42,7 @@ export class GenerateGetAll implements TypeGenerator {
 				orderBy: {type: generator.generateOrderByInput()}
 			},
 			queryArgs,
-			(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields());
+			getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
 
 			const fieldName = `${pluralize(type.name.toLowerCase())}`;
 
@@ -56,9 +56,13 @@ export class GenerateGetAll implements TypeGenerator {
 
 		// basic node query
 		this.fields['node'] = {
+			description: 'Fetches an object given its ID',
 			type: 'Node',
 			args: {
-				id: {type: 'ID!'}
+				id: {
+					description: 'The ID of an object',
+					type: 'ID!'
+				}
 			}
 		};
 

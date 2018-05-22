@@ -115,7 +115,7 @@ export class GraphQLGenie {
 
 					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field, returnConnection));
 				});
-				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers);
+				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers, false);
 			}
 		});
 	}
@@ -195,7 +195,7 @@ export class GraphQLGenie {
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
 		resolvers.forEach((resolverMap, name) => {
-			this.schemaBuilder.setResolvers(name, resolverMap);
+			this.schemaBuilder.setResolvers(name, resolverMap, false);
 		});
 
 		this.schema = this.schemaBuilder.getSchema();

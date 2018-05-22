@@ -1,4 +1,4 @@
-import { GraphQLInputType, GraphQLNamedType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import { DataResolver } from './GraphQLGenieInterfaces';
 export declare class Relation {
     type0: string;
@@ -66,6 +66,7 @@ export declare const getAllResolver: (dataResolver: DataResolver, schema: GraphQ
 }, _context: any, _info: GraphQLResolveInfo) => Promise<any>;
 export declare const queryArgs: Object;
 export declare const fortuneFilters: string[];
+export declare const getRootMatchFields: (matchInput: GraphQLInputObjectType) => {};
 export declare const moveArgsIntoFilter: (args: object) => object;
 export declare const parseFilter: (filter: object, type: GraphQLNamedType) => any;
 export declare const filterNested: (filter: object, orderBy: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver) => Promise<Set<string>>;

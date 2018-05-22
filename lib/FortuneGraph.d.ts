@@ -1,10 +1,12 @@
 import { IntrospectionType } from 'graphql';
-import { Connection, DataResolver, Features, FortuneOptions } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 export default class FortuneGraph implements DataResolver {
     private fortuneOptions;
     private fortuneTypeNames;
     private uniqueIndexes;
     private schemaInfo;
+    private inputHooks;
+    private outputHooks;
     private store;
     constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]);
     private getReturnResults;
@@ -29,7 +31,11 @@ export default class FortuneGraph implements DataResolver {
     private computeFortuneTypeNames;
     getFortuneTypeName: (name: string) => string;
     private buildFortune;
+    private inputHook(_fortuneType);
+    private outputHook(_fortuneType);
     getFeatures(): Features;
     private generateOptions;
     applyOptions(graphQLTypeName: string, records: any, options: any, meta?: any): any;
+    addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook): void;
+    addInputHook(graphQLTypeName: string, hook: DataResolverInputHook): void;
 }

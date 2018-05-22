@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getAllResolver, queryArgs } from './TypeGeneratorUtils';
+import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtils';
 
 export class GenerateConnections implements TypeGenerator {
 	private objectName: string;
@@ -78,7 +78,7 @@ export class GenerateConnections implements TypeGenerator {
 				orderBy: {type: generator.generateOrderByInput()}
 			},
 			queryArgs,
-			(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields());
+			getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
 
 			this.fields[fieldName] = {
 				type: `${type.name}Connection`,

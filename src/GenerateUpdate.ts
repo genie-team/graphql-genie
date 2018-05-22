@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getPayloadTypeDef, getPayloadTypeName, moveArgsIntoFilter, parseFilter, updateResolver } from './TypeGeneratorUtils';
+import { Relations, getPayloadTypeDef, getPayloadTypeName, getRootMatchFields, moveArgsIntoFilter, parseFilter, updateResolver } from './TypeGeneratorUtils';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
@@ -75,8 +75,8 @@ export class GenerateUpdate implements TypeGenerator {
 					),
 					clientMutationId: { type: GraphQLString }
 				},
-					(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields()
-				)
+				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)))
+			)
 			});
 			this.currInputObjectTypes.set(updateManyInputName, updateManyInput);
 

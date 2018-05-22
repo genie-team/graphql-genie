@@ -2,7 +2,7 @@ import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
-import { Connection, DataResolver, Features, FortuneOptions } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtils';
 
 export default class FortuneGraph implements DataResolver {
@@ -11,15 +11,22 @@ export default class FortuneGraph implements DataResolver {
 	private fortuneTypeNames: Map<string, string>;
 	private uniqueIndexes: Map<string, string[]>;
 	private schemaInfo: IntrospectionType[];
+	private inputHooks: Map<string, DataResolverInputHook[]>;
+	private outputHooks: Map<string, DataResolverOutputHook[]>;
 	private store;
 	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]) {
 		this.fortuneOptions = fortuneOptions;
+		if (!this.fortuneOptions || !this.fortuneOptions.hooks) {
+			set(this.fortuneOptions, 'hooks', {});
+		}
 		this.schemaInfo = schemaInfo;
 		this.uniqueIndexes = new Map<string, string[]>();
+		this.inputHooks = new Map<string, DataResolverInputHook[]>();
+		this.outputHooks = new Map<string, DataResolverOutputHook[]>();
 		this.store = this.buildFortune();
 	}
 
-	private getReturnResults = (results: any[], fortuneType: string, graphQLTypeName: string ) => {
+	private getReturnResults = (results: any[], fortuneType: string, graphQLTypeName: string) => {
 		return results.map(record => {
 			if (!record) {
 				return record;
@@ -31,11 +38,11 @@ export default class FortuneGraph implements DataResolver {
 				let arg = record[argName];
 				if (arg && link && argName !== 'id') {
 					if (isArray(arg)) {
-							arg = arg.map(currId => {
-								return this.computeReturnId(currId, currTypeName);
-							});
+						arg = arg.map(currId => {
+							return this.computeReturnId(currId, currTypeName);
+						});
 					} else {
-							arg = this.computeReturnId(arg, currTypeName);
+						arg = this.computeReturnId(arg, currTypeName);
 					}
 					record[argName] = arg;
 				}
@@ -74,7 +81,8 @@ export default class FortuneGraph implements DataResolver {
 			result = inputId;
 		}
 
-		return result;	}
+		return result;
+	}
 
 	public getValueByUnique = async (returnTypeName: string, args): Promise<Object> => {
 		let currValue;
@@ -93,7 +101,7 @@ export default class FortuneGraph implements DataResolver {
 			await Promise.all(this.uniqueIndexes.get(graphQLTypeName).map(async (fieldName) => {
 				await Promise.all(inputRecords.map(async (inputRecord) => {
 					if (canAdd && inputRecord[fieldName]) {
-						const dbRecord = await this.getValueByUnique(graphQLTypeName, {[fieldName]: inputRecord[fieldName]});
+						const dbRecord = await this.getValueByUnique(graphQLTypeName, { [fieldName]: inputRecord[fieldName] });
 						if (dbRecord) {
 							canAdd = false;
 						}
@@ -166,7 +174,7 @@ export default class FortuneGraph implements DataResolver {
 		return edges;
 	}
 
-	private getDataTypeName (graphQLTypeName: string): string {
+	private getDataTypeName(graphQLTypeName: string): string {
 		graphQLTypeName = graphQLTypeName.endsWith('Connection') ? graphQLTypeName.replace(/Connection$/g, '') : graphQLTypeName;
 		graphQLTypeName = graphQLTypeName.endsWith('Edge') ? graphQLTypeName.replace(/Edge$/g, '') : graphQLTypeName;
 		return graphQLTypeName;
@@ -270,11 +278,11 @@ export default class FortuneGraph implements DataResolver {
 			let arg = record[argName];
 			if (arg && link && argName !== 'id') {
 				if (isArray(arg)) {
-						arg = arg.map(currId => {
-							return this.getFortuneId(currId);
-						});
+					arg = arg.map(currId => {
+						return this.getFortuneId(currId);
+					});
 				} else {
-						arg = this.getFortuneId(arg);
+					arg = this.getFortuneId(arg);
 				}
 				record[argName] = arg;
 			}
@@ -283,7 +291,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	private generateUpdates = (fortuneTypeName: string, record, options: object = {}) => {
-		const updates = {id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {}};
+		const updates = { id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {} };
 		for (const argName in record) {
 			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
 			let arg = record[argName];
@@ -444,11 +452,34 @@ export default class FortuneGraph implements DataResolver {
 					}
 				});
 				fortuneConfig[fortuneName] = fortuneConfigForName;
+				if (!this.fortuneOptions.hooks[fortuneName]) {
+					this.fortuneOptions.hooks[fortuneName] = [this.inputHook(fortuneName), this.outputHook(fortuneName)];
+				}
 			}
 
 		});
 		const store = fortune(fortuneConfig, this.fortuneOptions);
 		return store;
+	}
+
+	private inputHook(_fortuneType: string) {
+		return (context, record, update) => {
+			if (record['__typename'] && this.inputHooks.has(record['__typename'])) {
+				this.inputHooks.get(record['__typename']).forEach(hook => {
+					hook(context, record, update);
+				});
+			}
+		};
+	}
+
+	private outputHook(_fortuneType: string) {
+		return (context, record) => {
+			if (record['__typename'] && this.outputHooks.has(record['__typename'])) {
+				this.outputHooks.get(record['__typename']).forEach(hook => {
+					hook(context, record);
+				});
+			}
+		};
 	}
 
 	public getFeatures(): Features {
@@ -485,4 +516,19 @@ export default class FortuneGraph implements DataResolver {
 		return fortuneCommon.applyOptions(this.store.recordTypes[fortuneType], records, options, meta);
 	}
 
+	public addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook) {
+		if (!this.outputHooks.has(graphQLTypeName)) {
+			this.outputHooks.set(graphQLTypeName, [hook]);
+		} else {
+			this.outputHooks.get(graphQLTypeName).push(hook);
+		}
+	}
+
+	public addInputHook(graphQLTypeName: string, hook: DataResolverInputHook) {
+		if (!this.inputHooks.has(graphQLTypeName)) {
+			this.inputHooks.set(graphQLTypeName, [hook]);
+		} else {
+			this.inputHooks.get(graphQLTypeName).push(hook);
+		}
+	}
 }

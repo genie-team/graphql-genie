@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, moveArgsIntoFilter, parseFilter } from './TypeGeneratorUtils';
+import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, getRootMatchFields, moveArgsIntoFilter, parseFilter } from './TypeGeneratorUtils';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
@@ -70,8 +70,8 @@ export class GenerateDelete implements TypeGenerator {
 					filter: { type: new GraphQLNonNull(generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators)) },
 					clientMutationId: { type: GraphQLString }
 				},
-					(<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)).getFields()
-				)
+				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)))
+			)
 			});
 			this.currInputObjectTypes.set(deleteManyInputName, deleteManyInput);
 

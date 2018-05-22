@@ -13,3 +13,4 @@ export {
 	GeniePlugin
 } from './GraphQLGenieInterfaces';
 export { GraphQLGenie } from './GraphQLGenie';
+export { InputGenerator } from './InputGenerator';

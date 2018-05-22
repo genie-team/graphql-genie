@@ -35,6 +35,8 @@ export interface DataResolver {
     getFeatures(): Features;
     applyOptions(graphQLTypeName: string, records: any, options: any, meta?: any): any;
     getStore(): any;
+    addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook): any;
+    addInputHook(graphQLTypeName: string, hook: DataResolverInputHook): any;
 }
 export interface GenerateConfig {
     generateGetAll?: boolean;
@@ -64,4 +66,10 @@ export interface FortuneOptions {
 }
 export interface GeniePlugin {
     (genie: GraphQLGenie): any;
+}
+export interface DataResolverInputHook {
+    (context?: any, record?: any, update?: any): any;
+}
+export interface DataResolverOutputHook {
+    (context?: any, record?: any): any;
 }

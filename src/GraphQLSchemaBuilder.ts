@@ -149,7 +149,7 @@ export class GraphQLSchemaBuilder {
 		return this.schema;
 	}
 
-	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>> ): GraphQLSchema  => {
+	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>>, requireResolversForResolveType = true): GraphQLSchema  => {
 		const resolverMap = {};
 		resolverMap[typeName] = {};
 		this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
@@ -162,7 +162,7 @@ export class GraphQLSchemaBuilder {
 			schema: this.schema,
 			resolvers: resolverMap,
 			resolverValidationOptions: {
-				requireResolversForResolveType: false
+				requireResolversForResolveType: requireResolversForResolveType
 			}
 		});
 		return this.schema;
