@@ -11,8 +11,9 @@ import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
+import { getReturnType, typeIsList } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
-import { Relations, computeRelations, getReturnType, getTypeResolver, typeIsList } from './TypeGeneratorUtils';
+import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtils';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
@@ -85,10 +86,16 @@ export class GraphQLGenie {
 		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
 		await this.buildQueries();
 		await this.buildResolvers();
-		this.plugins.forEach(plugin => {
-			plugin(this);
-		});
+
+		await Promise.all(this.plugins.map(async (plugin) => {
+			const pluginResult = plugin(this);
+			if (pluginResult.then) {
+				await pluginResult;
+			}
+		}));
+
 		this.plugins = [];
+		this.schema = this.schemaBuilder.getSchema();
 		this.ready = true;
 		return this;
 	}
@@ -207,6 +214,7 @@ export class GraphQLGenie {
 			this.plugins.push(plugin);
 		} else {
 				plugin(this);
+				this.schema = this.schemaBuilder.getSchema();
 		}
 	}
 

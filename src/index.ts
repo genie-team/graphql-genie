@@ -12,5 +12,9 @@ export {
 	TypeGenerator,
 	GeniePlugin
 } from './GraphQLGenieInterfaces';
+export {
+	typeIsList,
+	getReturnType
+} from './GraphQLUtils';
 export { GraphQLGenie } from './GraphQLGenie';
 export { InputGenerator } from './InputGenerator';

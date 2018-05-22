@@ -1,7 +1,8 @@
-import { GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType } from 'graphql';
+import { GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
+import { getReturnType, typeIsList } from './GraphQLUtils';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -180,52 +181,13 @@ export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInp
 		type: inputTypes[0],
 		defaultValue: defaultValue
 	};
-	if (inputTypes[1] && !isScalarType(getReturnGraphQLType(inputTypes[0]))) {
+	if (inputTypes[1] && !isScalarType(getNamedType(inputTypes[0]))) {
 		const idName = isListType(inputTypes[1]) ? fieldName + 'Ids' : fieldName + 'Id';
 		fields[idName] = {
 			type: inputTypes[1]
 		};
 	}
 	return fields;
-};
-
-export const stripNonNull = (type: GraphQLOutputType): GraphQLOutputType => {
-	if (isNonNullType(type)) {
-		return type.ofType;
-	} else {
-		return type;
-	}
-};
-
-export const typeIsList = (type) => {
-	let isList = false;
-	if (type.name && type.name.endsWith('Connection')) {
-		isList = true;
-	}
-	while (!isList && (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST')) {
-		if (isListType(type) || type.kind === 'LIST') {
-			isList = true;
-			break;
-		}
-		type = type.ofType;
-	}
-	return isList;
-};
-
-export const getReturnType = (type): string => {
-	if (isListType(type) || isNonNullType(type) || type.kind === 'NON_NULL' || type.kind === 'LIST') {
-		return getReturnType(type.ofType);
-	} else {
-		return type.name;
-	}
-};
-
-export const getReturnGraphQLType = (type: GraphQLType): GraphQLNamedType => {
-	if (isListType(type) || isNonNullType(type)) {
-		return getReturnGraphQLType(type.ofType);
-	} else {
-		return type;
-	}
 };
 
 export enum Mutation {
@@ -283,7 +245,7 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 			if ((isObjectType(returnType) || isInterfaceType(returnType)) && returnType.getFields()[argName]) {
 				argReturnType = returnType.getFields()[argName].type;
 			}
-			let argReturnRootType = <GraphQLOutputType>getReturnGraphQLType(argReturnType);
+			let argReturnRootType = <GraphQLOutputType>getNamedType(argReturnType);
 			if (!isScalarType(argReturnRootType)) {
 				const arg = currArg[argName];
 				if (isObject(arg) && argReturnType) {
@@ -317,7 +279,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const recursed = returnType ? true : false;
 		if (!returnType) {
 			returnType = (<GraphQLObjectType>_info.returnType).getFields().data.type;
-			returnType = <GraphQLOutputType>getReturnGraphQLType(returnType);
+			returnType = <GraphQLOutputType>getNamedType(returnType);
 		}
 		const returnTypeName = getReturnType(returnType);
 		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
@@ -867,7 +829,7 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 				set(filter, `exists.${field.name}`, true);
 			}
 		}
-		const fieldOutputType = getReturnGraphQLType(field.type);
+		const fieldOutputType = getNamedType(field.type);
 		if (isScalarType(fieldOutputType)) {
 			fieldMap.set(field.name, fieldOutputType);
 		}
@@ -885,7 +847,7 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 		await Promise.all(map(type.getFields(), async (field) => {
 			const currFilter = filter && filter[field.name] ? filter[field.name] : filter && filter[`f_${field.name}`] ? filter[`f_${field.name}`] : null;
 			const currOrderBy = orderBy && orderBy[field.name] ? orderBy[field.name] : orderBy && orderBy[`f_${field.name}`] ? orderBy[`f_${field.name}`] : null;
-			const childType = getReturnGraphQLType(field.type);
+			const childType = getNamedType(field.type);
 
 			if (!isScalarType(childType) && (currFilter || currOrderBy)) {
 

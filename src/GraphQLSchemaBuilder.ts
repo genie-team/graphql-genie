@@ -5,7 +5,7 @@ import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeEx
 import GraphQLJSON from 'graphql-type-json';
 import { has, set } from 'lodash';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
-import { getReturnType, typeIsList } from './TypeGeneratorUtils';
+import { getReturnType, typeIsList } from './GraphQLUtils';
 export class GraphQLSchemaBuilder {
 	private schema: GraphQLSchema;
 	private typeDefs: string;
@@ -132,7 +132,7 @@ export class GraphQLSchemaBuilder {
 		} else {
 			Object.keys(typeMap).forEach(name => {
 				const type = typeMap[name];
-				if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+				if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !type.name.endsWith('PreviousValues') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
 					type['_interfaces'].push(typeMap.Node);
 					has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(type) : set(this.schema, '_implementations.Node', [type]);
 				}

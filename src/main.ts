@@ -67,7 +67,7 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateSubscriptions: false
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	genie.use(subscriptionPlugin);
+	genie.use(subscriptionPlugin());
 	await genie.init();
 	const schema = genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
