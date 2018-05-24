@@ -79,8 +79,8 @@ describe('genie', () => {
 
 	test('find - make sure user also has post', async () => {
 		const users = gql`
-			query users($filter: JSON) {
-				users(filter: $filter) {
+			query users($where: JSON) {
+				users(where: $where) {
 					id
 					writtenSubmissions {
 						id
@@ -91,7 +91,7 @@ describe('genie', () => {
 
 		const result = await client.query({
 			query: users,
-			variables: {filter: { match: {id: testData.users[0].id}}}
+			variables: {where: { match: {id: testData.users[0].id}}}
 		});
 		expect(result.data['users'][0].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
@@ -183,8 +183,8 @@ describe('genie', () => {
 
 	test('find - make sure setting address worked', async () => {
 		const users = gql`
-			query users($filter: JSON) {
-				users(filter: $filter) {
+			query users($where: JSON) {
+				users(where: $where) {
 					id
 					address {
 						id
@@ -195,7 +195,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {filter: { match: {id: testData.users[0].id}}}
+			variables: {where: { match: {id: testData.users[0].id}}}
 		});
 		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
 		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
@@ -210,8 +210,8 @@ describe('genie', () => {
 			}
 		}`;
 		const users = gql`
-		query users($filter: JSON) {
-			users(filter: $filter) {
+		query users($where: JSON) {
+			users(where: $where) {
 					id
 					address {
 						id
@@ -226,7 +226,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {filter: { match: {id: testData.users[0].id}}}
+			variables: {where: { match: {id: testData.users[0].id}}}
 		});
 		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
 		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
@@ -262,8 +262,8 @@ describe('genie', () => {
 
 	test('find - make sure disconnect address worked', async () => {
 		const users = gql`
-			query users($filter: JSON) {
-				users(filter: $filter) {
+			query users($where: JSON) {
+				users(where: $where) {
 					id
 					address {
 						id
@@ -274,7 +274,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {filter: { match: {id: testData.users[0].id}}}
+			variables: {where: { match: {id: testData.users[0].id}}}
 		});
 
 		expect(result.data['users'][0].address).toBeNull();
@@ -341,8 +341,8 @@ describe('genie', () => {
 
 	test('find - comment is on user with default approval status', async () => {
 		const users = gql`
-		query users($filter: JSON) {
-			users(filter: $filter) {
+		query users($where: JSON) {
+			users(where: $where) {
 				id
 				writtenSubmissions {
 					id
@@ -357,7 +357,7 @@ describe('genie', () => {
 
 		const result = await client.query({
 			query: users,
-			variables: {filter: { match: {id: testData.users[0].id}}}
+			variables: {where: { match: {id: testData.users[0].id}}}
 		});
 
 		expect(result.data['users'][0].writtenSubmissions).toHaveLength(3);
@@ -410,7 +410,7 @@ describe('genie', () => {
 		expect(result.data.updatePost.data.comments[0].approved).toBe(true);
 	});
 
-	test('all filter - filter by age', async () => {
+	test('all where - where by age', async () => {
 		const zain = await client.mutate({
 			mutation: createUser,
 			variables: { input: {data: { name: 'Zain', age: 22, birthday: '1996-01-22', email: 'zain@example.com'}}}
@@ -425,7 +425,7 @@ describe('genie', () => {
 
 		const users = gql`
 				{
-					users(filter:{
+					users(where:{
 						range:{
 							age: [23, null]
 						}
@@ -438,7 +438,7 @@ describe('genie', () => {
 		`;
 
 // {
-// 	users(filter:{
+// 	users(where:{
 // 		or: [{
 // 			range:{
 // 				age: [0, 24]
@@ -454,7 +454,7 @@ describe('genie', () => {
 // }
 
 // {
-//   users(filter:{
+//   users(where:{
 //     range:{
 //       name: [ "C", "T" ]
 //     }
@@ -465,7 +465,7 @@ describe('genie', () => {
 //   }
 // }
 // {
-//   users(filter:{
+//   users(where:{
 //     range:{
 //       birthday: [ null, "1994-01-01" ]
 //     }
@@ -477,7 +477,7 @@ describe('genie', () => {
 // }
 
 // {
-//   users (filter: {
+//   users (where: {
 //     exists:{
 //       writtenSubmissions: true
 //     }

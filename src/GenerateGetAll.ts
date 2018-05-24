@@ -38,7 +38,7 @@ export class GenerateGetAll implements TypeGenerator {
 			const schemaType = this.schema.getType(type.name);
 			const generator = new InputGenerator(schemaType, null, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
 			const args = Object.assign({
-				filter: {type: generator.generateFilterInput(this.dataResolver.getFeatures().logicalOperators)},
+				where: {type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators)},
 				orderBy: {type: generator.generateOrderByInput()}
 			},
 			queryArgs,

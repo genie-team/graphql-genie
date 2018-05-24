@@ -1,6 +1,8 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
+import { execute, graphql, subscribe } from 'graphql';
+import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 import { GraphQLGenie } from './index';
 import subscriptionPlugin from './subscriptionPlugin/subscriptions';
@@ -63,11 +65,10 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateCreate: true,
 	generateUpdate: true,
 	generateDelete: true,
-	generateUpsert: true,
-	generateSubscriptions: false
+	generateUpsert: true
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	genie.use(subscriptionPlugin());
+	genie.use(subscriptionPlugin(new PubSub()));
 	await genie.init();
 	const schema = genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
@@ -85,6 +86,9 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['store'] = window['fortune'].getStore();
 	window['schema'] = schema;
 	window['client'] = client;
+	window['graphql'] = graphql;
+	window['subscribe'] = subscribe;
+
 	const zeus = await client.mutate({
 		mutation: gql`
 		mutation {
@@ -636,14 +640,6 @@ result = await client.mutate({
 	}}
 });
 
-result = await client.mutate({
-	mutation: updatePost,
-	variables: { input: {
-		data: { likedBy: { connect: [{email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
-		where: { id: thirdPostId}
-	}}
-});
-
 // create some users
 const newUsers = [];
 result = await client.mutate({
@@ -671,6 +667,39 @@ result = await client.mutate({
 	variables: { input: {data: { name: 'Test 4', email: 'test5@example.com'}}}
 });
 newUsers.push(result.data.createUser.data);
+console.log('subscribe main');
+const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
+	gql`subscription {
+		post (where: {mutation_in: [CREATED], node: {exists: {title: true}}}){
+			mutation
+			node {
+				title
+			}
+		}
+	}
+	`
+);
+console.log(sub);
+
+const exe = await execute(schema, gql`mutation {
+  createPost(input: {data:{title:"bam"}}) {
+    data {
+      title
+    }
+  }
+}`);
+console.log(exe);
+
+console.log(await sub.next());
+
+result = await client.mutate({
+	mutation: updatePost,
+	variables: { input: {
+		data: { likedBy: { connect: [{email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
+		where: { id: thirdPostId}
+	}}
+});
+console.log(await sub.next());
 
 // {
 // 	posts(orderBy: {
@@ -688,7 +717,7 @@ newUsers.push(result.data.createUser.data);
 
 // mutation {
 //   updateManyUsers(input: {
-//     filter: {
+//     where: {
 //       exists: {
 //         age: false
 //       }
@@ -703,7 +732,7 @@ newUsers.push(result.data.createUser.data);
 
 // mutation {
 //   deleteManyUsers(input: {
-//     filter: {
+//     where: {
 //       match: {
 //         age: 12
 //       }

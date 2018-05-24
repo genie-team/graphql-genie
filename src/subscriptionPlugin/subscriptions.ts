@@ -1,7 +1,17 @@
 import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType } from 'graphql';
+import { PubSub, withFilter } from 'graphql-subscriptions';
+import { IResolverObject } from 'graphql-tools';
+import { get } from 'lodash';
 import { GeniePlugin, GraphQLGenie, typeIsList } from '../.';
 
-export default (): GeniePlugin => {
+// enum MutationType {
+// 	CREATED,
+// 	UPDATED,
+// 	DELETED,
+// 	CONNECT,
+// 	DISCONNECT,
+// }
+export default (pubsub: PubSub): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
 		const schema = genie.getSchema();
 		const dataResolver = genie.getDataResolver();
@@ -11,8 +21,6 @@ export default (): GeniePlugin => {
 				CREATED
 				UPDATED
 				DELETED
-				CONNECT
-				DISCONNECT
 			}
 		`);
 		const typeMap = schema.getTypeMap();
@@ -25,25 +33,24 @@ export default (): GeniePlugin => {
 		}`);
 		const nodeNames = nodesResult.data.__type.possibleTypes;
 		let subscriptionQueries = '';
+		let subscriptionResolvers: IResolverObject = {};
 		nodeNames.forEach(node => {
 			const inputName = `${node.name}SubscriptionWhereInput`;
 			const payloadName = `${node.name}SubscriptionPayload`;
-			const schemaType =  <GraphQLObjectType>typeMap[node.name];
+			const schemaType = <GraphQLObjectType>typeMap[node.name];
 			newDefsAsString.push(getInputString(inputName, node.name));
 			newDefsAsString.push(getPayloadString(payloadName, node.name, schemaType));
 
-			subscriptionQueries += `${node.name.toLowerCase()}(where: ${inputName}): ${payloadName}
-				`;
+			subscriptionQueries += `${node.name.toLowerCase()}(where: ${inputName}): ${payloadName}\n`;
+
+			subscriptionResolvers = Object.assign(subscriptionResolvers, getResolver(node.name.toLowerCase(), pubsub));
+
 			dataResolver.addOutputHook(node.name, (context, record) => {
 				switch (context.request.method) {
-					// If it's a create request, return the record.
-					case 'create': return record;
-
-					// If it's an update request, return the update.
-					case 'update': return record;
-
-					// If it's a delete request, the return value doesn't matter.
-					case 'delete': return null;
+					case 'create':
+					case 'update':
+					case 'delete':
+						pubsub.publish(node.name.toLowerCase(), { context, record });
 				}
 			});
 		});
@@ -53,6 +60,26 @@ export default (): GeniePlugin => {
 		}
 		`);
 		genie.getSchemaBuilder().addTypeDefsToSchema(newDefsAsString.join('\n'));
+		genie.getSchemaBuilder().setIResolvers({ 'Subscription': subscriptionResolvers });
+	};
+};
+
+const getResolver = (name: string, pubsub: PubSub): IResolverObject => {
+	return {
+		[name]: {
+			resolve: (payload, args) => {
+				console.log('subscribe resolve', name, payload, args);
+				return { mutation: 'CREATED' };
+			},
+			subscribe: withFilter(() => pubsub.asyncIterator(name), ({context, record}, args) => {
+				const mutation = context.request.method.toUpperCase() + 'D';
+				const mutation_in = get(args, 'where.mutation_in', ['CREATED', 'UPDATED', 'DELETED']);
+				console.log('filter');
+				console.log(context, record);
+				console.log(args);
+				return mutation_in.includes(mutation);
+			}),
+		}
 	};
 };
 
@@ -79,7 +106,7 @@ const getInputString = (inputName: string, nodeName: string): string => {
 		The subscription event gets only dispatched when all of the field names included in this list have been updated
 		"""
 		updatedFields_contains_every: [String!]
-		node: ${nodeName}FilterInput
+		node: ${nodeName}WhereInput
 	}
 `;
 };
@@ -103,7 +130,7 @@ const getPayloadString = (payloadName: string, nodeName: string, schemaType: Gra
 			"""`;
 			const fieldName = currField.name + '_id' + (isList ? 's' : '');
 			// [String!] || String || [String!]!  || String!
-			const fieldType =  (isList ? '[' : '') + 'String' + (isList ? '!]' : '') + (isNonNullType(currField.type) ? '!' : '');
+			const fieldType = (isList ? '[' : '') + 'String' + (isList ? '!]' : '') + (isNonNullType(currField.type) ? '!' : '');
 			previousValuesFields += `
 			${fieldDescription}
 			${fieldName}: ${fieldType}

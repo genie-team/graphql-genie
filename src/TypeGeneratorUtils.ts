@@ -590,12 +590,12 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 			const ids = [];
 
 			let options = {};
-			_args = moveArgsIntoFilter(_args);
+			_args = moveArgsIntoWhere(_args);
 
-			let filter = null;
-			if (_args && _args.filter) {
-				filter = _args.filter;
-				options = parseFilter(_args.filter, schemaType);
+			let where = null;
+			if (_args && _args.where) {
+				where = _args.where;
+				options = parseFilter(where, schemaType);
 			}
 			set(options, 'orderBy', _args.orderBy);
 			set(options, 'offset', _args.skip);
@@ -640,12 +640,12 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				result = dataResolver.applyOptions(typeName, result, options);
 			}
 
-			if ((_args.orderBy || filter) && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
-				const pullIds = await filterNested(filter, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
+			if ((_args.orderBy || where) && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
+				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
 				result = result.filter(entry => !pullIds.has(entry.id));
 			}
 
-			// use cached data on subfields in order to support nested orderBy/filter
+			// use cached data on subfields in order to support nested orderBy/where
 			result.forEach(resultElement => {
 				for (const resultElementField in resultElement) {
 					if (cache.has(`${resultElement.id}.${resultElementField}`)) {
@@ -697,13 +697,13 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo) => {
 
 		let options = {};
-		let filter = null;
-		_args = moveArgsIntoFilter(_args);
+		let where = null;
+		_args = moveArgsIntoWhere(_args);
 
 		const schemaType: GraphQLNamedType = schema.getType(type.name);
-		if (_args && _args.filter) {
-			filter = _args.filter;
-			options = parseFilter(_args.filter, schemaType);
+		if (_args && _args.where) {
+			where = _args.where;
+			options = parseFilter(_args.where, schemaType);
 		}
 
 		set(options, 'orderBy', _args.orderBy);
@@ -722,8 +722,8 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 					cache.set(result.id, result);
 				}
 			});
-			if ((_args.orderBy || filter)  && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
-				const pullIds = await filterNested(filter, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
+			if ((_args.orderBy || where)  && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
+				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
 				fortuneReturn = pullIds.size > 0  ? fortuneReturn.filter(result => !pullIds.has(result ? result.id : '')) : fortuneReturn;
 			}
 			result = fortuneReturn.map((result) => {
@@ -731,7 +731,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 				return {
 					fortuneReturn: result,
 					cache: cache,
-					filter,
+					where,
 					__typename: result.__typename
 				};
 			});
@@ -784,7 +784,7 @@ export const queryArgs: Object = {
 
 export const fortuneFilters = ['not', 'or', 'and', 'range', 'match', 'exists'];
 
-const genieFindArgs = ['filter', 'orderBy', 'local', 'last', 'skip', 'before', 'after'];
+const genieFindArgs = ['where', 'orderBy', 'local', 'last', 'skip', 'before', 'after'];
 
 export const getRootMatchFields = (matchInput: GraphQLInputObjectType): {} => {
 	const matchFields = matchInput.getFields();
@@ -799,13 +799,13 @@ export const getRootMatchFields = (matchInput: GraphQLInputObjectType): {} => {
 	return args;
 };
 
-export const moveArgsIntoFilter = (args: object): object => {
+export const moveArgsIntoWhere = (args: object): object => {
 	if (!args) {
 		return args;
 	}
 	Object.keys(args).forEach((argKey) => {
 		if (!genieFindArgs.includes(argKey)) {
-			set(args, 'filter.match.' + argKey, args[argKey]);
+			set(args, 'where.match.' + argKey, args[argKey]);
 			delete args[argKey];
 		}
 	});

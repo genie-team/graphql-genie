@@ -23,8 +23,7 @@ export class GraphQLGenie {
 		generateUpdate: true,
 		generateDelete: true,
 		generateUpsert: true,
-		generateConnections: true,
-		generateSubscriptions: true
+		generateConnections: true
 	};
 	private generators: Array<TypeGenerator>;
 
@@ -104,7 +103,7 @@ export class GraphQLGenie {
 		const queryTypeFields = (<GraphQLObjectType>this.schema.getType('Query')).getFields();
 		const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
 		const fullArgs = queryField.args;
-		const filterArg = find(fullArgs, ['name', 'filter']);
+		const filterArg = find(fullArgs, ['name', 'where']);
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 			const schemaType = this.schema.getType(type.name);
@@ -122,7 +121,7 @@ export class GraphQLGenie {
 
 					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field, returnConnection));
 				});
-				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers, false);
+				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers);
 			}
 		});
 	}
@@ -202,7 +201,7 @@ export class GraphQLGenie {
 		this.schema = this.schemaBuilder.addTypeDefsToSchema(newTypes);
 
 		resolvers.forEach((resolverMap, name) => {
-			this.schemaBuilder.setResolvers(name, resolverMap, false);
+			this.schemaBuilder.setResolvers(name, resolverMap);
 		});
 
 		this.schema = this.schemaBuilder.getSchema();

@@ -566,15 +566,15 @@ describe('mutationTests', () => {
 
 	test('find - make sure address is deleted', async () => {
 		const addresses = gql`
-			query addresses($filter: JSON) {
-				addresses(filter: $filter) {
+			query addresses($where: JSON) {
+				addresses(where: $where) {
 					id
 				}
 			}
 			`;
 		const result = await client.query({
 			query: addresses,
-			variables: {filter: { match: {id: testData.addresses[0].id}}}
+			variables: {where: { match: {id: testData.addresses[0].id}}}
 		});
 		console.log(result);
 		expect(result.data['addresses']).toBeNull();
@@ -619,15 +619,15 @@ describe('mutationTests', () => {
 
 	test('find - make sure post is deleted', async () => {
 		const posts = gql`
-			query posts($filter: JSON) {
-				posts(filter: $filter) {
+			query posts($where: JSON) {
+				posts(where: $where) {
 					id
 				}
 			}
 			`;
 		const result = await client.query({
 			query: posts,
-			variables: {filter: { match: {id: testData.posts[1].id}}}
+			variables: {where: { match: {id: testData.posts[1].id}}}
 		});
 		expect(result.data['posts']).toBeNull();
 	});

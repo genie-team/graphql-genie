@@ -57,18 +57,6 @@ export class GraphQLSchemaBuilder {
 			this.typeDefs = 'directive @connection on FIELD_DEFINITION' + this.typeDefs;
 		}
 
-		if (this.config.generateSubscriptions && !this.typeDefs.includes('enum MUTATION_TYPE')) {
-			this.typeDefs += `
-			enum MUTATION_TYPE {
-				CREATED
-				UPDATED
-				DELETED
-				CONNECTED
-				DISCONNECTED
-			}
-			`;
-		}
-
 		if ((this.config.generateGetAll || this.config.generateConnections) && !this.typeDefs.includes('enum ORDER_BY_OPTIONS')) {
 			this.typeDefs += `
 			enum ORDER_BY_OPTIONS {
@@ -149,7 +137,7 @@ export class GraphQLSchemaBuilder {
 		return this.schema;
 	}
 
-	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>>, requireResolversForResolveType = true): GraphQLSchema  => {
+	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>>): GraphQLSchema  => {
 		const resolverMap = {};
 		resolverMap[typeName] = {};
 		this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
@@ -162,7 +150,18 @@ export class GraphQLSchemaBuilder {
 			schema: this.schema,
 			resolvers: resolverMap,
 			resolverValidationOptions: {
-				requireResolversForResolveType: requireResolversForResolveType
+				requireResolversForResolveType: false
+			}
+		});
+		return this.schema;
+	}
+	public setIResolvers = (iResolvers: IResolvers): GraphQLSchema  => {
+		this.resolveFunctions = Object.assign(this.resolveFunctions, iResolvers);
+		addResolveFunctionsToSchema({
+			schema: this.schema,
+			resolvers: iResolvers,
+			resolverValidationOptions: {
+				requireResolversForResolveType: false
 			}
 		});
 		return this.schema;

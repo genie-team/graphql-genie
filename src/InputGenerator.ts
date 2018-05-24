@@ -156,8 +156,8 @@ export class InputGenerator {
 		return this.currInputObjectTypes.get(name);
 	}
 
-	private getFilterInput(typeName: string, fields: GraphQLInputFieldConfigMap, existsFields: GraphQLInputFieldConfigMap, matchFields: GraphQLInputFieldConfigMap, rangeFields: GraphQLInputFieldConfigMap, addLogicalOperators: boolean): GraphQLInputType {
-		const name = typeName + 'FilterInput';
+	private getWhereInput(typeName: string, fields: GraphQLInputFieldConfigMap, existsFields: GraphQLInputFieldConfigMap, matchFields: GraphQLInputFieldConfigMap, rangeFields: GraphQLInputFieldConfigMap, addLogicalOperators: boolean): GraphQLInputType {
+		const name = typeName + 'WhereInput';
 		const existsName = typeName + 'ExistsInput';
 		const matchName = typeName + 'MatchInput';
 		const rangeName = typeName + 'RangeInput';
@@ -198,8 +198,8 @@ export class InputGenerator {
 		return this.currInputObjectTypes.get(name);
 	}
 
-	generateFilterInput(addLogicalOperators: boolean, fieldType: GraphQLNamedType = this.type, ): GraphQLInputType {
-		const name = fieldType.name + 'FilterInput';
+	generateWhereInput(addLogicalOperators: boolean, fieldType: GraphQLNamedType = this.type, ): GraphQLInputType {
+		const name = fieldType.name + 'WhereInput';
 		if (!this.currInputObjectTypes.has(name)) {
 			const existsFields = {};
 			const matchFields = {};
@@ -224,7 +224,7 @@ export class InputGenerator {
 							field.name,
 							new GraphQLList(inputType)));
 					} else {
-						const fieldInputName = schemaType.name + 'FilterInput';
+						const fieldInputName = schemaType.name + 'WhereInput';
 						let fieldName = field.name;
 						if (isInterfaceType(schemaType) || isUnionType(schemaType)) {
 
@@ -237,7 +237,7 @@ export class InputGenerator {
 								possibleTypes.forEach(typeInfo => {
 									const possibleSchemaType = getNamedType(this.schema.getType(typeInfo.name));
 									const possibleTypeGenerator = new InputGenerator(possibleSchemaType, this.config, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations, true);
-									const possibleTypeFilter = possibleTypeGenerator.generateFilterInput(addLogicalOperators);
+									const possibleTypeFilter = possibleTypeGenerator.generateWhereInput(addLogicalOperators);
 									const possibleTypeFieldMap = (<GraphQLInputObjectType>possibleTypeFilter).getFields();
 									merge(interfaceFields, possibleTypeFieldMap);
 									merge(interfaceExistsFields, (<GraphQLInputObjectType>possibleTypeFieldMap['exists'].type).getFields());
@@ -246,7 +246,7 @@ export class InputGenerator {
 
 								});
 
-								inputType = this.getFilterInput(schemaType.name, interfaceFields, interfaceExistsFields, interfaceMatchFields, interfaceRangeFields, addLogicalOperators);
+								inputType = this.getWhereInput(schemaType.name, interfaceFields, interfaceExistsFields, interfaceMatchFields, interfaceRangeFields, addLogicalOperators);
 							}
 						} else {
 							inputType = new GraphQLInputObjectType({name: fieldInputName, fields: {}});
@@ -259,7 +259,7 @@ export class InputGenerator {
 							inputType));
 					}
 			});
-			this.getFilterInput(fieldType.name, fields, existsFields, matchFields, rangeFields, addLogicalOperators);
+			this.getWhereInput(fieldType.name, fields, existsFields, matchFields, rangeFields, addLogicalOperators);
 		}
 		return this.currInputObjectTypes.get(name);
 	}

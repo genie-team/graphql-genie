@@ -31,6 +31,7 @@ export default class FortuneGraph implements DataResolver {
 			if (!record) {
 				return record;
 			}
+			record['bam'] = 'bam';
 			const currTypeName = record['__typename'] || graphQLTypeName;
 			record.id = this.computeReturnId(record.id, currTypeName);
 			for (const argName in record) {
@@ -211,6 +212,8 @@ export default class FortuneGraph implements DataResolver {
 		}
 		let graphReturn: any[] = get(results, 'payload.records');
 		if (graphReturn) {
+			// to support relay plural identifying root fields results should be in the order in which they were requested,
+			// with null being returned by failed finds
 			if (ids) {
 				const newReturn = [];
 				ids.forEach((value) => {
