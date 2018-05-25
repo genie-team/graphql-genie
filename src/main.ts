@@ -668,18 +668,78 @@ result = await client.mutate({
 });
 newUsers.push(result.data.createUser.data);
 console.log('subscribe main');
+// const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
+// 	gql`subscription {
+// 		post (where: {
+// 			mutation_in: [UPDATED],
+// 			updatedFields_contains: ["likedBy", "title"],
+// 			node: {exists: {title: true}}}){
+// 			mutation
+// 			node {
+// 				title
+// 			}
+// 		}
+// 	}
+// 	`
+// );
+
+// const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
+// 	gql`subscription {
+// 		post (where: {
+// 			mutation_in: [UPDATED],
+// 			updatedFields_contains: ["likedBy", "title"],
+// 			node: {author: {
+//         match: {
+//           email: ["zeu@example.com"]
+//         }
+//       }}
+//       }){
+// 			mutation
+// 			node {
+// 				title
+// 			}
+// 		}
+// 	}
+// 	`
+// );
+
 const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
 	gql`subscription {
-		post (where: {mutation_in: [CREATED], node: {exists: {title: true}}}){
+		post(where: {
+			AND: [
+				{mutation_in: [UPDATED]},
+				{updatedFields_contains: ["likedBy", "title"]},
+				{node: {
+					author: {
+						match: {
+							email: ["zeus@example.com"]
+						}
+					}
+				}
+				}
+			]
+		}) {
 			mutation
 			node {
 				title
+				likedBy {
+					edges {
+            node {
+              name
+            }
+          }
+				}
+			}
+			updatedFields
+			previousValues {
+				title
+				likedBy_ids
 			}
 		}
 	}
+
 	`
 );
-console.log(sub);
 
 const exe = await execute(schema, gql`mutation {
   createPost(input: {data:{title:"bam"}}) {
@@ -690,8 +750,6 @@ const exe = await execute(schema, gql`mutation {
 }`);
 console.log(exe);
 
-console.log(await sub.next());
-
 result = await client.mutate({
 	mutation: updatePost,
 	variables: { input: {
@@ -699,8 +757,7 @@ result = await client.mutate({
 		where: { id: thirdPostId}
 	}}
 });
-console.log(await sub.next());
-
+console.log((await sub.next()).value.data.post);
 // {
 // 	posts(orderBy: {
 //     title: ASC

@@ -31,7 +31,6 @@ export default class FortuneGraph implements DataResolver {
 			if (!record) {
 				return record;
 			}
-			record['bam'] = 'bam';
 			const currTypeName = record['__typename'] || graphQLTypeName;
 			record.id = this.computeReturnId(record.id, currTypeName);
 			for (const argName in record) {
@@ -514,6 +513,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public applyOptions(graphQLTypeName: string, records, options, meta?) {
+		records = isArray(records) ? records : [records];
 		options = this.generateOptions(options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		return fortuneCommon.applyOptions(this.store.recordTypes[fortuneType], records, options, meta);

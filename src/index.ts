@@ -16,5 +16,9 @@ export {
 	typeIsList,
 	getReturnType
 } from './GraphQLUtils';
+export {
+	filterNested,
+	parseFilter
+} from './TypeGeneratorutils';
 export { GraphQLGenie } from './GraphQLGenie';
 export { InputGenerator } from './InputGenerator';
