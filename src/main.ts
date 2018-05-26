@@ -1,12 +1,12 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
+import indexedDBAdapter from 'fortune-indexeddb';
 import { execute, graphql, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 import { GraphQLGenie } from './index';
 import subscriptionPlugin from './subscriptionPlugin/subscriptions';
-
 const typeDefs = `
 
 interface Submission {
@@ -57,7 +57,10 @@ type Address {
 
 `;
 
-const fortuneOptions = { settings: { enforceLinks: true } };
+const fortuneOptions = {
+	settings: { enforceLinks: true },
+	adapter: indexedDBAdapter
+};
 const start = Date.now();
 console.log('GraphQL Genie Started');
 const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
@@ -88,7 +91,16 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
-
+	const hasData = await client.query({
+		query: gql`{
+			users{
+				id
+			}
+		}`
+	});
+	if (hasData.data) {
+		return;
+	}
 	const zeus = await client.mutate({
 		mutation: gql`
 		mutation {

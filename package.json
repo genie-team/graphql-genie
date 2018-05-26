@@ -76,6 +76,7 @@
   },
   "dependencies": {
     "fortune": "^5.4.2",
+    "fortune-indexeddb": "^1.0.1",
     "graphql-iso-date": "^3.5.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^2.24.0",

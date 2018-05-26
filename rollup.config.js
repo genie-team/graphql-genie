@@ -10,7 +10,6 @@ import pkg from './package.json';
 
 const prod = !process.env.ROLLUP_WATCH;
 
-console.log(process.env.buildTarget);
 export default [
 	// browser-friendly UMD build
 	{
@@ -30,7 +29,8 @@ export default [
 		onwarn,
 		plugins: [
 			resolve({
-				extensions: ['.mjs', '.js', '.json'],
+				extensions: ['.mjs', '.js'],
+				preferBuiltins: true,
 				jsnext: true,
 				main: true
 			}), // so Rollup can find `ms`
@@ -46,11 +46,14 @@ export default [
 			}), // so Rollup can convert `ms` to an ES module
 			typescript(),
 			replace({
+				exclude: [
+					'node_modules/rollup-plugin-node-builtins/**'
+				],
 				'process': true,
-				'process.env.NODE_ENV': JSON.stringify( 'development' )
+				'process.env.NODE_ENV': !prod ?  '"development"' : '"production"'
 			}),
-			globals(),
 			builtins(),
+			globals(),
 			!prod && serve({
 				contentBase: 'lib',
 				port: '10001'
