@@ -29,10 +29,11 @@ export default [
 		onwarn,
 		plugins: [
 			resolve({
-				extensions: ['.mjs', '.js'],
+				extensions: ['.mjs', '.js', '.json'],
 				preferBuiltins: true,
 				jsnext: true,
-				main: true
+				main: true,
+				browser: true
 			}), // so Rollup can find `ms`
 			commonjs({
 				include: ['node_modules/**'],

@@ -485,7 +485,7 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public getFeatures(): Features {
-		return this.store.adapter.features;
+		return this.store.adapter.features || {};
 	}
 
 	private generateOptions = (options, graphQLTypeName?: string, ids?): Object => {

@@ -420,8 +420,14 @@ describe('genie', () => {
 			variables: { input: {data: { name: 'Steve', age: 26, birthday: '1992-06-02', email: 'steve@example.com' }}}
 		});
 
+		const brian = await client.mutate({
+			mutation: createUser,
+			variables: { input: {data: { name: 'Brian', age: 30, birthday: '1988-06-02', email: 'brian@example.com' }}}
+		});
+
 		testData.users.push(zain.data.createUser.data);
 		testData.users.push(steve.data.createUser.data);
+		testData.users.push(brian.data.createUser.data);
 
 		const users = gql`
 				{
@@ -436,45 +442,6 @@ describe('genie', () => {
 					}
 				}
 		`;
-
-// {
-// 	users(where:{
-// 		or: [{
-// 			range:{
-// 				age: [0, 24]
-// 			}
-// 		}, {range:{
-// 			age: [29, null]
-// 		}}]
-// 	}) {
-// 		name
-// 		birthday
-// 		age
-// 	}
-// }
-
-// {
-//   users(where:{
-//     range:{
-//       name: [ "C", "T" ]
-//     }
-//   }) {
-//     name
-//     birthday
-//     age
-//   }
-// }
-// {
-//   users(where:{
-//     range:{
-//       birthday: [ null, "1994-01-01" ]
-//     }
-//   }) {
-//     name
-//     birthday
-//     age
-//   }
-// }
 
 // {
 //   users (where: {
@@ -524,7 +491,74 @@ describe('genie', () => {
 			query: users
 		});
 
+		expect(result.data['users']).toHaveLength(3);
+	});
+
+	test('all where - where by age with or', async () => {
+
+		const users = gql`
+				{
+					users(where:{
+						or: [{
+							range:{
+								age: [0, 24]
+							}
+						}, {range:{
+							age: [29, null]
+						}}]
+					}) {
+						name
+						birthday
+						age
+					}
+				}
+		`;
+		const result = await client.query({
+			query: users
+		});
+		expect(result.data['users']).toHaveLength(3);
+	});
+
+	test('all where - where by name range', async () => {
+
+		const users = gql`
+			{
+				users(where:{
+					range:{
+						name: [ "C", "T" ]
+					}
+				}) {
+					name
+					birthday
+					age
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
 		expect(result.data['users']).toHaveLength(2);
 	});
 
+	test('all where - where by bday range', async () => {
+
+		const users = gql`
+			{
+				users(where:{
+					range:{
+						birthday: [ null, "1994-01-01" ]
+					}
+				}) {
+					name
+					birthday
+					age
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
+		console.log(result.data['users']);
+		expect(result.data['users']).toHaveLength(3);
+	});
 });

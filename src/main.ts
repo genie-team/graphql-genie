@@ -1,12 +1,12 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import indexedDBAdapter from 'fortune-indexeddb';
 import { execute, graphql, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 import { GraphQLGenie } from './index';
 import subscriptionPlugin from './subscriptionPlugin/subscriptions';
+
 const typeDefs = `
 
 interface Submission {
@@ -58,8 +58,7 @@ type Address {
 `;
 
 const fortuneOptions = {
-	settings: { enforceLinks: true },
-	adapter: indexedDBAdapter
+	settings: { enforceLinks: true }
 };
 const start = Date.now();
 console.log('GraphQL Genie Started');
@@ -98,7 +97,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 		}`
 	});
-	if (hasData.data) {
+	if (hasData.data['users']) {
 		return;
 	}
 	const zeus = await client.mutate({
@@ -108,6 +107,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 				input: {
 					data: {
 						age: 42
+						birthday: "2000-02-02"
 						email: "zeus@example.com"
 						name: "Zeus"
 						writtenSubmissions: {
@@ -314,6 +314,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 					}
           update: {
             age: 30
+						birthday: "1988-02-23"
           }
 					where: {
 						email: "corey@genie.com"
@@ -385,6 +386,7 @@ const buildClient = async (genie: GraphQLGenie) => {
                 {
                   update: {
                     age: 5000
+										birthday: "0001-01-01"
                   }
                   create: {
                     name: "Loki"
@@ -632,7 +634,7 @@ mutation createUser($input: CreateUserMutationInput!) {
 
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Hela', email: 'hela@example.com'}}}
+	variables: { input: {data: { name: 'Hela', email: 'hela@example.com', birthday: '1900-01-01'}}}
 });
 
 const updatePost = gql`

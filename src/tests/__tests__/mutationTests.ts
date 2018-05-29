@@ -576,7 +576,7 @@ describe('mutationTests', () => {
 			query: addresses,
 			variables: {where: { match: {id: testData.addresses[0].id}}}
 		});
-		console.log(result);
+
 		expect(result.data['addresses']).toBeNull();
 	});
 
