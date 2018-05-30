@@ -750,11 +750,11 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 };
 
 export const queryArgs: Object = {
-	'first': { type: 'Int' },
-	'last': { type: 'Int' },
-	'skip': { type: 'Int' },
-	'before': { type: 'String' },
-	'after': { type: 'String' }
+	'first': { type: 'Int', description: 'Slice result from the start' },
+	'last': { type: 'Int', description: 'Slice result from the end' },
+	'skip': { type: 'Int', description: 'Skip results' },
+	'before': { type: 'String', description: 'Cursor returned by previous connection queries for pagination' },
+	'after': { type: 'String', description: 'Cursor returned by previous connection queries for pagination' },
 };
 
 export const fortuneFilters = ['not', 'or', 'and', 'range', 'match', 'exists'];
@@ -770,6 +770,7 @@ export const getRootMatchFields = (matchInput: GraphQLInputObjectType): { [key: 
 			newKey = `f_${key}`;
 		}
 		args[newKey] = matchFields[key];
+		args[newKey].description = `${key} matches at least one of argument`;
 	});
 	return args;
 };

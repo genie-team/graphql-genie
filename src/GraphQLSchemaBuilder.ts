@@ -34,7 +34,13 @@ export class GraphQLSchemaBuilder {
 
 		directive @unique on FIELD_DEFINITION
 
+		"""
+		An object with an ID
+		"""
 		interface Node {
+			"""
+			The id of the object.
+			"""
 			id: ID! @unique
 		}
 		` + typeDefs;
@@ -47,7 +53,7 @@ export class GraphQLSchemaBuilder {
 
 		this.config = $config;
 	}
-	public printSchemaWithDirectives = () => {
+	public printSchemaWithDirectives = (): string => {
 		const str = Object
 			.keys(this.schema.getTypeMap())
 			.filter(k => !k.match(/^__/))
@@ -64,7 +70,7 @@ export class GraphQLSchemaBuilder {
 				return !isSpecifiedDirective(d)
 					? accum += `${print(d.astNode)}\n`
 					: accum;
-			}, str + `${print(this.schema.astNode)}\n`);
+			}, str + `${this.schema.astNode ? print(this.schema.astNode) : ''}\n`);
 	}
 
 	public addTypeDefsToSchema = ($typeDefs = ''): GraphQLSchema => {

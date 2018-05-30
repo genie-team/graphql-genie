@@ -163,14 +163,17 @@ export class InputGenerator {
 		const rangeName = typeName + 'RangeInput';
 		const existsInput = new GraphQLInputObjectType({
 			name: existsName,
+			description: 'Specifies if a field should exist or not (true or false)',
 			fields: existsFields
 		});
 		const matchInput = new GraphQLInputObjectType({
 			name: matchName,
+			description: 'Match the supplied values for each field',
 			fields: matchFields
 		});
 		const rangeInput = new GraphQLInputObjectType({
 			name: rangeName,
+			description: 'Filter between lower and upper bounds, takes precedence over match',
 			fields: rangeFields
 		});
 		this.currInputObjectTypes.set(existsName, existsInput);

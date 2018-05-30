@@ -36,10 +36,25 @@ export class GenerateConnections implements TypeGenerator {
 		this.edgeResolvers = new Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
 
 		this.currOutputObjectTypeDefs.add(`
+			"""
+			Information about pagination in a connection.
+			"""
 			type PageInfo {
+				"""
+				When paginating forwards, are there more items?
+				"""
 				hasNextPage: Boolean!
+				"""
+				When paginating backwards, are there more items?
+				"""
 				hasPreviousPage: Boolean!
+				"""
+				When paginating backwards, the cursor to continue.
+				"""
 				startCursor: String
+				"""
+				When paginating forwards, the cursor to continue.
+				"""
 				endCursor: String
 			}
 		`);
@@ -51,15 +66,30 @@ export class GenerateConnections implements TypeGenerator {
 		this.types.forEach(type => {
 			const fieldName = `${pluralize(type.name.toLowerCase())}Connection`;
 			this.currOutputObjectTypeDefs.add(`
+				"""
+				A connection to a list of items.
+				"""
 				type ${type.name}Connection {
+					"""
+					A list of edges.
+					"""
 					edges: [${type.name}Edge]
+					"""
+					Information to aid in pagination.
+					"""
 					pageInfo: PageInfo
+					"""
+					Meta information
+					"""
 					aggregate: ${type.name}Aggregate
 				}
 			`);
 
 			this.currOutputObjectTypeDefs.add(`
 				type ${type.name}Aggregate {
+					"""
+					The total number that match the where clause
+					"""
 					count: Int!
 				}
 			`);

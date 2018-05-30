@@ -71,10 +71,11 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 }});
 const buildClient = async (genie: GraphQLGenie) => {
 	await genie.init();
-	let schema = genie.getSchema();
 	await genie.use(subscriptionPlugin(new PubSub()));
-	schema = genie.getSchema();
+	const schema = genie.getSchema();
+	
 	console.log('GraphQL Genie Completed', Date.now() - start);
+	console.log(genie.printSchema());
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData

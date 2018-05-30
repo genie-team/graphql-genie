@@ -222,6 +222,10 @@ export class GraphQLGenie {
 		return this.schemaBuilder;
 	}
 
+	public printSchema = (): string => {
+		return this.schemaBuilder.printSchemaWithDirectives();
+	}
+
 	public getFragmentTypes = async (): Promise<IntrospectionResultData> => {
 		await this.ready;
 		const result = await graphql(this.schema, `{
