@@ -30,6 +30,18 @@ mutation createUser($input: CreateUserMutationInput!) {
 }
 `;
 
+const createPost = gql`
+mutation createUser($input: CreatePostMutationInput!) {
+	createPost(input: $input) {
+		data {
+			id
+			title
+		}
+		clientMutationId
+	}
+}
+`;
+
 describe('genie', () => {
 
 	test('create - simple user', async () => {
@@ -420,14 +432,14 @@ describe('genie', () => {
 			variables: { input: {data: { name: 'Steve', age: 26, birthday: '1992-06-02', email: 'steve@example.com' }}}
 		});
 
-		const brian = await client.mutate({
+		const pete = await client.mutate({
 			mutation: createUser,
-			variables: { input: {data: { name: 'Brian', age: 30, birthday: '1988-06-02', email: 'brian@example.com' }}}
+			variables: { input: {data: { name: 'Pete', age: 30, birthday: '1988-06-02', email: 'pete@example.com' }}}
 		});
 
 		testData.users.push(zain.data.createUser.data);
 		testData.users.push(steve.data.createUser.data);
-		testData.users.push(brian.data.createUser.data);
+		testData.users.push(pete.data.createUser.data);
 
 		const users = gql`
 				{
@@ -446,38 +458,13 @@ describe('genie', () => {
 				}
 		`;
 
-// {
-
-//   postsConnection(first: 1, after: "1ZN8GkZUASdEtHQ") {
-//     edges {
-//       cursor
-//       node {
-//         id
-//         title
-//         author {
-//           name
-//         }
-//       }
-//     }
-//     pageInfo {
-//       hasNextPage
-//       hasPreviousPage
-//       startCursor
-//       endCursor
-//     }
-//     aggregate {
-//       count
-//     }
-//   }
-// }
-
 		const result = await client.query({
 			query: users
 		});
 
 		expect(result.data['users']).toHaveLength(3);
-		expect(result.data['users'][0].email).toBe('brian@example.com');
-		expect(result.data['users'][1].email).toBe('coreyj@example.com');
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][1].email).toBe('pete@example.com');
 		expect(result.data['users'][2].email).toBe('steve@example.com');
 
 	});
@@ -509,8 +496,8 @@ describe('genie', () => {
 		});
 
 		expect(result.data['users']).toHaveLength(3);
-		expect(result.data['users'][0].email).toBe('brian@example.com');
-		expect(result.data['users'][1].email).toBe('coreyj@example.com');
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][1].email).toBe('pete@example.com');
 		expect(result.data['users'][2].email).toBe('zain@example.com');
 	});
 
@@ -536,8 +523,9 @@ describe('genie', () => {
 			query: users
 		});
 		expect(result.data['users'][0].email).toBe('coreyj@example.com');
-		expect(result.data['users'][1].email).toBe('steve@example.com');
-		expect(result.data['users']).toHaveLength(2);
+		expect(result.data['users'][1].email).toBe('pete@example.com');
+		expect(result.data['users'][2].email).toBe('steve@example.com');
+		expect(result.data['users']).toHaveLength(3);
 	});
 
 	test('all where - where by bday range', async () => {
@@ -563,8 +551,9 @@ describe('genie', () => {
 		});
 
 		expect(result.data['users']).toHaveLength(2);
-		expect(result.data['users'][0].email).toBe('brian@example.com');
-		expect(result.data['users'][1].email).toBe('coreyj@example.com');
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][1].email).toBe('pete@example.com');
+
 	});
 
 	test('all where - nested match', async () => {
@@ -594,4 +583,169 @@ describe('genie', () => {
 		expect(result.data['users'][0].email).toBe('coreyj@example.com');
 	});
 
+	test('all where - post connection', async () => {
+
+		const postsConnection = gql`
+		{
+
+		postsConnection(first: 1, orderBy: {title: DESC}, after: "${testData.posts[1].id}") {
+			edges {
+				cursor
+				node {
+					id
+					title
+					author {
+						name
+					}
+				}
+			}
+			pageInfo {
+				hasNextPage
+				hasPreviousPage
+				startCursor
+				endCursor
+			}
+			aggregate {
+				count
+			}
+		}
+		}
+		`;
+		const result = await client.query({
+			query: postsConnection
+		});
+
+		expect(result.data['postsConnection'].edges).toHaveLength(1);
+		expect(result.data['postsConnection'].edges[0].cursor).toBe(result.data['postsConnection'].edges[0].node.id);
+		expect(result.data['postsConnection'].edges[0].node.id).toBe(testData.posts[0].id);
+		expect(result.data['postsConnection'].aggregate.count).toBe(2);
+		expect(result.data['postsConnection'].pageInfo.hasNextPage).toBe(false);
+		expect(result.data['postsConnection'].pageInfo.hasPreviousPage).toBe(true);
+		expect(result.data['postsConnection'].pageInfo.startCursor).toBe(testData.posts[0].id);
+		expect(result.data['postsConnection'].pageInfo.endCursor).toBe(testData.posts[0].id);
+	});
+
+	test('all where - post connection', async () => {
+
+		const usersConnection = gql`
+		{
+
+		usersConnection(first: 2, orderBy: {name: ASC}, after: "${testData.users[0].id}") {
+			edges {
+				cursor
+				node {
+					id
+					name
+					email
+				}
+			}
+			pageInfo {
+				hasNextPage
+				hasPreviousPage
+				startCursor
+				endCursor
+			}
+			aggregate {
+				count
+			}
+		}
+		}
+		`;
+		const result = await client.query({
+			query: usersConnection
+		});
+		expect(result.data['usersConnection'].edges).toHaveLength(2);
+		expect(result.data['usersConnection'].edges[0].cursor).toBe(result.data['usersConnection'].edges[0].node.id);
+		expect(result.data['usersConnection'].aggregate.count).toBe(testData.users.length);
+		expect(result.data['usersConnection'].pageInfo.hasNextPage).toBe(true);
+		expect(result.data['usersConnection'].pageInfo.hasPreviousPage).toBe(true);
+		expect(result.data['usersConnection'].pageInfo.startCursor).toBe(result.data['usersConnection'].edges[0].node.id);
+		expect(result.data['usersConnection'].pageInfo.endCursor).toBe(result.data['usersConnection'].edges[1].node.id);
+	});
+
+	test('find - multiple ordering', async () => {
+
+		const users = gql`
+			{
+				users(orderBy: {
+					name: ASC
+			}){
+					name
+					writtenSubmissions (orderBy: {title: ASC}) {
+						title
+					}
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
+
+		const names = [];
+		const namesSorted = [];
+		result.data['users'].forEach(user => {
+			names.push(user.name);
+			namesSorted.push(user.name);
+			if (user.writtenSubmissions) {
+				const writtenSubmissions = [];
+				const writtenSubmissionsSorted = [];
+				user.writtenSubmissions.forEach(submission => {
+					writtenSubmissions.push(submission.title);
+					writtenSubmissionsSorted.push(submission.title);
+				});
+				writtenSubmissionsSorted.sort();
+				expect(writtenSubmissions).toEqual(writtenSubmissionsSorted);
+			}
+		});
+		namesSorted.sort();
+		expect(names).toEqual(namesSorted);
+
+	});
+
+	test('find - nested ordering', async () => {
+		await client.mutate({
+			mutation: createPost,
+			variables: { input: {data: { title: 'A Post', author: {connect: {id: testData.users[0].id}} }}}
+		});
+		await client.mutate({
+			mutation: createPost,
+			variables: { input: {data: { title: 'F Post', author: {connect: {id: testData.users[0].id}} }}}
+		});
+		await client.mutate({
+			mutation: createPost,
+			variables: { input: {data: { title: 'Z Post', author: {connect: {id: testData.users[0].id}} }}}
+		});
+		const posts = gql`
+			{
+				posts(orderBy: {author: {writtenSubmissions: {title: DESC}}}){
+					title
+					author {
+						name
+						writtenSubmissions {
+							title
+						}
+					}
+				}
+			}
+		`;
+		const result = await client.query({
+			query: posts
+		});
+
+		result.data['posts'].forEach(user => {
+			if (user.author && user.author.writtenSubmissions) {
+				const writtenSubmissions = [];
+				const writtenSubmissionsSorted = [];
+				user.author.writtenSubmissions.forEach(submission => {
+					writtenSubmissions.push(submission.title);
+					writtenSubmissionsSorted.push(submission.title);
+				});
+				writtenSubmissionsSorted.sort();
+				writtenSubmissionsSorted.reverse();
+
+				expect(writtenSubmissions).toEqual(writtenSubmissionsSorted);
+			}
+		});
+
+	});
 });

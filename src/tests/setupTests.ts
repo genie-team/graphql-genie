@@ -54,11 +54,13 @@ type Address {
 process['testSetup'] = {};
 const fortuneOptions = { settings: { enforceLinks: true } };
 
-const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
+export const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 
 export const getClient = async () => {
 	if (!process['testSetup']['client']) {
-		await genie.init();
+		if (!genie.ready) {
+			await genie.init();
+		}
 		const schema = genie.getSchema();
 		const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 		const fragmentMatcher = new IntrospectionFragmentMatcher({

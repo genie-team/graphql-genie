@@ -2,7 +2,7 @@
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType,
 	GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import {Relations,  getPayloadTypeDef, getPayloadTypeName, upsertResolver} from './TypeGeneratorUtils';
+import {Relations,  getPayloadTypeDef, getPayloadTypeName, upsertResolver} from './TypeGeneratorUtilities';
 import { InputGenerator } from './InputGenerator';
 
 export class GenerateUpsert implements TypeGenerator {

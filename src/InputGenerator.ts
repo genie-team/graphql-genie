@@ -4,7 +4,7 @@ import { each, get, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
-import { Mutation, Relations, capFirst, fortuneFilters, lowerFirst } from './TypeGeneratorUtils';
+import { Mutation, Relations, capFirst, fortuneFilters, lowerFirst } from './TypeGeneratorUtilities';
 export class InputGenerator {
 
 	private type: GraphQLNamedType;

@@ -26,7 +26,10 @@
     "postbuild": "npm run bundle",
     "prepublishOnly": "npm run build",
     "start": "rollup -c -w",
-    "test": "jest"
+		"test": "jest",
+		"testMutation": "jest ./tests/__tests__/mutationTests.ts",
+		"testGenie": "jest ./tests/__tests__/genie.ts",
+		"testSubscription": "jest ./tests/__tests__/subscriptions.ts"
   },
   "jest": {
     "transform": {

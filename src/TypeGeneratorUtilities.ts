@@ -1,4 +1,4 @@
-import { GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType } from 'graphql';
+import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -759,9 +759,9 @@ export const queryArgs: Object = {
 
 export const fortuneFilters = ['not', 'or', 'and', 'range', 'match', 'exists'];
 
-const genieFindArgs = ['where', 'orderBy', 'local', 'last', 'skip', 'before', 'after'];
+const genieFindArgs = ['first', 'where', 'orderBy', 'local', 'last', 'skip', 'before', 'after'];
 
-export const getRootMatchFields = (matchInput: GraphQLInputObjectType): {} => {
+export const getRootMatchFields = (matchInput: GraphQLInputObjectType): { [key: string]: GraphQLArgument } => {
 	const matchFields = matchInput.getFields();
 	const args = {};
 	Object.keys(matchFields).forEach(key => {
@@ -837,6 +837,11 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 						if (isArray(childReturn) && !isEmpty(childReturn)) {
 							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, childReturn, cache, dataResolver);
 							childReturn = childReturn ? childReturn.filter(result => {
+								if (!result) { return result; } return !recursePullIds.has(result.id);
+							}) : childReturn;
+						} else if (childReturn && (currOrderBy || currFilter)) {
+							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, [childReturn], cache, dataResolver);
+							childReturn = childReturn ? [childReturn].filter(result => {
 								if (!result) { return result; } return !recursePullIds.has(result.id);
 							}) : childReturn;
 						}

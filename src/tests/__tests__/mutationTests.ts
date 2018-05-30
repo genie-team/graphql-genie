@@ -10,11 +10,26 @@ beforeEach(() => {
 	client.cache['data'].data = {};
 });
 
-const testData = {users: [],
-posts: [],
-addresses: [],
-comments: []};
-
+const testData = {
+	users: [],
+	posts: [],
+	addresses: [],
+	comments: []
+};
+const createUser = gql`
+mutation createUser($input: CreateUserMutationInput!) {
+	createUser(input: $input) {
+		data {
+			id
+			name
+			age
+			birthday
+			email
+		}
+		clientMutationId
+	}
+}
+`;
 describe('mutationTests', () => {
 
 	test('create - user with posts', async () => {
@@ -574,7 +589,7 @@ describe('mutationTests', () => {
 			`;
 		const result = await client.query({
 			query: addresses,
-			variables: {where: { match: {id: testData.addresses[0].id}}}
+			variables: { where: { match: { id: testData.addresses[0].id } } }
 		});
 
 		expect(result.data['addresses']).toBeNull();
@@ -627,9 +642,137 @@ describe('mutationTests', () => {
 			`;
 		const result = await client.query({
 			query: posts,
-			variables: {where: { match: {id: testData.posts[1].id}}}
+			variables: { where: { match: { id: testData.posts[1].id } } }
 		});
 		expect(result.data['posts']).toBeNull();
 	});
 
+	test('update - update many users', async () => {
+
+		const zain = await client.mutate({
+			mutation: createUser,
+			variables: { input: { data: { name: 'Zain', birthday: '1996-01-22', email: 'zain@example.com' } } }
+		});
+		const steve = await client.mutate({
+			mutation: createUser,
+			variables: { input: { data: { name: 'Steve', birthday: '1992-06-02', email: 'steve@example.com' } } }
+		});
+
+		const pete = await client.mutate({
+			mutation: createUser,
+			variables: { input: { data: { name: 'Pete', birthday: '1988-06-02', email: 'pete@example.com' } } }
+		});
+
+		testData.users.push(zain.data.createUser.data);
+		testData.users.push(steve.data.createUser.data);
+		testData.users.push(pete.data.createUser.data);
+
+		const updateManyUsers = gql`
+				mutation {
+					updateManyUsers(input: {
+						where: {
+							exists: {
+								age: false
+							}
+						}
+						data: {
+							age: 12
+						}
+					}) {
+						count
+					}
+				}
+			`;
+		const result = await client.mutate({
+			mutation: updateManyUsers
+		});
+
+		const findPete = gql`
+			{
+				users(email: "pete@example.com") {
+					age
+				}
+			}
+		`;
+
+		const peteResult = await client.query({
+			query: findPete
+		});
+		expect(result.data['updateManyUsers'].count).toBe(3);
+		expect(peteResult.data['users']).toHaveLength(1);
+		expect(peteResult.data['users'][0].age).toBe(12);
+	});
+
+	test('create - unique field check', async () => {
+
+		const createPost = gql`
+				mutation {
+					createPost(
+						input: {
+							data: {
+								title: "should not create"
+								author: {
+									create: {
+										name: "zeus"
+										email: "zeus@example.com"
+									}
+								}
+							}
+							clientMutationId: "Test"
+						}
+					) {
+						data {
+							id
+							title
+						}
+						clientMutationId
+					}
+				}
+			`;
+		try {
+			const result = await client.mutate({
+				mutation: createPost
+			});
+		} catch (e) {
+			expect(e).not.toBeNull();
+			expect(e['message']).toContain('duplicate');
+		}
+
+	});
+
+	test('deleteMany - users age 12', async () => {
+
+		const deleteManyUsers = gql`
+				mutation {
+					deleteManyUsers(input: {
+						where: {
+							match: {
+								age: 12
+							}
+						}
+					}) {
+						count
+					}
+				}
+			`;
+		const result = await client.mutate({
+			mutation: deleteManyUsers
+		});
+
+		const findPete = gql`
+		{
+			users(email: "pete@example.com") {
+				age
+			}
+		}
+	`;
+
+		const peteResult = await client.query({
+			query: findPete
+		});
+
+		expect(result.data['deleteManyUsers'].count).toBe(3);
+		expect(peteResult.data['users'][0]).toBeNull();
+
+	});
 });

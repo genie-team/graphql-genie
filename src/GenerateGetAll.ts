@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtils';
+import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
 
 export class GenerateGetAll implements TypeGenerator {
 	private objectName: string;

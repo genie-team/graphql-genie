@@ -1,7 +1,7 @@
 
 import { IntrospectionResultData } from 'apollo-cache-inmemory';
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, isObjectType, printType } from 'graphql';
-import { assign, find, forOwn, get } from 'lodash';
+import { assign, forOwn, get } from 'lodash';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
@@ -11,9 +11,9 @@ import { GenerateUpdate } from './GenerateUpdate';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
-import { getReturnType, typeIsList } from './GraphQLUtils';
+import { getReturnType } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
-import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtils';
+import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtilities';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
@@ -100,25 +100,15 @@ export class GraphQLGenie {
 	}
 
 	private buildResolvers = async () => {
-		const queryTypeFields = (<GraphQLObjectType>this.schema.getType('Query')).getFields();
-		const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
-		const fullArgs = queryField.args;
-		const filterArg = find(fullArgs, ['name', 'where']);
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 			const schemaType = this.schema.getType(type.name);
 			if (isObjectType(schemaType) && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
 				const fieldMap = schemaType.getFields();
+
 				forOwn(type.fields, (field) => {
 					const graphQLfield = fieldMap[field.name];
-					graphQLfield.args = graphQLfield.args ? graphQLfield.args : [];
-					if (typeIsList(graphQLfield.type)) {
-						graphQLfield.args = graphQLfield.args.concat(fullArgs);
-					} else {
-						graphQLfield.args.push(filterArg);
-					}
 					const returnConnection = getReturnType(graphQLfield.type).endsWith('Connection');
-
 					fieldResolvers.set(field.name, getTypeResolver(this.graphQLFortune, this.schema, field, returnConnection));
 				});
 				this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers);
@@ -208,12 +198,15 @@ export class GraphQLGenie {
 
 	}
 
-	public use = (plugin: GeniePlugin) => {
+	public use = async (plugin: GeniePlugin) => {
 		if (!this.ready) {
 			this.plugins.push(plugin);
 		} else {
-				plugin(this);
-				this.schema = this.schemaBuilder.getSchema();
+			const pluginResult = plugin(this);
+			if (pluginResult.then) {
+				await pluginResult;
+			}
+			this.schema = this.schemaBuilder.getSchema();
 		}
 	}
 

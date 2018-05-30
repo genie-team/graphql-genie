@@ -3,7 +3,7 @@ import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
-import { computeRelations } from './TypeGeneratorUtils';
+import { computeRelations } from './TypeGeneratorUtilities';
 
 export default class FortuneGraph implements DataResolver {
 
@@ -211,31 +211,14 @@ export default class FortuneGraph implements DataResolver {
 		}
 		let graphReturn: any[] = get(results, 'payload.records');
 		if (graphReturn) {
-			// to support relay plural identifying root fields results should be in the order in which they were requested,
-			// with null being returned by failed finds
-			if (ids) {
-				const newReturn = [];
-				ids.forEach((value) => {
-					const foundResult = find(graphReturn, ['id', value]);
-					if (foundResult) {
-						newReturn.push(foundResult);
-					} else {
-						newReturn.push(null);
-					}
-				});
-				graphReturn = newReturn;
-			} else {
-				const matches: object = options.match;
-				if (matches['__typename']) {
-					delete matches['__typename'];
-				}
-				const matchesKeys = Object.keys(matches);
-				if (matchesKeys.length === 1) {
-					const key = matchesKeys[0];
-					const theMatch = isArray(matches[key]) ? matches[key] : [matches[key]];
+
+			if (!options.sort) {
+				// to support relay plural identifying root fields results should be in the order in which they were requested,
+				// with null being returned by failed finds
+				if (ids) {
 					const newReturn = [];
-					theMatch.forEach((value) => {
-						const foundResult = find(graphReturn, [key, value]);
+					ids.forEach((value) => {
+						const foundResult = find(graphReturn, ['id', value]);
 						if (foundResult) {
 							newReturn.push(foundResult);
 						} else {
@@ -243,9 +226,30 @@ export default class FortuneGraph implements DataResolver {
 						}
 					});
 					graphReturn = newReturn;
+				} else if (this.uniqueIndexes.has(graphQLTypeName)) {
+					const matches: object = options.match;
+					if (matches['__typename']) {
+						delete matches['__typename'];
+					}
+					const matchesKeys = Object.keys(matches);
+					if (matchesKeys.length === 1) {
+						const key = matchesKeys[0];
+						if (this.uniqueIndexes.get(graphQLTypeName).includes(key)) {
+							const theMatch = isArray(matches[key]) ? matches[key] : [matches[key]];
+							const newReturn = [];
+							theMatch.forEach((value) => {
+								const foundResult = find(graphReturn, [key, value]);
+								if (foundResult) {
+									newReturn.push(foundResult);
+								} else {
+									newReturn.push(null);
+								}
+							});
+							graphReturn = newReturn;
+						}
+					}
 				}
 			}
-
 			graphReturn = this.getReturnResults(graphReturn, fortuneType, graphQLTypeName);
 			// if one id sent in we just want to return the value not an array
 			graphReturn = ids && ids.length === 1 ? graphReturn[0] : graphReturn;

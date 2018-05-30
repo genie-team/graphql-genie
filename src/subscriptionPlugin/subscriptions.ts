@@ -60,8 +60,8 @@ export default (pubsub: PubSub): GeniePlugin => {
 const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType, dataResolver: DataResolver): IResolverObject => {
 	return {
 		[name]: {
-			resolve: ({context, record}, args) => {
-				console.log('subscribe resolve', name, context, record, args);
+			resolve: ({context, record}, _args) => {
+				// console.log('subscribe resolve', name, context, record, _args);
 				const mutation = context.request.method.toUpperCase() + 'D';
 				let previousValues;
 				if (mutation === 'UPDATED') {
@@ -99,10 +99,10 @@ const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType
 						resolve = andResults.some((val: boolean) => val);
 					}
 				}
-				console.log('filter');
-				console.log(context, record);
-				console.log(args);
-				console.log('resolve?', resolve);
+				// console.log('filter');
+				// console.log(context, record);
+				// console.log(args);
+				// console.log('resolve?', resolve);
 				return resolve;
 			}),
 		}
@@ -149,9 +149,10 @@ const subscribeFilter = async (args, context, record, schemaType: GraphQLObjectT
 };
 
 const getUpdatedFields = (context): string[] => {
-	const updatedFields: string[] = [];
+	let updatedFields: string[] = null;
 	const mutation = context.request.method.toUpperCase() + 'D';
 	if (mutation === 'UPDATED') {
+		updatedFields = [];
 		const update = context.request.payload[0];
 		updatedFields.push(...Object.keys(update.pull));
 		updatedFields.push(...Object.keys(update.push));

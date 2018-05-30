@@ -19,6 +19,6 @@ export {
 export {
 	filterNested,
 	parseFilter
-} from './TypeGeneratorutils';
+} from './TypeGeneratorUtilities';
 export { GraphQLGenie } from './GraphQLGenie';
 export { InputGenerator } from './InputGenerator';

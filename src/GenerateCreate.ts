@@ -2,7 +2,7 @@
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, createResolver, getPayloadTypeDef, getPayloadTypeName } from './TypeGeneratorUtils';
+import { Relations, createResolver, getPayloadTypeDef, getPayloadTypeName } from './TypeGeneratorUtilities';
 
 export class GenerateCreate implements TypeGenerator {
 	private objectName: string;
@@ -37,7 +37,6 @@ export class GenerateCreate implements TypeGenerator {
 	}
 
 	generate() {
-		console.log('generate create');
 		this.types.forEach(type => {
 			const args = {};
 

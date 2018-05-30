@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getPayloadTypeDef, getPayloadTypeName, getRootMatchFields, moveArgsIntoWhere, parseFilter, updateResolver } from './TypeGeneratorUtils';
+import { Relations, getPayloadTypeDef, getPayloadTypeName, parseFilter, updateResolver } from './TypeGeneratorUtilities';
 
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
@@ -68,15 +68,13 @@ export class GenerateUpdate implements TypeGenerator {
 			const updateManyInputName = `UpdateMany${pluralize(type.name)}MutationInput`;
 			const updateManyInput = new GraphQLInputObjectType({
 				name: updateManyInputName,
-				fields: Object.assign({
+				fields: {
 					data: { type: new GraphQLNonNull(generator.generateUpdateInput()) },
 					where: Object.assign(
 						{ type: new GraphQLNonNull(generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators)) },
 					),
 					clientMutationId: { type: GraphQLString }
-				},
-				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)))
-			)
+				}
 			});
 			this.currInputObjectTypes.set(updateManyInputName, updateManyInput);
 
@@ -96,7 +94,6 @@ export class GenerateUpdate implements TypeGenerator {
 				_info: any
 			): Promise<any> => {
 				let count = 0;
-				_args = moveArgsIntoWhere(_args);
 				const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
 				const filter = _args.input && _args.input.where ? _args.input.where : '';
 				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';

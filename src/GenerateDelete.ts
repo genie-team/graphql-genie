@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, getRootMatchFields, moveArgsIntoWhere, parseFilter } from './TypeGeneratorUtils';
+import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter } from './TypeGeneratorUtilities';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
@@ -66,12 +66,10 @@ export class GenerateDelete implements TypeGenerator {
 			const deleteManyInputName = `DeleteMany${pluralize(type.name)}MutationInput`;
 			const deleteManyInput = new GraphQLInputObjectType({
 				name: deleteManyInputName,
-				fields: Object.assign({
+				fields: {
 					where: { type: new GraphQLNonNull(generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators)) },
 					clientMutationId: { type: GraphQLString }
-				},
-				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`)))
-			)
+				}
 			});
 			this.currInputObjectTypes.set(deleteManyInputName, deleteManyInput);
 
@@ -90,7 +88,6 @@ export class GenerateDelete implements TypeGenerator {
 			): Promise<any> => {
 				let count = 0;
 				const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
-				_args = moveArgsIntoWhere(_args);
 				const filter = _args.input && _args.input.where ? _args.input.where : '';
 				if (filter) {
 					const schemaType = this.schema.getType(type.name);
