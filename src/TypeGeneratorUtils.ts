@@ -1,5 +1,5 @@
 import { GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType } from 'graphql';
-import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, mapValues, pick, set, union } from 'lodash';
+import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
@@ -748,31 +748,6 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 		return result;
 	};
 };
-const parseScalars = (filter: object, fieldMap: Map<string, GraphQLScalarType>) => {
-	if (!filter || !isObject(filter) || isArray(filter)) {
-		return filter;
-	}
-	return mapValues(filter, (val, key) => {
-
-		if (isArray(val)) {
-			return val.map((val) => {
-				if (isObject(val)) {
-					return parseScalars(val, fieldMap);
-				} else {
-					return val && fieldMap.has(key) ? fieldMap.get(key).parseValue(val) : val;
-				}
-			});
-		} else if (isObject(val)) {
-			if (key === 'range' || key === 'match') {
-				return parseScalars(val, fieldMap);
-			} else {
-				return val;
-			}
-		} else {
-			return val && fieldMap.has(key) ? fieldMap.get(key).parseValue(val) : val;
-		}
-	});
-};
 
 export const queryArgs: Object = {
 	'first': { type: 'Int' },
@@ -835,8 +810,7 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 		}
 	});
 
-	const scalarsParsed = parseScalars(pick(filter, fortuneFilters), fieldMap);
-	return Object.assign(filter, scalarsParsed);
+	return filter;
 
 };
 
@@ -857,10 +831,10 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 					const childIds = result[field.name];
 					if (childIds && !isEmpty(childIds)) {
 						if (currOrderBy) {
-							options.orderBy = currOrderBy;
+							options['orderBy'] = currOrderBy;
 						}
 						let childReturn = await dataResolver.find(childType.name, childIds, options);
-						if (isArray(childReturn)) {
+						if (isArray(childReturn) && !isEmpty(childReturn)) {
 							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, childReturn, cache, dataResolver);
 							childReturn = childReturn ? childReturn.filter(result => {
 								if (!result) { return result; } return !recursePullIds.has(result.id);

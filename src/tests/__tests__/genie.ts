@@ -435,32 +435,16 @@ describe('genie', () => {
 						range:{
 							age: [23, null]
 						}
-					}) {
+					}, orderBy: {
+            email: ASC
+          }) {
 						name
 						birthday
 						age
+						email
 					}
 				}
 		`;
-
-// {
-//   users (where: {
-//     exists:{
-//       writtenSubmissions: true
-//     }
-//     writtenSubmissions: {
-		// match: {
-		//   title: "Genie is great"
-		// }
-//     }
-//   }) {
-//     name
-//     writtenSubmissions {
-//       id
-//       title
-//     }
-//   }
-// }
 
 // {
 
@@ -492,6 +476,10 @@ describe('genie', () => {
 		});
 
 		expect(result.data['users']).toHaveLength(3);
+		expect(result.data['users'][0].email).toBe('brian@example.com');
+		expect(result.data['users'][1].email).toBe('coreyj@example.com');
+		expect(result.data['users'][2].email).toBe('steve@example.com');
+
 	});
 
 	test('all where - where by age with or', async () => {
@@ -506,17 +494,24 @@ describe('genie', () => {
 						}, {range:{
 							age: [29, null]
 						}}]
-					}) {
+					}, orderBy: {
+            email: ASC
+          }) {
 						name
 						birthday
 						age
+						email
 					}
 				}
 		`;
 		const result = await client.query({
 			query: users
 		});
+
 		expect(result.data['users']).toHaveLength(3);
+		expect(result.data['users'][0].email).toBe('brian@example.com');
+		expect(result.data['users'][1].email).toBe('coreyj@example.com');
+		expect(result.data['users'][2].email).toBe('zain@example.com');
 	});
 
 	test('all where - where by name range', async () => {
@@ -527,16 +522,21 @@ describe('genie', () => {
 					range:{
 						name: [ "C", "T" ]
 					}
-				}) {
+				}, orderBy: {
+            email: ASC
+          }) {
 					name
 					birthday
 					age
+					email
 				}
 			}
 		`;
 		const result = await client.query({
 			query: users
 		});
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][1].email).toBe('steve@example.com');
 		expect(result.data['users']).toHaveLength(2);
 	});
 
@@ -546,19 +546,52 @@ describe('genie', () => {
 			{
 				users(where:{
 					range:{
-						birthday: [ null, "1994-01-01" ]
+						birthday: [ null, "1990-01-01" ]
 					}
-				}) {
+				}, orderBy: {
+            email: ASC
+          }) {
 					name
 					birthday
 					age
+					email
 				}
 			}
 		`;
 		const result = await client.query({
 			query: users
 		});
-		console.log(result.data['users']);
-		expect(result.data['users']).toHaveLength(3);
+
+		expect(result.data['users']).toHaveLength(2);
+		expect(result.data['users'][0].email).toBe('brian@example.com');
+		expect(result.data['users'][1].email).toBe('coreyj@example.com');
 	});
+
+	test('all where - nested match', async () => {
+
+		const users = gql`
+			{
+				users (where: {
+					writtenSubmissions: {
+					match: {
+						title: "${testData.posts[0].title}"
+					}
+					}
+				}) {
+					name
+					email
+					writtenSubmissions {
+						id
+						title
+					}
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
+		expect(result.data['users']).toHaveLength(1);
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+	});
+
 });
