@@ -186,10 +186,10 @@ export class InputGenerator {
 		});
 
 		if (addLogicalOperators) {
-			const dummyListOfFilterInput = new GraphQLList(new GraphQLNonNull(new GraphQLInputObjectType({name, fields: {}})));
+			const dummyListOfFilterInput = new GraphQLInputObjectType({name, fields: {}});
 			merge(fields, {
-				and: {type: dummyListOfFilterInput},
-				or: {type: dummyListOfFilterInput},
+				and: {type: new GraphQLList(new GraphQLNonNull(dummyListOfFilterInput))},
+				or: {type: new GraphQLList(new GraphQLNonNull(dummyListOfFilterInput))},
 				not: {type: dummyListOfFilterInput}
 			});
 		}

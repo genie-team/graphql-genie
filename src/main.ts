@@ -73,7 +73,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	await genie.init();
 	await genie.use(subscriptionPlugin(new PubSub()));
 	const schema = genie.getSchema();
-	
 	console.log('GraphQL Genie Completed', Date.now() - start);
 	console.log(genie.printSchema());
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
@@ -660,12 +659,12 @@ result = await client.mutate({
 const newUsers = [];
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Test 1', email: 'test1@example.com'}}}
+	variables: { input: {data: {age: 6, birthday: '2012-02-02', name: 'Test 1', email: 'test1@example.com'}}}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Test 2', email: 'test2@example.com'}}}
+	variables: { input: {data: {birthday: '2012-02-02', name: 'Test 2', email: 'test2@example.com'}}}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({

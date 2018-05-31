@@ -204,7 +204,7 @@ const getPayloadString = (payloadName: string, nodeName: string, schemaType: Gra
 			const isList = typeIsList(currField.type);
 			const fieldDescription = `
 			"""
-			Just the IDs, make a separate query would be necessary to get more info than the ID
+			Just the IDs, make a separate to get full type data
 			"""`;
 			const fieldName = currField.name + '_id' + (isList ? 's' : '');
 			// [String!] || String || [String!]!  || String!

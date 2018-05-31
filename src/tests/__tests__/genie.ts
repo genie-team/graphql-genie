@@ -10,10 +10,12 @@ beforeEach(() => {
 	client.cache['data'].data = {};
 });
 
-const testData = {users: [],
-posts: [],
-addresses: [],
-comments: []};
+const testData = {
+	users: [],
+	posts: [],
+	addresses: [],
+	comments: []
+};
 
 const createUser = gql`
 mutation createUser($input: CreateUserMutationInput!) {
@@ -52,7 +54,7 @@ describe('genie', () => {
 
 		const user = await client.mutate({
 			mutation: createUser,
-			variables: { input: {clientMutationId: 'create simple user', data: { name: $name, age: $age, birthday: $birthday, email: $email }}}
+			variables: { input: { clientMutationId: 'create simple user', data: { name: $name, age: $age, birthday: $birthday, email: $email } } }
 		});
 		testData.users.push(user.data.createUser.data);
 		expect(user.data.createUser.clientMutationId).toBe('create simple user');
@@ -81,7 +83,7 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: createPost,
-			variables: { input: {data: { title: $title, author: {connect: {id: testData.users[0].id}}}}}
+			variables: { input: { data: { title: $title, author: { connect: { id: testData.users[0].id } } } } }
 		});
 		testData.posts.push(result.data.createPost.data);
 		expect(result.data.createPost.data.title).toBe($title);
@@ -103,7 +105,7 @@ describe('genie', () => {
 
 		const result = await client.query({
 			query: users,
-			variables: {where: { match: {id: testData.users[0].id}}}
+			variables: { where: { match: { id: testData.users[0].id } } }
 		});
 		expect(result.data['users'][0].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
@@ -130,7 +132,7 @@ describe('genie', () => {
 
 		const result = await client.mutate({
 			mutation: createPost,
-			variables: { input: {data: { title: $title, author: {create: {name: $authorName, email: $email}}}}}
+			variables: { input: { data: { title: $title, author: { create: { name: $authorName, email: $email } } } } }
 		});
 		testData.posts.push(result.data.createPost.data);
 		testData.users.push(result.data.createPost.data.author);
@@ -154,7 +156,7 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: createAddress,
-			variables: {input: { data: {city: $city}}}
+			variables: { input: { data: { city: $city } } }
 		});
 		testData.addresses.push(result.data.createAddress.data);
 		expect(result.data.createAddress.data.city).toBe($city);
@@ -180,10 +182,12 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: updateUser,
-			variables: {input : {
-				where: {id: testData.users[0].id},
-				data: {address: {connect: {id: testData.addresses[0].id}}}
-			}}
+			variables: {
+				input: {
+					where: { id: testData.users[0].id },
+					data: { address: { connect: { id: testData.addresses[0].id } } }
+				}
+			}
 		});
 
 		expect(result.data.updateUser.data.id).toBe(testData.users[0].id);
@@ -207,7 +211,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {where: { match: {id: testData.users[0].id}}}
+			variables: { where: { match: { id: testData.users[0].id } } }
 		});
 		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
 		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
@@ -238,7 +242,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {where: { match: {id: testData.users[0].id}}}
+			variables: { where: { match: { id: testData.users[0].id } } }
 		});
 		expect(result.data['users'][0].address.id).toBe(testData.addresses[0].id);
 		expect(result.data['users'][0].address.city).toBe(testData.addresses[0].city);
@@ -262,10 +266,12 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: updateAddress,
-			variables: {input: {
-				where: {id: testData.addresses[0].id},
-				data: {user: {disconnect: true}}
-			}}
+			variables: {
+				input: {
+					where: { id: testData.addresses[0].id },
+					data: { user: { disconnect: true } }
+				}
+			}
 		});
 		expect(result.data.updateAddress.data.id).toBe(testData.addresses[0].id);
 		expect(result.data.updateAddress.data.city).toBe(testData.addresses[0].city);
@@ -286,7 +292,7 @@ describe('genie', () => {
 			`;
 		const result = await client.query({
 			query: users,
-			variables: {where: { match: {id: testData.users[0].id}}}
+			variables: { where: { match: { id: testData.users[0].id } } }
 		});
 
 		expect(result.data['users'][0].address).toBeNull();
@@ -312,7 +318,7 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: createComment,
-			variables: { input: {data: { title: $title, author: {connect: {id: testData.users[0].id}}}}}
+			variables: { input: { data: { title: $title, author: { connect: { id: testData.users[0].id } } } } }
 		});
 		testData.comments.push(result.data.createComment.data);
 		expect(result.data.createComment.data.title).toBe($title);
@@ -341,7 +347,7 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: createComment,
-			variables: { input: {data: { approved: false, title: $title, author: {connect: {id: testData.users[0].id}}}}}
+			variables: { input: { data: { approved: false, title: $title, author: { connect: { id: testData.users[0].id } } } } }
 		});
 		testData.comments.push(result.data.createComment.data);
 		expect(result.data.createComment.data.title).toBe($title);
@@ -369,7 +375,7 @@ describe('genie', () => {
 
 		const result = await client.query({
 			query: users,
-			variables: {where: { match: {id: testData.users[0].id}}}
+			variables: { where: { match: { id: testData.users[0].id } } }
 		});
 
 		expect(result.data['users'][0].writtenSubmissions).toHaveLength(3);
@@ -399,18 +405,22 @@ describe('genie', () => {
 			`;
 		const result = await client.mutate({
 			mutation: updatePost,
-			variables: {input: {
-				where: {id: testData.posts[0].id},
-				data: {comments: {
-					connect: [
-						{id: testData.comments[0].id},
-						{id: testData.comments[1].id}
-					],
-					create: [
-						{title: 'best post ever'}
-					]
-				}}
-			}}
+			variables: {
+				input: {
+					where: { id: testData.posts[0].id },
+					data: {
+						comments: {
+							connect: [
+								{ id: testData.comments[0].id },
+								{ id: testData.comments[1].id }
+							],
+							create: [
+								{ title: 'best post ever' }
+							]
+						}
+					}
+				}
+			}
 		});
 
 		expect(result.data.updatePost.data.comments).toHaveLength(3);
@@ -425,16 +435,16 @@ describe('genie', () => {
 	test('all where - where by age', async () => {
 		const zain = await client.mutate({
 			mutation: createUser,
-			variables: { input: {data: { name: 'Zain', age: 22, birthday: '1996-01-22', email: 'zain@example.com'}}}
+			variables: { input: { data: { name: 'Zain', age: 22, birthday: '1996-01-22', email: 'zain@example.com' } } }
 		});
 		const steve = await client.mutate({
 			mutation: createUser,
-			variables: { input: {data: { name: 'Steve', age: 26, birthday: '1992-06-02', email: 'steve@example.com' }}}
+			variables: { input: { data: { name: 'Steve', age: 26, birthday: '1992-06-02', email: 'steve@example.com' } } }
 		});
 
 		const pete = await client.mutate({
 			mutation: createUser,
-			variables: { input: {data: { name: 'Pete', age: 30, birthday: '1988-06-02', email: 'pete@example.com' }}}
+			variables: { input: { data: { name: 'Pete', age: 30, birthday: '1988-06-02', email: 'pete@example.com' } } }
 		});
 
 		testData.users.push(zain.data.createUser.data);
@@ -705,15 +715,15 @@ describe('genie', () => {
 	test('find - nested ordering', async () => {
 		await client.mutate({
 			mutation: createPost,
-			variables: { input: {data: { title: 'A Post', author: {connect: {id: testData.users[0].id}} }}}
+			variables: { input: { data: { title: 'A Post', author: { connect: { id: testData.users[0].id } } } } }
 		});
 		await client.mutate({
 			mutation: createPost,
-			variables: { input: {data: { title: 'F Post', author: {connect: {id: testData.users[0].id}} }}}
+			variables: { input: { data: { title: 'F Post', author: { connect: { id: testData.users[0].id } } } } }
 		});
 		await client.mutate({
 			mutation: createPost,
-			variables: { input: {data: { title: 'Z Post', author: {connect: {id: testData.users[0].id}} }}}
+			variables: { input: { data: { title: 'Z Post', author: { connect: { id: testData.users[0].id } } } } }
 		});
 		const posts = gql`
 			{
@@ -747,5 +757,82 @@ describe('genie', () => {
 			}
 		});
 
+	});
+
+	test('find - and logical operator', async () => {
+
+		const users = gql`
+			{
+				users(where: {and: [{range: {age: [26, 30]}},{exists: {birthday: true}}]}) {
+					name
+					age
+					birthday
+				}
+			}
+		`;
+
+		const result = await client.query({
+			query: users
+		});
+		expect(result.data['users']).toHaveLength(3);
+		result.data['users'].forEach(user => {
+			expect(user.birthday).not.toBeNull();
+			expect(user.age).toBeLessThanOrEqual(30);
+			expect(user.age).toBeGreaterThanOrEqual(26);
+		});
+	});
+
+	test('find - or logical operator', async () => {
+
+		const users = gql`
+			{
+				users(where: {or: [{range: {age: [26, 30]}},{exists: {birthday: true}}]}) {
+					name
+					age
+					birthday
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
+		expect.hasAssertions();
+		result.data['users'].forEach(user => {
+				if (!user.birthday) {
+					expect(user.age).toBeLessThanOrEqual(30);
+					expect(user.age).toBeGreaterThanOrEqual(26);
+				} else if (user.age < 26 || user.age > 30) {
+					expect(user.birthday).not.toBeNull();
+				}
+		});
+	});
+
+	test('find - not logical operator', async () => {
+
+		const users = gql`
+			{
+				users(where: {not: {range: {age: [20, 26]}}}) {
+					name
+					age
+					birthday
+				}
+			}
+		`;
+
+		const result = await client.query({
+			query: users
+		});
+		expect.hasAssertions();
+		result.data['users'].forEach(user => {
+			if (user.age) {
+				expect(user.age).not.toBe(20);
+				expect(user.age).not.toBe(21);
+				expect(user.age).not.toBe(22);
+				expect(user.age).not.toBe(23);
+				expect(user.age).not.toBe(24);
+				expect(user.age).not.toBe(25);
+				expect(user.age).not.toBe(26);
+			}
+		});
 	});
 });

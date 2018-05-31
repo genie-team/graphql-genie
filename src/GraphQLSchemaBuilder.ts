@@ -20,9 +20,6 @@ export class GraphQLSchemaBuilder {
 		scalar Date
 		scalar Time
 		scalar DateTime
-		directive @display(
-			name: String
-		) on FIELD_DEFINITION | ENUM_VALUE | OBJECT
 
 		directive @relation(
 			name: String!
@@ -117,7 +114,6 @@ export class GraphQLSchemaBuilder {
 			typeDefs: newTypeDefs,
 			resolvers: this.resolveFunctions,
 			schemaDirectives: {
-				display: DisplayDirective,
 				relation: RelationDirective,
 				default: DefaultDirective,
 				unique: UniqueDirective
@@ -165,22 +161,16 @@ export class GraphQLSchemaBuilder {
 				Object.keys(fieldMap).forEach(fieldName => {
 					const graphQLfield = fieldMap[fieldName];
 					const returnType = getNamedType(graphQLfield.type);
-					if (!isScalarType(returnType)) {
-						if (isInterfaceType(returnType) || isUnionType(returnType)) {
-							// const args = Object.assign({
-							// 	where: {type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators)},
-							// 	orderBy: {type: generator.generateOrderByInput()}
-							// },
-							// queryArgs,
-							// getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
+					if (!isScalarType(returnType)) { // scalars don't have filters
+						if (isInterfaceType(returnType) || isUnionType(returnType)) { // can't grab args from existing query type
 							const where = this.schema.getType(returnType.name + 'WhereInput');
 							if (typeIsList(graphQLfield.type)) {
 								const orderBy = this.schema.getType(returnType.name + 'OrderByInput');
 								const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
 								const fullArgs = queryField ? queryField.args : [];
 								if (!isEmpty(fullArgs)) {
-									const interfaceQueryArgs = fullArgs.filter((o) => {
-										return Object.keys(queryArgs).includes(o.name);
+									const interfaceQueryArgs = fullArgs.filter(({name}) => {
+										return Object.keys(queryArgs).includes(name);
 									});
 									if (interfaceQueryArgs && !isEmpty(interfaceQueryArgs)) {
 										graphQLfield.args.push(...interfaceQueryArgs);
@@ -200,7 +190,7 @@ export class GraphQLSchemaBuilder {
 									}
 								}
 							}
-					} else {
+					} else { // if an object type grab from existing query type
 						let queryFieldName = `${pluralize(returnType.name.toLowerCase())}`;
 						if (returnType.name.endsWith('Connection')) {
 							queryFieldName = `${pluralize(returnType.name.replace('Connection', '').toLowerCase())}Connection`;
@@ -272,27 +262,27 @@ return this.schema;
 }
 }
 
-class DisplayDirective extends SchemaDirectiveVisitor {
-	public visitFieldDefinition(field) {
-		this.setDisplay(field);
-	}
+// class DisplayDirective extends SchemaDirectiveVisitor {
+// 	public visitFieldDefinition(field) {
+// 		this.setDisplay(field);
+// 	}
 
-	public visitEnumValue(value) {
-		this.setDisplay(value);
-	}
+// 	public visitEnumValue(value) {
+// 		this.setDisplay(value);
+// 	}
 
-	public visitObject(object) {
-		this.setDisplay(object);
-	}
+// 	public visitObject(object) {
+// 		this.setDisplay(object);
+// 	}
 
-	private setDisplay(field: any) {
-		field.display = {};
-		if (this.args.name) {
-			field.display.name = this.args.name;
-		}
-	}
+// 	private setDisplay(field: any) {
+// 		field.display = {};
+// 		if (this.args.name) {
+// 			field.display.name = this.args.name;
+// 		}
+// 	}
 
-}
+// }
 
 class RelationDirective extends SchemaDirectiveVisitor {
 	public visitFieldDefinition(field) {
@@ -373,55 +363,3 @@ class ConnectionDirective extends SchemaDirectiveVisitor {
 		}
 	}
 }
-
-// {
-//   __type(name: "GraphQLInputType") {
-//     name
-//     description
-//     kind
-//     possibleTypes {
-//       name
-//     }
-//     fields {
-//       name
-//       type {
-//         name
-//         kind
-//         ofType {
-//           name
-//           kind
-//           ofType {
-//             name
-//             kind
-//             ofType {
-//               name
-//               kind
-//             }
-//           }
-//         }
-//       }
-//     }
-//     interfaces {
-//       name
-//       possibleTypes {
-//         name
-//       }
-//     }
-//   }
-// }
-
-// {
-//   allGraphQLDirectives {
-//     id
-//     name
-//     description
-//     args {
-//       id
-//       type {
-//         ... on GraphQLScalarType {
-//           id
-//         }
-//       }
-//     }
-//   }
-// }
