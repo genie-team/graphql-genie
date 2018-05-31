@@ -229,7 +229,7 @@ export class InputGenerator {
 					} else {
 						const fieldInputName = schemaType.name + 'WhereInput';
 						let fieldName = field.name;
-						if (isInterfaceType(schemaType) || isUnionType(schemaType)) {
+						if (!this.dummy && (isInterfaceType(schemaType) || isUnionType(schemaType))) {
 
 							if (!this.currInputObjectTypes.has(fieldInputName)) {
 								const interfaceExistsFields = {};
@@ -286,7 +286,7 @@ export class InputGenerator {
 
 					} else {
 						const fieldInputName = schemaType.name + 'OrderByInput';
-						if (isInterfaceType(schemaType) || isUnionType(schemaType)) {
+						if (!this.dummy && (isInterfaceType(schemaType) || isUnionType(schemaType))) {
 
 							if (!this.currInputObjectTypes.has(fieldInputName)) {
 								const interfaceFields = {};

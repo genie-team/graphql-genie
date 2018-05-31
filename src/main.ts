@@ -47,6 +47,7 @@ type User {
 	family: [User]
 	match: User
 	orderBy: String
+	starred: [Star]
 }
 
 type Address {
@@ -54,6 +55,9 @@ type Address {
   city: String!
   user: User
 }
+
+union Star = Address | User | Comment | Post
+
 
 `;
 

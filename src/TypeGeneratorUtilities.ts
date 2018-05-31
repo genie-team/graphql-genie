@@ -1,4 +1,4 @@
-import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType } from 'graphql';
+import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -251,7 +251,7 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 				if (isObject(arg) && argReturnType) {
 					currArg[argName] = typeIsList(argReturnType) ? [] : undefined;
 
-					if (isInterfaceType(argReturnRootType)) {
+					if (isInterfaceType(argReturnRootType) || isUnionType(argReturnRootType)) {
 						for (const argKey in arg) {
 							const argTypeName = capFirst(pluralize.singular(argKey));
 							argReturnRootType = <GraphQLOutputType>_info.schema.getType(argTypeName);
@@ -770,6 +770,7 @@ export const getRootMatchFields = (matchInput: GraphQLInputObjectType): { [key: 
 			newKey = `f_${key}`;
 		}
 		args[newKey] = matchFields[key];
+		args[newKey].name = newKey;
 		args[newKey].description = `${key} matches at least one of argument`;
 	});
 	return args;
