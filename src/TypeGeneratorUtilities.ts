@@ -275,6 +275,7 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 
 const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 	return async (currRecord: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo, index?: number, key?: string, returnType?: GraphQLOutputType) => {
+		await dataResolver.beginTransaction();
 		// iterate over all the non-id arguments and recursively create new types
 		const recursed = returnType ? true : false;
 		if (!returnType) {
@@ -528,6 +529,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		if (recursed) {
 			return dataResult;
 		} else {
+			await dataResolver.endTransaction();
 			let data = get(dataResult, '[0].data');
 			if (!data && mutation === Mutation.Delete) {
 				data = currRecord;

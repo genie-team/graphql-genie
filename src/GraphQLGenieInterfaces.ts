@@ -52,6 +52,8 @@ export interface DataResolver {
 	getStore(): any;
 	addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook);
 	addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
+	beginTransaction(): Promise<void>;
+	endTransaction(): Promise<void>;
 }
 
 export interface GenerateConfig {
