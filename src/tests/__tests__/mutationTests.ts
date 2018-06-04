@@ -775,4 +775,49 @@ describe('mutationTests', () => {
 		expect(peteResult.data['users'][0]).toBeNull();
 
 	});
+
+	test('createUser - with creating union types', async () => {
+
+		const createUser = gql`
+			mutation {
+				createUser(input: {data: {name: "joe", email: "joe@example.com",
+					starred: {
+						users: {
+							create: {
+								name: "jim",
+								email: "jim@example.com"
+							}
+						}
+						comments: {
+							create: {
+								title: "bam"
+							}
+						}
+					}
+				}}) {
+					data {
+						name
+						starred {
+							...on User {
+								name
+								email
+							}
+							...on Submission {
+								title
+							}
+						}
+					}
+				}
+			}
+
+			`;
+		const result = await client.mutate({
+			mutation: createUser
+		});
+
+		expect(result.data['createUser'].data.name).toBe('joe');
+		expect(result.data['createUser'].data.starred[0].name).toBe('jim');
+		expect(result.data['createUser'].data.starred[1].title).toBe('bam');
+
+	});
 });

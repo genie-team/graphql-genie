@@ -1,10 +1,10 @@
+import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
-
 export default class FortuneGraph implements DataResolver {
 
 	private fortuneOptions: FortuneOptions;
@@ -351,16 +351,32 @@ export default class FortuneGraph implements DataResolver {
 						}
 						possibleType = this.schemaInfo[possibleType.name];
 						each(possibleType['interfaces'], currInterface => {
+							currInterface = this.schemaInfo[currInterface.name];
 							if (currInterface.name !== 'Node' && currInterface.name !== typeName) {
 								if (possibleTypes.indexOf(currInterface.name) < 0) {
 									possibleTypes.push(currInterface.name);
 								}
+								if (!isEmpty(currInterface.possibleTypes)) {
+									each(currInterface.possibleTypes, currInterfacePossibleType => {
+										if (possibleTypes.indexOf(currInterfacePossibleType.name) < 0) {
+											possibleTypes.push(currInterfacePossibleType.name);
+										}
+									});
+								}
 							}
 						});
 						each(possibleType['unions'], currUnion => {
+							currUnion = this.schemaInfo[currUnion.name];
 							if (currUnion.name !== typeName) {
 								if (possibleTypes.indexOf(currUnion.name) < 0) {
 									possibleTypes.push(currUnion.name);
+								}
+								if (!isEmpty(currUnion.possibleTypes)) {
+									each(currUnion.possibleTypes, currUnionPossibleType => {
+										if (possibleTypes.indexOf(currUnionPossibleType.name) < 0) {
+											possibleTypes.push(currUnionPossibleType.name);
+										}
+									});
 								}
 							}
 						});

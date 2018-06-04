@@ -1,11 +1,12 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import { execute, graphql, subscribe } from 'graphql';
+import postgresAdapter from 'fortune-postgres';
+import { execute, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-import { FortuneOptions, GraphQLGenie } from './index';
-import subscriptionPlugin from './subscriptionPlugin/subscriptions';
+import { FortuneOptions, GraphQLGenie } from '../../../src/index';
+import subscriptionPlugin from '../../../src/subscriptionPlugin/subscriptions';
 
 const typeDefs = `
 
@@ -62,6 +63,13 @@ union Star = Address | User | Comment | Post
 `;
 
 const fortuneOptions: FortuneOptions = {
+	adapter: [
+		postgresAdapter,
+		{
+			// options object, URL is mandatory.
+			url: `postgres://piccrxpi:emXqTkBU5VRGYi8TYjzaCMxxzpthRfir@stampy.db.elephantsql.com:5432/piccrxpi`
+		}
+	],
 	settings: { enforceLinks: true }
 };
 const start = Date.now();
@@ -78,7 +86,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	await genie.use(subscriptionPlugin(new PubSub()));
 	const schema = genie.getSchema();
 	console.log('GraphQL Genie Completed', Date.now() - start);
-	console.log(genie.printSchema());
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
@@ -89,12 +96,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
-	window['fortune'] = genie.getDataResolver();
-	window['store'] = window['fortune'].getStore();
-	window['schema'] = schema;
-	window['client'] = client;
-	window['graphql'] = graphql;
-	window['subscribe'] = subscribe;
 	const hasData = await client.query({
 		query: gql`{
 			users{
@@ -102,8 +103,73 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 		}`
 	});
+	console.log(JSON.stringify(hasData));
+
 	if (hasData.data['users']) {
-		return;
+		await client.mutate({
+			mutation: gql`
+				mutation { deleteManyUsers (
+					input: {
+						where: {
+							exists: {
+								id: true
+							}
+						}
+					}
+				) {
+					count
+				}
+				}
+			`
+		});
+		await client.mutate({
+			mutation: gql`
+				mutation { deleteManyAddresses (
+					input: {
+						where: {
+							exists: {
+								id: true
+							}
+						}
+					}
+				) {
+					count
+				}
+				}
+			`
+		});
+		await client.mutate({
+			mutation: gql`
+				mutation { deleteManyPosts (
+					input: {
+						where: {
+							exists: {
+								id: true
+							}
+						}
+					}
+				) {
+					count
+				}
+				}
+			`
+		});
+		await client.mutate({
+			mutation: gql`
+			mutation { deleteManyComments (
+					input: {
+						where: {
+							exists: {
+								id: true
+							}
+						}
+					}
+				) {
+					count
+				}
+			}
+			`
+		});
 	}
 	const zeus = await client.mutate({
 		mutation: gql`
