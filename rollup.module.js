@@ -11,7 +11,7 @@ export default [
 		output: {
 			name: 'graphql-genie',
 			file: pkg.module,
-			format: 'umd',
+			format: 'cjs',
 			globals: {
 				'graphql': 'graphql_1',
 				'lodash': 'lodash',

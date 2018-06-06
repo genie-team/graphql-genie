@@ -1,12 +1,11 @@
 import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
-import postgresAdapter from 'fortune-postgres';
-import { execute, subscribe } from 'graphql';
+import indexedDBAdapter from 'fortune-indexeddb';
+import { execute, graphql, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from 'graphql-genie';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-
 const typeDefs = `
 
 interface Submission {
@@ -62,17 +61,12 @@ union Star = Address | User | Comment | Post
 `;
 
 const fortuneOptions: FortuneOptions = {
-	adapter: [
-		postgresAdapter,
-		{
-			// options object, URL is mandatory.
-			url: `postgres://piccrxpi:emXqTkBU5VRGYi8TYjzaCMxxzpthRfir@stampy.db.elephantsql.com:5432/piccrxpi`
-		}
-	],
-	settings: { enforceLinks: true }
+	settings: { enforceLinks: true },
+	adapter: [ indexedDBAdapter, {
+		// Name of the IndexedDB database to use. Defaults to `fortune`.
+		name: 'fortune'
+	} ]
 };
-const start = Date.now();
-console.log('GraphQL Genie Started');
 const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateGetAll: true,
 	generateCreate: true,
@@ -84,7 +78,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	await genie.init();
 	await genie.use(subscriptionPlugin(new PubSub()));
 	const schema = genie.getSchema();
-	console.log('GraphQL Genie Completed', Date.now() - start);
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
@@ -95,6 +88,12 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
+	window['fortune'] = genie.getDataResolver();
+	window['store'] = window['fortune'].getStore();
+	window['schema'] = schema;
+	window['client'] = client;
+	window['graphql'] = graphql;
+	window['subscribe'] = subscribe;
 	const hasData = await client.query({
 		query: gql`{
 			users{
@@ -102,73 +101,8 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 		}`
 	});
-	console.log(JSON.stringify(hasData));
-
 	if (hasData.data['users']) {
-		await client.mutate({
-			mutation: gql`
-				mutation { deleteManyUsers (
-					input: {
-						where: {
-							exists: {
-								id: true
-							}
-						}
-					}
-				) {
-					count
-				}
-				}
-			`
-		});
-		await client.mutate({
-			mutation: gql`
-				mutation { deleteManyAddresses (
-					input: {
-						where: {
-							exists: {
-								id: true
-							}
-						}
-					}
-				) {
-					count
-				}
-				}
-			`
-		});
-		await client.mutate({
-			mutation: gql`
-				mutation { deleteManyPosts (
-					input: {
-						where: {
-							exists: {
-								id: true
-							}
-						}
-					}
-				) {
-					count
-				}
-				}
-			`
-		});
-		await client.mutate({
-			mutation: gql`
-			mutation { deleteManyComments (
-					input: {
-						where: {
-							exists: {
-								id: true
-							}
-						}
-					}
-				) {
-					count
-				}
-			}
-			`
-		});
+		return;
 	}
 	const zeus = await client.mutate({
 		mutation: gql`
@@ -456,7 +390,7 @@ const buildClient = async (genie: GraphQLGenie) => {
                 {
                   update: {
                     age: 5000
-										birthday: "1000-01-01"
+										birthday: "0001-01-01"
                   }
                   create: {
                     name: "Loki"
@@ -842,6 +776,71 @@ result = await client.mutate({
 	}}
 });
 console.log((await sub.next()).value.data.post);
+
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyUsers (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyAddresses (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyPosts (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 	mutation { deleteManyComments (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 	}
+	// 	`
+	// });
 
 };
 

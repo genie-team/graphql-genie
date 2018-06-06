@@ -2,30 +2,33 @@
   "name": "graphql-genie-postgresql-example",
   "version": "1.0.0",
   "description": "GraphQL Genie Postgresql Example",
+  "browser": "lib/bundle.umd.js",
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --config webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server --config 'webpack.config.js'"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",
-    "awesome-typescript-loader": "^5.0.0",
     "tslint": "^5.9.1",
     "tslint-genie-rules": "^1.2.0",
     "typescript": "^2.8.3",
     "webpack": "^4.10.2",
-    "webpack-cli": "^3.0.1"
+    "webpack-cli": "^3.0.1",
+    "webpack-dev-server": "^3.1.4"
   },
   "dependencies": {
-    "apollo-cache-inmemory": "^1.2.1",
-    "apollo-client": "^2.3.1",
+    "apollo-cache-inmemory": "^1.2.2",
+    "apollo-client": "^2.3.2",
     "apollo-link-schema": "^1.1.0",
+    "awesome-typescript-loader": "^5.0.0",
     "fortune": "^5.4.2",
-    "fortune-postgres": "^1.6.4",
+    "fortune-indexeddb": "^1.0.1",
     "graphql": "^0.13.2",
-    "graphql-genie": "^0.1.1",
+    "graphql-genie": "^0.1.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",
     "graphql-tools": "^2.24.0",

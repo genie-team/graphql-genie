@@ -2,9 +2,9 @@ import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } 
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import { execute, graphql, subscribe } from 'graphql';
+import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from 'graphql-genie';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from '../../../lib/browser.umd';
 
 const typeDefs = `
 
@@ -63,8 +63,6 @@ union Star = Address | User | Comment | Post
 const fortuneOptions: FortuneOptions = {
 	settings: { enforceLinks: true }
 };
-const start = Date.now();
-console.log('GraphQL Genie Started');
 const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateGetAll: true,
 	generateCreate: true,
@@ -76,8 +74,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	await genie.init();
 	await genie.use(subscriptionPlugin(new PubSub()));
 	const schema = genie.getSchema();
-	console.log('GraphQL Genie Completed', Date.now() - start);
-	console.log(genie.printSchema());
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
@@ -94,16 +90,9 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
-	const hasData = await client.query({
-		query: gql`{
-			users{
-				id
-			}
-		}`
-	});
-	if (hasData.data['users']) {
-		return;
-	}
+
+	// create a bunch of data
+
 	const zeus = await client.mutate({
 		mutation: gql`
 		mutation {

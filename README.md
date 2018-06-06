@@ -9,25 +9,13 @@
 [![devDependency Status](https://david-dm.org/genie-team/graphql-genie/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie/?type=dev)
 [![npm](https://img.shields.io/npm/l/graphql-genie.svg)](https://github.com/genie-team/graphql-genie/blob/master/LICENSE)
 
+All you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. 
 
+GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any fortune adapter will work, plugins currently exist for memory, IndexedDB, MongoDB, Postgres, Redis, Google Cloud Datastore, NeDB and File System. Or you could write your own.
 
-A React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.
-All you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. 
-
-Data can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).
-
-## Roadmap
-Ability to export data
-## Development
-
-```sh
-yarn
-npm run build
-npm run start
-```
+See examples directory for more info.
 
 ## Thanks/Credit
-[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) which I largely copied the react component
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
 

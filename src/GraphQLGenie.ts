@@ -1,5 +1,4 @@
 
-import { IntrospectionResultData } from 'apollo-cache-inmemory';
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, isObjectType, printType } from 'graphql';
 import { assign, forOwn, get } from 'lodash';
 import FortuneGraph from './FortuneGraph';
@@ -226,7 +225,7 @@ export class GraphQLGenie {
 		return this.schemaBuilder.printSchemaWithDirectives();
 	}
 
-	public getFragmentTypes = async (): Promise<IntrospectionResultData> => {
+	public getFragmentTypes = async (): Promise<any> => {
 		await this.ready;
 		const result = await graphql(this.schema, `{
 			__schema {
@@ -248,7 +247,7 @@ export class GraphQLGenie {
 			result.data.__schema.types = filteredData;
 
 		}
-		return <IntrospectionResultData>result.data;
+		return result.data;
 	}
 
 }

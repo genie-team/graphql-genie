@@ -1,8 +1,8 @@
 {
   "name": "graphql-genie-postgresql-example",
   "version": "1.0.0",
-	"description": "GraphQL Genie Postgresql Example",
-	"browser": "./lib/browser.umd.js",
+  "description": "GraphQL Genie Postgresql Example",
+  "browser": "lib/bundle.umd.js",
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
@@ -33,6 +33,7 @@
     "apollo-link-schema": "^1.1.0",
     "fortune": "^5.4.2",
     "graphql": "^0.13.2",
+    "graphql-genie": "^0.1.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",
     "graphql-tools": "^2.24.0",
