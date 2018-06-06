@@ -629,7 +629,8 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				let findResult = await dataResolver.find(typeName, ids, findOptions);
 				if (findResult) {
 					findResult = isArray(findResult) ? findResult : [findResult];
-
+					// remove null values
+					findResult = findResult.filter(function(n) { return !!n; });
 					findResult.forEach(result => {
 						cache.set(result.id, result);
 					});

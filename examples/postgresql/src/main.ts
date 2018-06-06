@@ -457,7 +457,7 @@ const buildClient = async (genie: GraphQLGenie) => {
                 {
                   update: {
                     age: 5000
-										birthday: "0001-01-01"
+										birthday: "1000-01-01"
                   }
                   create: {
                     name: "Loki"

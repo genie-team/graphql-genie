@@ -591,6 +591,42 @@ describe('genie', () => {
 		});
 		expect(result.data['users']).toHaveLength(1);
 		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][0].writtenSubmissions.length).toBeGreaterThan(1);
+		expect(result.data['users'][0].writtenSubmissions).toEqual(expect.arrayContaining([expect.objectContaining({title: testData.posts[0].title})]));
+
+	});
+
+	test('all where - nested match and filter in result', async () => {
+
+		const users = gql`
+			{
+				users (where: {
+					writtenSubmissions: {
+					match: {
+						title: "${testData.posts[0].title}"
+					}
+					}
+				}) {
+					name
+					email
+					writtenSubmissions (where: {
+						match: {
+						title: "${testData.posts[0].title}"
+						}
+					}) {
+						id
+						title
+					}
+				}
+			}
+		`;
+		const result = await client.query({
+			query: users
+		});
+		expect(result.data['users']).toHaveLength(1);
+		expect(result.data['users'][0].email).toBe('coreyj@example.com');
+		expect(result.data['users'][0].writtenSubmissions).toHaveLength(1);
+		expect(result.data['users'][0].writtenSubmissions[0].title).toBe(testData.posts[0].title);
 	});
 
 	test('all where - post connection', async () => {

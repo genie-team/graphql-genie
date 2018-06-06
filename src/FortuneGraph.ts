@@ -1,7 +1,7 @@
 import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
-import { each, find, findIndex, forOwn, get, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
+import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
@@ -274,7 +274,9 @@ export default class FortuneGraph implements DataResolver {
 	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		ids = isArray(ids) ? ids.map(value => this.getFortuneId(value)) : [this.getFortuneId(ids)];
-		this.transaction ? await this.transaction.delete(fortuneType, ids, meta) : await this.store.delete(fortuneType, ids, meta);
+		if (ids.length > 0) {
+			this.transaction ? await this.transaction.delete(fortuneType, ids, meta) : await this.store.delete(fortuneType, ids, meta);
+		}
 		return true;
 	}
 
@@ -514,6 +516,10 @@ export default class FortuneGraph implements DataResolver {
 		// if no ids we need to make sure we only get the necessary typename so that this works with interfaces/unions
 		if (graphQLTypeName && (!ids || ids.length < 1)) {
 			set(options, 'match.__typename', this.getDataTypeName(graphQLTypeName));
+		}
+
+		if (has(options, 'exists.id')) {
+			delete options.exists.id;
 		}
 
 		// make sure sort is boolean rather than enum

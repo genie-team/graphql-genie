@@ -1,32 +1,11 @@
 {
   "name": "graphql-genie-postgresql-example",
-  "version": "0.0.1",
-  "description": "GraphQL Genie",
-  "jsnext:main": "./lib/index.js",
-  "module": "lib/module.js",
-  "files": [
-    "lib/"
-  ],
+  "version": "1.0.0",
+  "description": "GraphQL Genie Postgresql Example",
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "bundle": "rollup -c rollup.browser.js",
-    "module": "rollup -c rollup.module.js"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
@@ -36,23 +15,17 @@
     "apollo-client": "^2.3.1",
     "apollo-link-schema": "^1.1.0",
     "awesome-typescript-loader": "^5.0.0",
-    "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1",
     "graphql": "^0.13.0",
     "graphql-tag": "^2.9.2",
-    "lodash": "^4.17.10",
     "tslint": "^5.9.1",
     "tslint-genie-rules": "^1.2.0",
     "typescript": "^2.8.3",
     "webpack": "^4.10.2",
     "webpack-cli": "^3.0.1"
   },
-  "peerDependencies": {
-    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0",
-    "lodash": "^4.0.0"
-  },
   "dependencies": {
-    "abab": "^2.0.0",
+		"abab": "^2.0.0",
+		"lodash": "^4.17.10",
     "fortune": "^5.4.2",
     "fortune-postgres": "^1.6.4",
     "graphql-iso-date": "^3.5.0",

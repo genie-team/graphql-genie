@@ -97,7 +97,9 @@ export class GenerateDelete implements TypeGenerator {
 					fortuneReturn = fortuneReturn.map((value) => {
 						return value.id;
 					});
-					await this.dataResolver.delete(type.name, fortuneReturn);
+					if (count > 0) {
+						await this.dataResolver.delete(type.name, fortuneReturn);
+					}
 				}
 				return {
 					count,

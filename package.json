@@ -51,16 +51,9 @@
     "@types/jest": "^21.1.10",
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",
-    "apollo-cache-inmemory": "^1.2.1",
-    "apollo-client": "^2.3.1",
-    "apollo-link-schema": "^1.1.0",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "graphql": "^0.13.0",
-    "graphql-tag": "^2.9.2",
     "jest": "^22.4.0",
-    "lerna": "^2.11.0",
-    "lodash": "^4.17.10",
     "rollup": "^0.58.2",
     "rollup-plugin-commonjs": "^9.1.3",
     "rollup-plugin-livereload": "^0.6.0",
@@ -70,7 +63,8 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-serve": "^0.4.2",
     "rollup-plugin-typescript2": "^0.12.0",
-    "rollup-plugin-uglify": "^3.0.0",
+		"rollup-plugin-uglify": "^3.0.0",
+		"rollup-plugin-json": "^3.0.0",
     "ts-jest": "^22.4.4",
     "tslint": "^5.9.1",
     "tslint-genie-rules": "^1.2.0",
@@ -78,19 +72,15 @@
   },
   "peerDependencies": {
     "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0",
-    "lodash": "^4.0.0"
+		"lodash": "^4.0.0",
+		"fortune": "^5.0.0"
   },
   "dependencies": {
     "abab": "^2.0.0",
-    "fortune": "^5.4.2",
-    "fortune-indexeddb-with-bundle": "^1.0.3",
-    "fortune-postgres": "^1.6.4",
     "graphql-iso-date": "^3.5.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^2.24.0",
     "graphql-type-json": "^0.2.1",
-    "libpq": "^1.8.8",
-    "pluralize": "^7.0.0",
-    "rollup-plugin-json": "^3.0.0"
+    "pluralize": "^7.0.0"    
   }
 }

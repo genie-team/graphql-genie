@@ -778,6 +778,71 @@ result = await client.mutate({
 });
 console.log((await sub.next()).value.data.post);
 
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyUsers (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyAddresses (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 		mutation { deleteManyPosts (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 		}
+	// 	`
+	// });
+	// await client.mutate({
+	// 	mutation: gql`
+	// 	mutation { deleteManyComments (
+	// 			input: {
+	// 				where: {
+	// 					exists: {
+	// 						id: true
+	// 					}
+	// 				}
+	// 			}
+	// 		) {
+	// 			count
+	// 		}
+	// 	}
+	// 	`
+	// });
+
 };
 
 buildClient(genie);
