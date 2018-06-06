@@ -7,11 +7,18 @@ import pkg from './package.json';
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/main.ts',
+		input: 'src/index.ts',
 		output: {
 			name: 'graphql-genie',
 			file: pkg.module,
-			format: 'umd'
+			format: 'umd',
+			globals: {
+				'graphql': 'graphql_1',
+				'lodash': 'lodash',
+				'fortune': 'fortune',
+				'graphql-tools': 'graphql-tools',
+				'graphql-subscriptions': 'graphql-subscriptions'
+			}
 		},
 		onwarn,
 		plugins: [
@@ -29,13 +36,13 @@ export default [
 					'node_modules/lodash/lodash.js': ['values', 'find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
 					'node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
-					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime'],
-					'node_modules/punycode/punycode.js': ['toASCII']
+					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime']
 				}
 			}), // so Rollup can convert `ms` to an ES module
 			typescript(),
 			json()
-		]
+		],
+		external: ['graphql-subscriptions', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 	}
 ];
 

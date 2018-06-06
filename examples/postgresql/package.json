@@ -5,7 +5,7 @@
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.config.js"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",

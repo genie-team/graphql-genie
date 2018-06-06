@@ -1,27 +1,23 @@
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
+import livereload from 'rollup-plugin-livereload';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
+import serve from 'rollup-plugin-serve';
 import typescript from 'rollup-plugin-typescript2';
 import pkg from './package.json';
+const prod = !process.env.ROLLUP_WATCH;
 
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/index.ts',
+		input: 'src/main.ts',
 		output: {
-			name: 'graphql-genie',
+			name: 'graphql-genie-browser',
 			file: pkg.browser,
-			format: 'umd',
-			globals: {
-				'graphql': 'graphql_1',
-				'lodash': 'lodash',
-				'fortune': 'fortune',
-				'graphql-tools': 'graphql-tools',
-				'graphql-subscriptions': 'graphql-subscriptions'
-			}
+			format: 'umd'
 		},
 		watch: {
 			include: 'src/**'
@@ -43,7 +39,7 @@ export default [
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
 					'node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
 					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime'],
-					'node_modules/punycode/punycode.js': ['toASCII']
+					'../../lib/browser.umd.js': ['GraphQLGenie']
 				}
 			}), // so Rollup can convert `ms` to an ES module
 			typescript(),
@@ -53,13 +49,16 @@ export default [
 					'node_modules/rollup-plugin-node-builtins/**'
 				],
 				'process': true,
-				'process.env.NODE_ENV': '"production"'
+				'process.env.NODE_ENV': !prod ?  '"development"' : '"production"'
 			}),
 			builtins(),
-			globals()
-		],
-		external: ['graphql-subscriptions', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
-
+			globals(),
+			!prod && serve({
+				contentBase: 'lib',
+				port: '10001'
+			}), 
+			!prod && livereload()
+		]
 	}
 ];
 

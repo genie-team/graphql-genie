@@ -22,3 +22,4 @@ export {
 } from './TypeGeneratorUtilities';
 export { GraphQLGenie } from './GraphQLGenie';
 export { InputGenerator } from './InputGenerator';
+export {default as subscriptionPlugin}  from './subscriptionPlugin/subscriptions';

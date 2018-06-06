@@ -4,8 +4,7 @@ import { SchemaLink } from 'apollo-link-schema';
 import { execute, graphql, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-import { FortuneOptions, GraphQLGenie } from './index';
-import subscriptionPlugin from './subscriptionPlugin/subscriptions';
+import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from '../../../lib/browser.umd';
 
 const typeDefs = `
 
