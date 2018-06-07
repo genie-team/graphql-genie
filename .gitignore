@@ -1,5 +1,6 @@
-!dist/index.html
-dist/
+
+
+**/dist/index.js
 !www/favicon.ico
 www/
 lib/
