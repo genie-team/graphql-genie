@@ -1,33 +1,22 @@
 {
-  "name": "graphql-genie",
-  "version": "0.1.1",
-  "description": "GraphQL Genie",
-  "browser": "./lib/browser.umd.js",
+  "name": "graphql-genie-subscriptions",
+  "version": "1.0.0",
+  "description": "GraphQL Genie Subscriptions",
+	"browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
   "module": "./lib/module.js",
   "main": "./lib/module.js",
   "typings": "./lib/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/genie-team/graphql-genie.git"
-  },
   "author": "Genie Team",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/genie-team/graphql-genie"
-  },
-  "homepage": "https://github.com/genie-team/graphql-genie",
   "scripts": {
     "build": "tsc -p .",
     "browser": "rollup -c rollup.browser.js",
     "module": "rollup -c rollup.module.js",
     "prepublishOnly": "npm run build && npm run browser && npm run module",
-    "start": "rollup -c rollup.browser.js -w",
-    "test": "jest",
-    "testMutation": "jest ./tests/__tests__/mutationTests.ts",
-    "testGenie": "jest ./tests/__tests__/genie.ts"
+    "test": "jest"
   },
-  "jest": {
+	"jest": {
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
@@ -41,13 +30,18 @@
       "node"
     ]
   },
-  "devDependencies": {
+  "peerDependencies": {
+    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0",
+    "graphql-tools": "^2.0.0",
+		"lodash": "^4.0.0",
+		"graphql-subscriptions": "^0.5.0",		
+		"graphql-genie": ">=0.1.0"
+  },
+	"devDependencies": {
     "@types/graphql": "^0.13.1",
     "@types/jest": "^21.1.10",
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",
-    "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1",
     "fortune": "^5.4.2",
     "graphql": "^0.13.2",
     "graphql-subscriptions": "^0.5.8",
@@ -66,17 +60,5 @@
     "tslint": "^5.9.1",
     "tslint-genie-rules": "^1.2.0",
     "typescript": "^2.9.0"
-  },
-  "peerDependencies": {
-    "fortune": "^5.0.0",
-    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0",
-    "graphql-tools": "^2.0.0",
-    "lodash": "^4.0.0"
-  },
-  "dependencies": {
-    "abab": "^2.0.0",
-    "graphql-iso-date": "^3.5.0",
-    "graphql-type-json": "^0.2.1",
-    "pluralize": "^7.0.0"
   }
 }

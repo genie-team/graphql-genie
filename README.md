@@ -11,9 +11,9 @@
 
 All you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. 
 
-GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any fortune adapter will work, plugins currently exist for memory, IndexedDB, MongoDB, Postgres, Redis, Google Cloud Datastore, NeDB and File System. Or you could write your own.
+GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any [fortune adapter](http://fortune.js.org/plugins/) will work, plugins currently exist for memory, [IndexedDB](https://github.com/fortunejs/fortune-indexeddb), [MongoDB](https://github.com/fortunejs/fortune-mongodb), [Postgres](https://github.com/fortunejs/fortune-postgres), [Redis](https://github.com/thibremy/fortune-redis), [Google Cloud Datastore](https://github.com/patrinhani-ciandt/fortune-datastore), [NeDB](https://github.com/fortunejs/fortune-nedb) and [File System](https://github.com/fortunejs/fortune-fs). Or you could write your own.
 
-See examples directory for more info.
+See examples directory for useage with different adapters.
 
 ## Thanks/Credit
 

@@ -20,7 +20,8 @@ export default [
 				'lodash': 'lodash',
 				'fortune': 'fortune',
 				'graphql-tools': 'graphql-tools',
-				'graphql-subscriptions': 'graphql-subscriptions'
+				'graphql-subscriptions': 'graphql-subscriptions',
+				'graphql-genie': 'graphql-genie'
 			}
 		},
 		watch: {
@@ -42,7 +43,8 @@ export default [
 					'node_modules/lodash/lodash.js': ['values', 'find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-tools/dist/index.js': [ 'SchemaDirectiveVisitor', 'makeExecutableSchema', 'addResolveFunctionsToSchema' ],
 					'node_modules/graphql-type-json/lib/index.js': ['GraphQLJSON'],
-					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime']
+					'node_modules/graphql-iso-date/dist/index.js': ['GraphQLDate', 'GraphQLTime', 'GraphQLDateTime'],
+					'node_modules/graphql-genie/lib/browser.umd.js': ['DataResolver', 'GeniePlugin', 'GraphQLGenie', 'filterNested', 'parseFilter', 'typeIsList']
 				}
 			}), // so Rollup can convert `ms` to an ES module
 			typescript(),
@@ -57,7 +59,7 @@ export default [
 			builtins(),
 			globals()
 		],
-		external: ['graphql-subscriptions', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+		external: ['graphql-subscriptions', 'graphql-tools', 'graphql-genie', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 
 	}
 ];

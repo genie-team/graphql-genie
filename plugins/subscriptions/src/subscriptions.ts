@@ -1,8 +1,8 @@
 import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType } from 'graphql';
+import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
 import { get, isEmpty } from 'lodash';
-import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from '../.';
 
 export default (pubsub: PubSub): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
