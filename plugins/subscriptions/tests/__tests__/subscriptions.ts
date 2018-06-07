@@ -2,8 +2,8 @@ import { ApolloClient } from 'apollo-client';
 import { GraphQLSchema, execute, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-import subscriptionPlugin from '../../subscriptionPlugin/subscriptions';
-import { genie, getClient } from '../setupTests';
+import { genie, getClient } from '../../../../src/tests/setupTests';
+import subscriptionPlugin from '../../src/subscriptions';
 
 let client: ApolloClient<any>;
 let schema: GraphQLSchema;
@@ -262,80 +262,99 @@ describe('subscriptionsTest', () => {
 			}}
 		});
 
-		sub.next().then(subNext => {
-			expect(subNext.value.data.post.mutation).toBe('UPDATED');
-			expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
-			expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
-			expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
+		return new Promise((resolve, reject) => {
+			sub.next().then(subNext => {
+				expect(subNext.value.data.post.mutation).toBe('UPDATED');
+				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
+				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
+				expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
+				resolve();
+			});
 		});
 
 	});
 
 	test('subscription - update OR match which will fire both times', async () => {
+		try {
+			await client.mutate({
+				mutation: updatePost,
+				variables: { input: {
+					data: { likedBy: { disconnect: [{email: testData.users[0].email}, {email: testData.users[1].email}, {email: testData.users[2].email}, {email: testData.users[3].email}]}},
+					where: { id: testData.posts[0].id}
+				}}
+			});
+		} catch (e) {
+			console.error(e, 'error updating first post');
+		}
 
-		await client.mutate({
-			mutation: updatePost,
-			variables: { input: {
-				data: { likedBy: { disconnect: [{email: testData.users[0].email}, {email: testData.users[1].email}, {email: testData.users[2].email}, {email: testData.users[3].email}]}},
-				where: { id: testData.posts[0].id}
-			}}
-		});
-
-		await client.mutate({
-			mutation: updatePost,
-			variables: { input: {
-				data: { likedBy: { disconnect: [{email: testData.users[0].email}, {email: testData.users[1].email}, {email: testData.users[2].email}, {email: testData.users[3].email}]}},
-				where: { id: testData.posts[testData.posts.length - 1].id}
-			}}
-		});
-
-		const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
-			gql`subscription {
-				post(where: {
-					OR: [
-						{mutation_in: [CREATED]},
-						{node: {
-							author: {
-								match: {
-									email: "${testData.users[3].email}"
+		try {
+			await client.mutate({
+				mutation: updatePost,
+				variables: { input: {
+					data: { likedBy: { disconnect: [{email: testData.users[0].email}, {email: testData.users[1].email}, {email: testData.users[2].email}, {email: testData.users[3].email}]}},
+					where: { id: testData.posts[testData.posts.length - 1].id}
+				}}
+			});
+		} catch (e) {
+			console.error(e, 'error updating last post');
+		}
+		let sub: AsyncIterator<any>;
+		try {
+			sub = <AsyncIterator<any>> await subscribe(schema,
+				gql`subscription {
+					post(where: {
+						OR: [
+							{mutation_in: [CREATED]},
+							{node: {
+								author: {
+									match: {
+										email: "${testData.users[3].email}"
+									}
+								}
+							}
+							}
+						]
+					}) {
+						mutation
+						node {
+							title
+							author {
+								email
+							}
+							likedBy {
+								edges {
+									node {
+										name
+									}
 								}
 							}
 						}
-						}
-					]
-				}) {
-					mutation
-					node {
-						title
-						author {
-							email
-						}
-						likedBy {
-							edges {
-								node {
-									name
-								}
-							}
+						updatedFields
+						previousValues {
+							title
+							likedBy_ids
 						}
 					}
-					updatedFields
-					previousValues {
+				}
+				`
+			);
+		} catch (e) {
+			console.error('error subscribing', e);
+		}
+		let post;
+		try {
+			post = await execute(schema, gql`mutation {
+				createPost(input: {data:{title:"bam"}}) {
+					data {
+						id
 						title
-						likedBy_ids
+						author
 					}
 				}
-			}
-			`
-		);
-
-		const post = await execute(schema, gql`mutation {
-			createPost(input: {data:{title:"bam"}}) {
-				data {
-					id
-					title
-				}
-			}
-		}`);
+			}`);
+		} catch (e) {
+			console.error('error creating post', e);
+		}
 
 		const result = await client.mutate({
 			mutation: updatePost,
@@ -344,20 +363,21 @@ describe('subscriptionsTest', () => {
 				where: { id: testData.posts[0].id}
 			}}
 		});
-
-		sub.next().then(subNext => {
-			expect(subNext.value.data.post.mutation).toBe('CREATED');
-			expect(subNext.value.data.post.node.title).toBe('bam');
-			expect(subNext.value.data.post.node.author.email).toBeNull();
-			expect(subNext.value.data.post.updatedFields[0]).toBeNull();
+		return new Promise((resolve, reject) => {
+			expect.assertions(8);
+			sub.next().then(subNext => {
+				expect(subNext.value.data.post.mutation).toBe('CREATED');
+				expect(subNext.value.data.post.node.title).toBe('bam');
+				expect(subNext.value.data.post.node.author).toBeNull();
+				expect(subNext.value.data.post.updatedFields).toBeNull();
+			});
+			sub.next().then(subNext => {
+				expect(subNext.value.data.post.mutation).toBe('UPDATED');
+				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
+				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
+				expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
+				resolve();
+			});
 		});
-
-		sub.next().then(subNext => {
-			expect(subNext.value.data.post.mutation).toBe('UPDATED');
-			expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
-			expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
-			expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
-		});
-
 	});
 });

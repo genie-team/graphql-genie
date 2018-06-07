@@ -3,7 +3,8 @@ import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import postgresAdapter from 'fortune-postgres';
 import { execute, subscribe } from 'graphql';
-import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from 'graphql-genie';
+import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
+import subscriptionPlugin from 'graphql-genie-subscriptions';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 import config from './config.json';
@@ -99,13 +100,15 @@ const buildClient = async (genie: GraphQLGenie) => {
 	const hasData = await client.query({
 		query: gql`{
 			users{
-				id
+				name
 			}
 		}`
 	});
+	console.log('current data:');
 	console.log(JSON.stringify(hasData));
 
 	if (hasData.data['users']) {
+		console.log('Deleting existing data');
 		await client.mutate({
 			mutation: gql`
 				mutation { deleteManyUsers (

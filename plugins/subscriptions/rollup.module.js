@@ -7,7 +7,7 @@ import pkg from './package.json';
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/index.ts',
+		input: 'src/subscriptions.ts',
 		output: {
 			name: 'graphql-genie',
 			file: pkg.module,

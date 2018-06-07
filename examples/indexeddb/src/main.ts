@@ -3,7 +3,8 @@ import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import indexedDBAdapter from 'fortune-indexeddb';
 import { execute, graphql, subscribe } from 'graphql';
-import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from 'graphql-genie';
+import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
+import subscriptionPlugin from 'graphql-genie-subscriptions';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 const typeDefs = `
