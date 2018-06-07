@@ -14,7 +14,7 @@
     "awesome-typescript-loader": "^5.0.0",
     "tslint": "^5.9.1",
     "tslint-genie-rules": "^1.2.0",
-    "typescript": "^2.8.3",
+    "typescript": "^2.9.0",
     "webpack": "^4.10.2",
     "webpack-cli": "^3.0.1"
   },

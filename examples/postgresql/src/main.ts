@@ -6,6 +6,7 @@ import { execute, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie, subscriptionPlugin } from 'graphql-genie';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
+import config from './config.json';
 
 const typeDefs = `
 
@@ -66,7 +67,7 @@ const fortuneOptions: FortuneOptions = {
 		postgresAdapter,
 		{
 			// options object, URL is mandatory.
-			url: `postgres://piccrxpi:emXqTkBU5VRGYi8TYjzaCMxxzpthRfir@stampy.db.elephantsql.com:5432/piccrxpi`
+			url: config.postgresURL
 		}
 	],
 	settings: { enforceLinks: true }

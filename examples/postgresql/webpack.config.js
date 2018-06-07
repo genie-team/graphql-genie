@@ -34,7 +34,7 @@ module.exports = (options) => {
 		plugins: [new webpack.IgnorePlugin(/\.\/native/, /\/pg\//)],
     output: {
       path: root('dist'),
-      filename: 'postgresql.js',
+      filename: 'index.js',
       libraryTarget: 'commonjs'
     }
   };

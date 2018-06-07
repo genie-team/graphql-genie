@@ -40,7 +40,7 @@ module.exports = (options) => {
 		},
 		output: {
 			path: root('dist'),
-			filename: 'indexeddb.js',
+			filename: 'index.js',
 			libraryTarget: 'umd'
 		}
 	};
