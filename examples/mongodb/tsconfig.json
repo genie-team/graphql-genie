@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+		"resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+		"allowUnreachableCode": false,
+		"sourceMap": false,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "lib": [
+      "dom",
+			"es2017",
+			"esnext.asynciterable"
+    ],
+    "moduleResolution": "node",
+    "module": "es2015",
+    "target": "es2015",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "jsx": "react",
+    "jsxFactory": "h",
+    "rootDir": "./src",
+    "outDir": "lib"
+  },
+  "include": ["src/*.ts"],
+  "exclude": ["src/tests/*.ts"]
+}

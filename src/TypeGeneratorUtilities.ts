@@ -1,4 +1,4 @@
-import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { defaultFieldResolver, getNamedType, GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -197,7 +197,7 @@ export enum Mutation {
 	Upsert
 }
 
-const clean = (obj): any => {
+export const clean = (obj): any => {
 	const returnObj = {};
 	for (const propName in obj) {
 		if (obj[propName] !== null && obj[propName] !== undefined) {
