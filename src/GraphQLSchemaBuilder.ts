@@ -1,7 +1,7 @@
 
-import { GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
+import { getNamedType, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
-import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+import { addResolveFunctionsToSchema, IResolvers, makeExecutableSchema, SchemaDirectiveVisitor } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
 import { find, has, isEmpty, set, values } from 'lodash';
 import pluralize from 'pluralize';
@@ -144,8 +144,11 @@ export class GraphQLSchemaBuilder {
 		} else {
 			Object.keys(typeMap).forEach(name => {
 				const type = typeMap[name];
-				if (this.isUserType(type)) {
+				if (this.isUserType(type) && isObjectType(type)) {
 					type['_interfaces'].push(typeMap.Node);
+					if (!type.getFields()['id']) {
+						throw new Error('every object type must have an ID if you are not using the model directive');
+					}
 					has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(type) : set(this.schema, '_implementations.Node', [type]);
 				}
 			});
@@ -333,6 +336,9 @@ class DefaultDirective extends SchemaDirectiveVisitor {
 
 class ModelDirective extends SchemaDirectiveVisitor {
 	public visitObject(object) {
+		if (!object.getFields()['id']) {
+			throw new Error('every model type must have an ID');
+		}
 		object._interfaces.push(this.schema.getTypeMap().Node);
 		has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(object) : set(this.schema, '_implementations.Node', [object]);
 	}

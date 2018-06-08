@@ -1,4 +1,4 @@
-import { GraphQLSchema, IntrospectionType, getIntrospectionQuery, graphql } from 'graphql';
+import { getIntrospectionQuery, graphql, GraphQLError, GraphQLSchema, IntrospectionType } from 'graphql';
 import { concat, each, findIndex, get, includes, keys, mapKeys, omit, omitBy, set, startsWith } from 'lodash';
 
 export default class SchemaInfoBuilder {
@@ -31,6 +31,9 @@ export default class SchemaInfoBuilder {
 
 	private async buildSchemaInfo(schema): Promise<IntrospectionType[]>  {
 		let originalSchemaInfo = await graphql(schema, getIntrospectionQuery({ descriptions: true }));
+		if (originalSchemaInfo.errors) {
+			throw new GraphQLError(originalSchemaInfo.errors[0].message);
+		}
 		originalSchemaInfo = originalSchemaInfo.data;
 		let schemaInfo = <any>originalSchemaInfo;
 		schemaInfo = omitBy(schemaInfo.__schema.types, (value) => {
