@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter } from './TypeGeneratorUtilities';
+import { deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter, Relations } from './TypeGeneratorUtilities';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;
@@ -94,10 +94,11 @@ export class GenerateDelete implements TypeGenerator {
 					const options = parseFilter(filter, schemaType);
 					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
 					count = fortuneReturn.length;
-					fortuneReturn = fortuneReturn.map((value) => {
-						return value.id;
-					});
+
 					if (count > 0) {
+						fortuneReturn = fortuneReturn.map((value) => {
+							return value.id;
+						});
 						await this.dataResolver.delete(type.name, fortuneReturn);
 					}
 				}

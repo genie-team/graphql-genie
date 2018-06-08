@@ -1,8 +1,9 @@
-import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType } from 'graphql';
-import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
+import { getNamedType, graphql, GraphQLObjectType, isNonNullType, isScalarType } from 'graphql';
+import { DataResolver, filterNested, GeniePlugin, GraphQLGenie, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
 import { get, isEmpty } from 'lodash';
+import { isObject } from 'util';
 
 export default (pubsub: PubSub): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
@@ -60,13 +61,13 @@ export default (pubsub: PubSub): GeniePlugin => {
 const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType, dataResolver: DataResolver): IResolverObject => {
 	return {
 		[name]: {
-			resolve: ({context, record}, _args) => {
+			resolve: ({ context, record }, _args) => {
 				// console.log('subscribe resolve', name, context, record, _args);
 				const mutation = context.request.method.toUpperCase() + 'D';
 				let previousValues;
 				if (mutation === 'UPDATED') {
 					const payload = get(context, 'request.payload[0]', {});
-					const sym = Object.getOwnPropertySymbols(payload).find(function(s) {
+					const sym = Object.getOwnPropertySymbols(payload).find(function (s) {
 						return String(s) === 'Symbol(updateRecord)';
 					});
 					previousValues = payload[sym];
@@ -79,22 +80,22 @@ const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType
 					previousValues
 				};
 			},
-			subscribe: withFilter(() => pubsub.asyncIterator(name), async ({context, record}, args): Promise<boolean> => {
+			subscribe: withFilter(() => pubsub.asyncIterator(name), async ({ context, record }, args): Promise<boolean> => {
 				let resolve = true;
 				if (args) {
 					resolve = await subscribeFilter(args, context, record, schemaType, dataResolver);
 					const and = get(args, 'where.AND');
-				 	const or  = get(args, 'where.OR');
+					const or = get(args, 'where.OR');
 					if (resolve && !isEmpty(and)) {
-						const andResults =  await Promise.all(and.map(async (arg): Promise<boolean> => {
-							return await subscribeFilter({where: arg}, context, record, schemaType, dataResolver);
+						const andResults = await Promise.all(and.map(async (arg): Promise<boolean> => {
+							return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
 						}));
 						resolve = andResults.every((val: boolean) => val);
 					}
 
 					if (resolve && !isEmpty(or)) {
-						const andResults =  await Promise.all(or.map(async (arg): Promise<boolean> => {
-							return await subscribeFilter({where: arg}, context, record, schemaType, dataResolver);
+						const andResults = await Promise.all(or.map(async (arg): Promise<boolean> => {
+							return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
 						}));
 						resolve = andResults.some((val: boolean) => val);
 					}
@@ -111,41 +112,41 @@ const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType
 
 const subscribeFilter = async (args, context, record, schemaType: GraphQLObjectType, dataResolver: DataResolver): Promise<boolean> => {
 	let resolve = true;
-				const mutation = context.request.method.toUpperCase() + 'D';
-				const mutation_in = get(args, 'where.mutation_in', ['CREATED', 'UPDATED', 'DELETED']);
-				resolve = mutation_in.includes(mutation);
-				if (resolve && mutation === 'UPDATED') {
-					const updatedFields_contains: string[] = get(args, 'where.updatedFields_contains', []);
-					const updatedFields_contains_every: string[] = get(args, 'where.updatedFields_contains_every', []);
-					let updatedFields: string[];
-					if (!isEmpty(updatedFields_contains) || !isEmpty(updatedFields_contains_every)) {
-						updatedFields = getUpdatedFields(context);
-					}
+	const mutation = context.request.method.toUpperCase() + 'D';
+	const mutation_in = get(args, 'where.mutation_in', ['CREATED', 'UPDATED', 'DELETED']);
+	resolve = mutation_in.includes(mutation);
+	if (resolve && mutation === 'UPDATED') {
+		const updatedFields_contains: string[] = get(args, 'where.updatedFields_contains', []);
+		const updatedFields_contains_every: string[] = get(args, 'where.updatedFields_contains_every', []);
+		let updatedFields: string[];
+		if (!isEmpty(updatedFields_contains) || !isEmpty(updatedFields_contains_every)) {
+			updatedFields = getUpdatedFields(context);
+		}
 
-					if (!isEmpty(updatedFields_contains_every)) {
-						resolve = updatedFields_contains_every.every(fieldName => {
-							return updatedFields.includes(fieldName);
-						});
-					}
-					if (resolve && !isEmpty(updatedFields_contains)) {
-						resolve = updatedFields_contains.some(fieldName => {
-							return updatedFields.includes(fieldName);
-						});
-					}
-				}
-				let nodeWhere = get(args, 'where.node');
+		if (!isEmpty(updatedFields_contains_every)) {
+			resolve = updatedFields_contains_every.every(fieldName => {
+				return updatedFields.includes(fieldName);
+			});
+		}
+		if (resolve && !isEmpty(updatedFields_contains)) {
+			resolve = updatedFields_contains.some(fieldName => {
+				return updatedFields.includes(fieldName);
+			});
+		}
+	}
+	let nodeWhere = get(args, 'where.node');
 
-				if (resolve && nodeWhere) {
-					nodeWhere = parseFilter(nodeWhere, schemaType);
-					let recordWithWhere = dataResolver.applyOptions(schemaType.name, record, nodeWhere);
-					resolve = !isEmpty(recordWithWhere);
-					if (resolve) {
-						const pullIds = await filterNested(nodeWhere, null, schemaType, recordWithWhere, new Map<string, object>(), dataResolver);
-						recordWithWhere = recordWithWhere.filter(entry => !pullIds.has(entry.id));
-						resolve = !isEmpty(recordWithWhere);
-					}
-				}
-				return resolve;
+	if (resolve && nodeWhere) {
+		nodeWhere = parseFilter(nodeWhere, schemaType);
+		let recordWithWhere = dataResolver.applyOptions(schemaType.name, record, nodeWhere);
+		resolve = !isEmpty(recordWithWhere);
+		if (resolve) {
+			const pullIds = await filterNested(nodeWhere, null, schemaType, recordWithWhere, new Map<string, object>(), dataResolver);
+			recordWithWhere = recordWithWhere.filter(entry => !pullIds.has(entry.id));
+			resolve = !isEmpty(recordWithWhere);
+		}
+	}
+	return resolve;
 };
 
 const getUpdatedFields = (context): string[] => {
@@ -154,9 +155,15 @@ const getUpdatedFields = (context): string[] => {
 	if (mutation === 'UPDATED') {
 		updatedFields = [];
 		const update = context.request.payload[0];
-		updatedFields.push(...Object.keys(update.pull));
-		updatedFields.push(...Object.keys(update.push));
-		updatedFields.push(...Object.keys(update.replace));
+		if (isObject(update.pull)) {
+			updatedFields.push(...Object.keys(update.pull));
+		}
+		if (isObject(update.push)) {
+			updatedFields.push(...Object.keys(update.push));
+		}
+		if (isObject(update.replace)) {
+			updatedFields.push(...Object.keys(update.replace));
+		}
 	}
 	return updatedFields;
 };

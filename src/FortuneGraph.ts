@@ -4,7 +4,14 @@ import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
-import { clean, computeRelations } from './TypeGeneratorUtilities';
+import { computeRelations } from './TypeGeneratorUtilities';
+
+interface FortuneUpdate {
+	id: string;
+	push?: object;
+	replace?: object;
+	pull?: object;
+}
 export default class FortuneGraph implements DataResolver {
 
 	private fortuneOptions: FortuneOptions;
@@ -194,7 +201,6 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
-		options = clean(options);
 		let results;
 		let fortuneType: string;
 		if (graphQLTypeName === 'Node') {
@@ -264,7 +270,6 @@ export default class FortuneGraph implements DataResolver {
 	}
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
-		options = clean(options);
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		const updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
 		let results = this.transaction ? await this.transaction.update(fortuneType, updates, meta) : await this.store.update(fortuneType, updates, meta);
@@ -300,8 +305,8 @@ export default class FortuneGraph implements DataResolver {
 		return record;
 	}
 
-	private generateUpdates = (fortuneTypeName: string, record, options: object = {}) => {
-		const updates = { id: this.getFortuneId(record['id']), replace: {}, push: {}, pull: {} };
+	private generateUpdates = (fortuneTypeName: string, record, options: object = {}): FortuneUpdate => {
+		const updates: FortuneUpdate  = { id: this.getFortuneId(record['id']) };
 		for (const argName in record) {
 			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
 			let arg = record[argName];
@@ -313,13 +318,22 @@ export default class FortuneGraph implements DataResolver {
 						});
 					}
 					if (options['pull']) {
+						if (!updates.pull) {
+							updates.pull = {};
+						}
 						updates.pull[argName] = arg;
 					} else {
+						if (!updates.push) {
+							updates.push = {};
+						}
 						updates.push[argName] = arg;
 					}
 				} else {
 					if (link && arg) {
 						arg = this.getFortuneId(arg);
+					}
+					if (!updates.replace) {
+						updates.replace = {};
 					}
 					updates.replace[argName] = arg;
 				}

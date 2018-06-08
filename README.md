@@ -19,4 +19,6 @@ See examples directory for useage with different adapters.
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
 
+[FortuneJS](http://fortune.js.org) for CRUD adapters
+
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)

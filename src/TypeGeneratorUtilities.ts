@@ -599,8 +599,12 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				where = _args.where;
 				options = parseFilter(where, schemaType);
 			}
-			set(options, 'orderBy', _args.orderBy);
-			set(options, 'offset', _args.skip);
+			if (_args.orderBy) {
+				set(options, 'orderBy', _args.orderBy);
+			}
+			if (_args.skip) {
+				set(options, 'offset', _args.skip);
+			}
 			let connection: Connection;
 			options = clean(options);
 			// I guess use the args here instead of args as a result of cache
@@ -709,8 +713,12 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 			options = parseFilter(_args.where, schemaType);
 		}
 
-		set(options, 'orderBy', _args.orderBy);
-		set(options, 'offset', _args.skip);
+		if (_args.orderBy) {
+			set(options, 'orderBy', _args.orderBy);
+		}
+		if (_args.skip) {
+			set(options, 'offset', _args.skip);
+		}
 		let connection: Connection;
 		let result: any;
 		let fortuneReturn = await dataResolver.find(type.name, null, options);
