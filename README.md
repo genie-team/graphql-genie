@@ -1,5 +1,5 @@
 <h1 align="center">
-	<img width="128px" src="https://raw.githubusercontent.com/genie-team/graphql-genie/master/resources/logo.svg" alt="GraphQL Genie Logo">
+	<img width="128px" src="/resources/logo.svg" alt="GraphQL Genie Logo">
 </h1>
 
 # GraphQL Genie Client
