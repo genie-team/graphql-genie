@@ -16,7 +16,7 @@ Because GraphQL Genie gives you a fully functioning schema but is not opinionate
 ### Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
 
-`npm install graphql-genie fortune graphql graphql-tools` or `yarn add graphql-genie fortune graphql graphql-tools`
+`npm install graphql-genie fortune graphql graphql-tools lodash` or `yarn add graphql-genie fortune graphql graphql-tools lodash`
 
 ### Getting started
 
