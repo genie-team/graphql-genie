@@ -160,7 +160,6 @@ export class GraphQLSchemaBuilder {
 		let visitUnique = false;
 		const uniqueDirective = {arguments: [], kind: 'Directive', name: {kind: 'Name', value: 'unique'}};
 
-
 		Object.keys(typeMap).forEach(name => {
 			const type = typeMap[name];
 			if (this.isUserType(type)) {
