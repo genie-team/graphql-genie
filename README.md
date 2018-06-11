@@ -20,9 +20,25 @@ Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-
 
 ### Getting started
 
-Create your type defintions.
+Create your [type defintions](https://graphql.org/learn/schema/). 
 
-Genie will compute relations for referential integrity and inverse updates (like between User and Address below) but if the relation is ambiguous the @relation directive should be used
+GraphQL Genie has some custom directives you can use.
+ * **@unique**
+	* The @unique directive marks a scalar field as unique. All id fields will be considered marked @unique
+	* This is used for various update operations that need to find a unique field, errors will be thrown if a duplicate value is attempted to be added on a unique field
+	* Currently GraphQL Genie does not automatically add indexes to unique fields in your database and it is recommended that you do this manually to improve performance.
+*  **@relation**
+	*  The directive @relation(name: String) can be attached to a relation field
+	*  Fields with relations will have referential integrity and inverse updates
+	*  Genie will compute relations automatically (like between User and Address below) but if the relation is ambiguous the @relation directive should be used
+	*  If a related object is delated, it's related nodes will be set to null
+*  **@default**
+	*  The directive @default(value: String!) sets a default value for a scalar field. 
+	*  Note that the value argument is of type String for all scalar fields
+
+
+
+Example:
 ```graphql 
 
 interface Submission {
@@ -43,6 +59,7 @@ type Comment implements Submission {
 	id: ID! @unique
 	text: String!
 	author: User @relation(name: "SubmissionsByUser")
+	approved: Boolean @default(value: "true")
 }
 
 type User {
@@ -110,22 +127,22 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
 
 ### Documentation
 
-#### use(plugin: GeniePlugin): Promise\<Void\>
+#### GraphQLGenie.use(plugin: GeniePlugin): Promise\<Void\>
 
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
 
 > See info about the GeniePlugin interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
 
-#### getSchema(): GraphQLSchema
+#### GraphQLGenie.getSchema(): GraphQLSchema
 
 Get the schema
 
-#### printSchema(): string
+#### GraphQLGenie.printSchema(): string
 
 Return a string of the full schema with directives
 
 
-#### getFragmentTypes(): Promise\<Void\>
+#### GraphQLGenie.getFragmentTypes(): Promise\<Void\>
 When using Apollo or another tool you may need to get information on the fragment types, genie provides a helper for this
 ```ts
 import { IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
@@ -136,7 +153,7 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 ```
 
 
-#### getDataResolver(): DataResolver
+#### GraphQLGenie.getDataResolver(): DataResolver
 DataResolver handles all the operations with your actual data. Such as CRUD and hooks. 
 
 Most likely use of this is to add hooks into the CRUD operations against your database. The DataResolver has 2 functions to add hooks. For more info on the context, record and update objects see the [fortune documentation](http://fortune.js.org/#input-and-output-hooks).
@@ -154,7 +171,7 @@ Most likely use of this is to add hooks into the CRUD operations against your da
 
 > See info about the DataResolver interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
 
-#### getSchemaBuilder(): GraphQLSchemaBuilder
+#### GraphQLGenie.getSchemaBuilder(): GraphQLSchemaBuilder
 GraphQLSchemaBuilder has some additional helpers to add types and resolvers to a graphql schema
 
 > See info about the GraphQLSchemaBuilder interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
