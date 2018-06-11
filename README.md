@@ -40,7 +40,7 @@ Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-
 
 
 #### Scalar Types
-	In addition to the [default scalar types](https://graphql.org/learn/schema/#scalar-types) (Int, Float, String, Boolean, ID) GraphQL Genie comes built in with scalar fields Date, Time, DateTime ([learn more](https://www.npmjs.com/package/graphql-iso-date)) and JSON ([learn more](https://github.com/taion/graphql-type-json)).
+In addition to the [default scalar types](https://graphql.org/learn/schema/#scalar-types) (Int, Float, String, Boolean, ID) GraphQL Genie comes built in with scalar fields Date, Time, DateTime ([learn more](https://www.npmjs.com/package/graphql-iso-date)) and JSON ([learn more](https://github.com/taion/graphql-type-json)).
 
 **Example:**
 ```graphql 
