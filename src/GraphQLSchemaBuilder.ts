@@ -271,7 +271,7 @@ export class GraphQLSchemaBuilder {
 		return this.schema;
 	}
 
-	private isUserType(type: GraphQLType): boolean {
+	public isUserType(type: GraphQLType): boolean {
 		let isUserType = false;
 		if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !type.name.endsWith('PreviousValues') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
 			isUserType = true;
