@@ -18,7 +18,6 @@
     "noUnusedParameters": true,
     "jsx": "react",
     "jsxFactory": "h",
-    "rootDir": "./src",
     "outDir": "lib"
   },
   "include": ["src/*.ts"],

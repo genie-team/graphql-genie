@@ -17,6 +17,7 @@ module.exports = (options) => {
 		},
 		watch: true,
 		devServer: {
+			watchContentBase: true,
 			contentBase: root('dist'),
 			port: 9000
 		},
@@ -41,7 +42,8 @@ module.exports = (options) => {
 		output: {
 			path: root('dist'),
 			filename: 'index.js',
-			libraryTarget: 'umd'
+			libraryTarget: 'umd',
+			sourceMapFilename: '[file].map'
 		}
 	};
 };
