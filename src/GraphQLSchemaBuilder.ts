@@ -10,6 +10,7 @@ import { getReturnType, typeIsList } from './GraphQLUtils';
 import { getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
 
 export class GraphQLSchemaBuilder {
+
 	private schema: GraphQLSchema;
 	private typeDefs: string;
 	private config: GenerateConfig;
@@ -156,7 +157,8 @@ export class GraphQLSchemaBuilder {
 
 		// add args to type fields
 		const queryTypeFields = (<GraphQLObjectType>this.schema.getType('Query')).getFields();
-
+		let visitUnique = false;
+		const uniqueDirective = {arguments: [], kind: 'Directive', name: {kind: 'Name', value: 'unique'}};
 		Object.keys(typeMap).forEach(name => {
 			const type = typeMap[name];
 			if (this.isUserType(type)) {
@@ -172,7 +174,7 @@ export class GraphQLSchemaBuilder {
 								const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
 								const fullArgs = queryField ? queryField.args : [];
 								if (!isEmpty(fullArgs)) {
-									const interfaceQueryArgs = fullArgs.filter(({name}) => {
+									const interfaceQueryArgs = fullArgs.filter(({ name }) => {
 										return Object.keys(queryArgs).includes(name);
 									});
 									if (interfaceQueryArgs && !isEmpty(interfaceQueryArgs)) {
@@ -193,76 +195,88 @@ export class GraphQLSchemaBuilder {
 									}
 								}
 							}
-					} else { // if an object type grab from existing query type
-						let queryFieldName = `${pluralize(returnType.name.toLowerCase())}`;
-						if (returnType.name.endsWith('Connection')) {
-							queryFieldName = `${pluralize(returnType.name.replace('Connection', '').toLowerCase())}Connection`;
-						}
-						const queryField = queryTypeFields[queryFieldName];
-						const fullArgs = queryField ? queryField.args : [];
-						if (!isEmpty(fullArgs)) {
-							const filterArg = find(fullArgs, ['name', 'where']);
-							graphQLfield.args = graphQLfield.args ? graphQLfield.args : [];
-							if (typeIsList(graphQLfield.type)) {
-								graphQLfield.args = graphQLfield.args.concat(fullArgs);
-							} else {
-								graphQLfield.args.push(filterArg);
+						} else { // if an object type grab from existing query type
+							let queryFieldName = `${pluralize(returnType.name.toLowerCase())}`;
+							if (returnType.name.endsWith('Connection')) {
+								queryFieldName = `${pluralize(returnType.name.replace('Connection', '').toLowerCase())}Connection`;
+							}
+							const queryField = queryTypeFields[queryFieldName];
+							const fullArgs = queryField ? queryField.args : [];
+							if (!isEmpty(fullArgs)) {
+								const filterArg = find(fullArgs, ['name', 'where']);
+								graphQLfield.args = graphQLfield.args ? graphQLfield.args : [];
+								if (typeIsList(graphQLfield.type)) {
+									graphQLfield.args = graphQLfield.args.concat(fullArgs);
+								} else {
+									graphQLfield.args.push(filterArg);
+								}
 							}
 						}
+					} else if (fieldName === 'id') { // make sure id field has unique directive
+						const directives = <Array<any>>graphQLfield.astNode.directives;
+						const hasUnique = directives.findIndex((directive) => {
+							return directive.name.value === 'unique';
+						}) > -1;
+						if (!hasUnique) {
+							visitUnique = true;
+							directives.push(uniqueDirective);
+						}
 					}
-
-				}
-					});
-	}
-});
-
-return this.schema;
+				});
+			}
+		});
+		if (visitUnique) {
+			SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
+				unique: UniqueDirective
+			});
+		}
+		return this.schema;
 	}
 
 	public getSchema = (): GraphQLSchema => {
-	if (!this.schema) {
-		this.schema = this.addTypeDefsToSchema();
+		if (!this.schema) {
+			this.schema = this.addTypeDefsToSchema();
+		}
+		return this.schema;
 	}
-	return this.schema;
-}
 
 	public setResolvers = (typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>>): GraphQLSchema => {
-	const resolverMap = {};
-	resolverMap[typeName] = {};
-	this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
-	fieldResolvers.forEach((resolveFn, name) => {
-		resolverMap[typeName][name] = resolveFn;
-		this.resolveFunctions[typeName][name] = resolveFn; // save in case type defs changed
-	});
+		const resolverMap = {};
+		resolverMap[typeName] = {};
+		this.resolveFunctions[typeName] = this.resolveFunctions[typeName] ? this.resolveFunctions[typeName] : {};
+		fieldResolvers.forEach((resolveFn, name) => {
+			resolverMap[typeName][name] = resolveFn;
+			this.resolveFunctions[typeName][name] = resolveFn; // save in case type defs changed
+		});
 
-	addResolveFunctionsToSchema({
-		schema: this.schema,
-		resolvers: resolverMap,
-		resolverValidationOptions: {
-			requireResolversForResolveType: false
-		}
-	});
-	return this.schema;
-}
+		addResolveFunctionsToSchema({
+			schema: this.schema,
+			resolvers: resolverMap,
+			resolverValidationOptions: {
+				requireResolversForResolveType: false
+			}
+		});
+		return this.schema;
+	}
 	public setIResolvers = (iResolvers: IResolvers): GraphQLSchema => {
-	this.resolveFunctions = Object.assign(this.resolveFunctions, iResolvers);
-	addResolveFunctionsToSchema({
-		schema: this.schema,
-		resolvers: iResolvers,
-		resolverValidationOptions: {
-			requireResolversForResolveType: false
-		}
-	});
-	return this.schema;
-}
+		this.resolveFunctions = Object.assign(this.resolveFunctions, iResolvers);
+		addResolveFunctionsToSchema({
+			schema: this.schema,
+			resolvers: iResolvers,
+			resolverValidationOptions: {
+				requireResolversForResolveType: false
+			}
+		});
+		return this.schema;
+	}
 
 	private isUserType(type: GraphQLType): boolean {
-	let isUserType = false;
-	if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !type.name.endsWith('PreviousValues') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
-		isUserType = true;
+		let isUserType = false;
+		if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !type.name.endsWith('PreviousValues') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+			isUserType = true;
+		}
+		return isUserType;
 	}
-	return isUserType;
-}
 }
 
 // class DisplayDirective extends SchemaDirectiveVisitor {
