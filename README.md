@@ -25,7 +25,7 @@ Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-
 
 ### Getting started
 
-1. Create your type definitions. These are GraphQL Type definitions, GraphQL Genie does have some additional directives which may be useful. [Documentation in docs/sdl.md](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md)
+1. [Create your type definitions.](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md) These are GraphQL Type definitions, GraphQL Genie does have some additional directives which may be useful. [Documentation in docs/sdl.md](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md)
 2. Setup fortune options with your adapter and other settings. See example below or [fortune docs](http://fortune.js.org/api/#fortune-constructor) and documentation for your adapter
 3. Create the schema using genie.
 	1. Create a new GraphQLGenie object
