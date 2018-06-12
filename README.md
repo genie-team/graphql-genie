@@ -136,7 +136,7 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
 
 
 ### GraphQLGenie API
- 
+___ 
 ```ts 
 use(plugin: GeniePlugin): Promise<Void> 
 ```
@@ -144,18 +144,20 @@ use(plugin: GeniePlugin): Promise<Void>
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
 
 > See info about the GeniePlugin interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
-
+___
 ```ts 
 getSchema(): GraphQLSchema
 ```
 
 Get the schema
+___
 
 ```ts 
 printSchema(): string
 ```
 
 Return a string of the full schema with directives
+___
 
 ```ts 
 getFragmentTypes(): Promise<Void>
@@ -168,6 +170,7 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 	introspectionQueryResultData
 });
 ```
+___
 
 ```ts 
 getDataResolver(): DataResolver
@@ -188,6 +191,7 @@ Most likely use of this is to add hooks into the CRUD operations against your da
 ```
 
 > See info about the DataResolver interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
+___
 
 ```ts 
 GraphQLGenie.getSchemaBuilder(): GraphQLSchemaBuilder 
@@ -207,6 +211,7 @@ GraphQLSchemaBuilder has some additional helpers to add types and resolvers to a
 
 > See info about the GraphQLSchemaBuilder class in [GraphQLSchemaBuilder.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
 
+___
 
 Additional documentation is in development, see [examples](https://github.com/genie-team/graphql-genie/tree/master/examples) and [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests) for implementation examples.
 
