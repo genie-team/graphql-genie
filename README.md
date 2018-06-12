@@ -11,13 +11,6 @@
 
 Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns it into a fully featured GraphQL API with referential integrity and inverse updates that can be used client side or server side. You can use all the features of the type schema, including interfaces and unions. Add subscriptions with the [plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions). The schema uses best practices and is compliant with the [Relay GraphQL Server Specification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#mutations). 
 
-## Advantages/Differences
-Because GraphQL Genie gives you a fully functioning graphql api but is not opinionated about anything else you have the flexibility to use that schema wherever you want and integrate it was any existing services you use. 
- * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/) or any of the many other tools in the growing GraphQL ecosystem. 
- * You can use your existing [authentication](#authentication) methods or one provided by an outside service.
- * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
- * You can make your api logic completely serverless 
-
 ### Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
 
@@ -88,6 +81,14 @@ You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilde
 If you want guidance feel free to open an issue and label it as a question.
 
 **Additional documentation is in development, see [examples](https://github.com/genie-team/graphql-genie/tree/master/examples) and [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests) for implementation examples.**
+
+
+## Advantages/Differences
+GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/prisma) and the resulting API has a lot of similarities but they have different goals. Because GraphQL Genie gives you a fully functioning graphql api but is not opinionated about anything else you have the flexibility to use that schema wherever you want and integrate it with any existing services you use. 
+ * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/) or any of the many other tools in the growing GraphQL ecosystem. 
+ * You can use your existing [authentication](#authentication) methods or one provided by an outside service.
+ * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
+ * You can make your api logic completely serverless 
 
 ### TODO
 
