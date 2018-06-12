@@ -1,7 +1,7 @@
 
 **GraphQLGenie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**
 
-#### GraphQL Genie has some custom directives you can use.
+#### Custom directives you can use.
  * **@unique**
 	* The @unique directive marks a scalar field as unique. All id fields will be considered marked @unique
 	* This is used for various update operations that need to find a unique field, errors will be thrown if a duplicate value is attempted to be added on a unique field
