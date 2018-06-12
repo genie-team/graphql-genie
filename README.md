@@ -135,10 +135,10 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
 [GraphQL Genie](https://github.com/genie-team/graphql-genie) also supports subscriptions with the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions). 
 
 
-### Documentation
+### GraphQLGenie API
  
 ```ts 
-GraphQLGenie.use(plugin: GeniePlugin): Promise<Void> 
+use(plugin: GeniePlugin): Promise<Void> 
 ```
 
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
@@ -146,19 +146,19 @@ Pass in a plugin that alters the schema, see the [subscriptions plugin](https://
 > See info about the GeniePlugin interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
 
 ```ts 
-GraphQLGenie.getSchema(): GraphQLSchema
+getSchema(): GraphQLSchema
 ```
 
 Get the schema
 
 ```ts 
-GraphQLGenie.printSchema(): string
+printSchema(): string
 ```
 
 Return a string of the full schema with directives
 
 ```ts 
-GraphQLGenie.getFragmentTypes(): Promise<Void>
+getFragmentTypes(): Promise<Void>
 ```
 When using Apollo or another tool you may need to get information on the fragment types, genie provides a helper for this
 ```ts
@@ -170,7 +170,7 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 ```
 
 ```ts 
-GraphQLGenie.getDataResolver(): DataResolver
+getDataResolver(): DataResolver
 ```
 DataResolver handles all the operations with your actual data. Such as CRUD and hooks. 
 
