@@ -198,7 +198,7 @@ GraphQLGenie.getSchemaBuilder(): GraphQLSchemaBuilder
 ```
 GraphQLSchemaBuilder has some additional helpers to add types and resolvers to a graphql schema
 
-See the [GraphQLSchemaBuilder API documentation](#)
+See the [GraphQLSchemaBuilder API documentation](#graphqlschemabuilder-api)
 
 ___
 
