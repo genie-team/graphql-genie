@@ -9,7 +9,7 @@ module.exports = (options) => {
 		mode: 'development',
 		target: 'web',
 		entry: {
-			'main': './src/main.ts'
+			'main': './src/main.simple.ts'
 		},
 		resolve: {
 			extensions: [".webpack.js", ".web.js", ".mjs", ".ts", ".js", ".json"],

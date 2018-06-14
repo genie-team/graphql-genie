@@ -7,20 +7,41 @@ import { FortuneOptions, GraphQLGenie } from '../../../src/index';
 
 const typeDefs = `
 
-type Company {
+interface Submission {
 	id: ID! @unique
-  name: String
-  industry: String
-  employees: [Employee!]
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
 }
 
-type Employee {
-	id: ID!
-  firstName: String
-  lastName: String
-  address: String
-  subordinates: [Employee!]
-  company: Company
+type Story implements Submission {
+	id: ID! @unique
+	title: String!
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
+}
+
+
+type Comment implements Submission {
+	id: ID! @unique
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	approved: Boolean @default(value: "true")
+}
+
+
+type User {
+	id: ID! @unique
+	email: String @unique
+	submissions: [Submission!] @relation(name: "SubmissionsByUser")
+	address: Address
+	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
+}
+
+type Address {
+	id: ID! @unique
+	city: String!
+	user: User
 }
 
 
@@ -62,3 +83,27 @@ const buildClient = async (genie: GraphQLGenie) => {
 };
 
 buildClient(genie);
+// mutation {
+//   createUser (input: {
+//     data: {      
+//       liked: {
+//         comments: {
+//           create: {
+//             text: "bam"
+//           }
+//         }
+//       }
+//     }
+//   }) {
+//     data {
+//       id
+//       liked {
+//         edges {
+//           node {
+//             text
+//           }
+//         }
+//       }
+//     }
+//   }
+// }

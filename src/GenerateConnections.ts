@@ -1,9 +1,9 @@
 
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, isInterfaceType, isUnionType } from 'graphql';
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
+import { getAllResolver, getRootMatchFields, queryArgs, Relations } from './TypeGeneratorUtilities';
 
 export class GenerateConnections implements TypeGenerator {
 	private objectName: string;
@@ -63,43 +63,17 @@ export class GenerateConnections implements TypeGenerator {
 	}
 
 	generate() {
+		Object.keys(this.schema.getTypeMap()).forEach(typeName => {
+			const type = this.schema.getType(typeName);
+			if (isInterfaceType(type) || isUnionType(type)) {
+				this.createNewTypes(typeName);
+			}
+		});
+
 		this.types.forEach(type => {
 			const fieldName = `${pluralize(type.name.toLowerCase())}Connection`;
-			this.currOutputObjectTypeDefs.add(`
-				"""
-				A connection to a list of items.
-				"""
-				type ${type.name}Connection {
-					"""
-					A list of edges.
-					"""
-					edges: [${type.name}Edge]
-					"""
-					Information to aid in pagination.
-					"""
-					pageInfo: PageInfo
-					"""
-					Meta information
-					"""
-					aggregate: ${type.name}Aggregate
-				}
-			`);
 
-			this.currOutputObjectTypeDefs.add(`
-				type ${type.name}Aggregate {
-					"""
-					The total number that match the where clause
-					"""
-					count: Int!
-				}
-			`);
-
-			this.currOutputObjectTypeDefs.add(`
-				type ${type.name}Edge {
-					node: ${type.name}!
-					cursor: String!
-				}
-			`);
+			this.createNewTypes(type.name);
 
 			const schemaType = this.schema.getType(type.name);
 			const generator = new InputGenerator(schemaType, null, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
@@ -144,4 +118,41 @@ export class GenerateConnections implements TypeGenerator {
 		return new Map([[this.objectName, this.fields]]);
 	}
 
+	private createNewTypes(typeName: string) {
+		this.currOutputObjectTypeDefs.add(`
+		"""
+		A connection to a list of items.
+		"""
+		type ${typeName}Connection {
+			"""
+			A list of edges.
+			"""
+			edges: [${typeName}Edge]
+			"""
+			Information to aid in pagination.
+			"""
+			pageInfo: PageInfo
+			"""
+			Meta information
+			"""
+			aggregate: ${typeName}Aggregate
+		}
+	`);
+
+	this.currOutputObjectTypeDefs.add(`
+		type ${typeName}Aggregate {
+			"""
+			The total number that match the where clause
+			"""
+			count: Int!
+		}
+	`);
+
+	this.currOutputObjectTypeDefs.add(`
+		type ${typeName}Edge {
+			node: ${typeName}!
+			cursor: String!
+		}
+	`);
+	}
 }
