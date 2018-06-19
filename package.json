@@ -21,7 +21,7 @@
     "build": "tsc -p .",
     "browser": "rollup -c rollup.browser.js",
     "module": "rollup -c rollup.module.js",
-    "prepublishOnly": "lint && npm run build && npm run browser && npm run module",
+    "prepublishOnly": "npm run test && npm run lint && npm run build && npm run browser && npm run module",
     "start": "rollup -c rollup.browser.js -w",
     "test": "jest",
     "testMutation": "jest ./tests/__tests__/mutationTests.ts",
