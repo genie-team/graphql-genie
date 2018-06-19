@@ -1,4 +1,4 @@
-import { getIntrospectionQuery, graphql, GraphQLError, GraphQLSchema, IntrospectionType } from 'graphql';
+import { GraphQLError, GraphQLSchema, IntrospectionType, getIntrospectionQuery, graphql } from 'graphql';
 import { concat, each, findIndex, get, includes, keys, mapKeys, omit, omitBy, set, startsWith } from 'lodash';
 
 export default class SchemaInfoBuilder {

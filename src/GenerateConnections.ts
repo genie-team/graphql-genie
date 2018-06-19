@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { getAllResolver, getRootMatchFields, queryArgs, Relations } from './TypeGeneratorUtilities';
+import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
 
 export class GenerateConnections implements TypeGenerator {
 	private objectName: string;
@@ -73,14 +73,14 @@ export class GenerateConnections implements TypeGenerator {
 				): any => {
 					return root;
 				});
-	
+
 				edgeFieldResolvers.set('cursor', (
 					root: any
 				): any => {
 					const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
 					return fortuneReturn.id;
 				});
-	
+
 				this.edgeResolvers.set(`${typeName}Edge`, edgeFieldResolvers);
 			}
 		});

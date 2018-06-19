@@ -1,7 +1,7 @@
 
-import { getNamedType, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
+import { GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
-import { addResolveFunctionsToSchema, IResolvers, makeExecutableSchema, SchemaDirectiveVisitor } from 'graphql-tools';
+import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
 import { find, has, isEmpty, set, values } from 'lodash';
 import pluralize from 'pluralize';

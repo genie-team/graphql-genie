@@ -1,4 +1,4 @@
-import { defaultFieldResolver, getNamedType, GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -344,6 +344,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 								} else {
 									resolve(result[0]);
 								}
+							}).catch(reason => {
+								throw new Error(reason);
 							});
 						})
 					);
@@ -386,6 +388,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 							} else {
 								resolve();
 							}
+						}).catch(reason => {
+							throw new Error(reason);
 						});
 					})
 				);
@@ -406,6 +410,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					dataResolver.create(returnTypeName, createArg).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			}
@@ -431,6 +437,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					dataResolver.update(returnTypeName, cleanArg).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			} else if (currRecord) {
@@ -447,6 +455,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					} else {
 						reject(new Error('tried to connect using unique value that does not exist ' + JSON.stringify(connectArg)));
 					}
+				}).catch(reason => {
+					throw new Error(reason);
 				});
 			}));
 		});
@@ -458,6 +468,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				dataResolverPromises.push(new Promise((resolve) => {
 					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(data => {
 						resolve({ index, key, id: null, data });
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			} else {
@@ -468,6 +480,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						} else {
 							reject();
 						}
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			}
@@ -478,6 +492,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			dataResolverPromises.push(new Promise((resolve) => {
 				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(data => {
 					resolve({ index, key, id: data[key], data });
+				}).catch(reason => {
+					throw new Error(reason);
 				});
 			}));
 		}
@@ -490,6 +506,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				dataResolverPromises.push(new Promise((resolve) => {
 					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]]).then(data => {
 						resolve({ index, key, id: null, data });
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			} else if (whereArgs && !currRecord) {
@@ -501,7 +519,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						}
 						dataResolver.delete(currRecord.__typename, [currRecord.id]).then(() => {
 							resolve({ index, key, id: null, currRecord });
+						}).catch(reason => {
+							throw new Error(reason);
 						});
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			} else {
@@ -512,6 +534,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						} else {
 							reject();
 						}
+					}).catch(reason => {
+						throw new Error(reason);
 					});
 				}));
 			}
@@ -522,6 +546,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			dataResolverPromises.push(new Promise((resolve) => {
 				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds).then(data => {
 					resolve({ index, key, id: data[key], data });
+				}).catch(reason => {
+					throw new Error(reason);
 				});
 			}));
 		}

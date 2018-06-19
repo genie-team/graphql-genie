@@ -1,10 +1,10 @@
 
-import { getNamedType, getNullableType, GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, isInputType, isInterfaceType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isInputType, isInterfaceType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { each, get, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
-import { capFirst, fortuneFilters, lowerFirst, Mutation, Relations } from './TypeGeneratorUtilities';
+import { Mutation, Relations, capFirst, fortuneFilters, lowerFirst } from './TypeGeneratorUtilities';
 export class InputGenerator {
 
 	private type: GraphQLNamedType;
@@ -96,11 +96,14 @@ export class InputGenerator {
 							});
 						}
 					});
-					this.currInputObjectTypes.set(fieldInputName, new GraphQLInputObjectType({
+					const newInputObject = new GraphQLInputObjectType({
 						name: fieldInputName,
 						fields
-					}));
-					inputType = this.currInputObjectTypes.get(fieldInputName);
+					});
+					if (!this.dummy) {
+						this.currInputObjectTypes.set(fieldInputName, newInputObject);
+					}
+					inputType = newInputObject;
 				}
 			} else {
 				if (!this.dummy) {

@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQL
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
-import { deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter, Relations } from './TypeGeneratorUtilities';
+import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter } from './TypeGeneratorUtilities';
 
 export class GenerateDelete implements TypeGenerator {
 	private objectName: string;

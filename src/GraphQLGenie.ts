@@ -226,7 +226,6 @@ export class GraphQLGenie {
 	}
 
 	public getFragmentTypes = async (): Promise<any> => {
-		await this.ready;
 		const result = await graphql(this.schema, `{
 			__schema {
 				types {
