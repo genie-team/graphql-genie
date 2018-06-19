@@ -8,42 +8,15 @@ import { FortuneOptions, GraphQLGenie } from '../../../src/index';
 
 const typeDefs = `
 
-interface Submission {
-	id: ID! @unique
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
+# This is sample IDL schema for GraphQL Genie.
+#
+
+
+
+type Bam {
+  id: ID!
 }
 
-type Story implements Submission {
-	id: ID! @unique
-	title: String!
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
-	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
-}
-
-
-type Comment implements Submission {
-	id: ID! @unique
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
-	approved: Boolean @default(value: "true")
-}
-
-
-type User {
-	id: ID! @unique
-	email: String @unique
-	submissions: [Submission!] @relation(name: "SubmissionsByUser")
-	address: Address
-	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
-}
-
-type Address {
-	id: ID! @unique
-	city: String!
-	user: User
-}
 
 
 `;

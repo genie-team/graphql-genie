@@ -1,6 +1,6 @@
 
 import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isInputType, isInterfaceType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
-import { each, get, merge } from 'lodash';
+import { each, get, isEmpty, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
@@ -441,7 +441,9 @@ export class InputGenerator {
 						get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
 				}
 			});
-
+			if (isEmpty(fields)) {
+				throw new Error(`Types must have at least one field other than ID, ${this.type.name} does not`);
+			}
 			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
@@ -598,7 +600,9 @@ export class InputGenerator {
 						inputType));
 				}
 			});
-
+			if (isEmpty(fields)) {
+				throw new Error(`Types must have at least one field other than ID, ${this.type.name} does not`);
+			}
 			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
 				name,
 				fields
