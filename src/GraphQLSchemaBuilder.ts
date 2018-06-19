@@ -124,18 +124,6 @@ export class GraphQLSchemaBuilder {
 			}
 		});
 
-		if (this.typeDefs.includes('@connection')) {
-			if (!this.config.generateConnections) {
-				throw new Error('Generate Connections must be true to use connection directive');
-			}
-			// don't want to attempt this if we didn't create the necessary types yet
-			if (this.typeDefs.includes('Connection') && this.typeDefs.includes('Edge') && this.typeDefs.includes('PageInfo')) {
-				SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
-					connection: ConnectionDirective
-				});
-			}
-		}
-
 		const typeMap = this.schema.getTypeMap();
 
 		if (this.typeDefs.includes('@model')) {
@@ -226,6 +214,19 @@ export class GraphQLSchemaBuilder {
 				});
 			}
 		});
+
+		if (this.typeDefs.includes('@connection')) {
+			if (!this.config.generateConnections) {
+				throw new Error('Generate Connections must be true to use connection directive');
+			}
+			// don't want to attempt this if we didn't create the necessary types yet
+			if (this.typeDefs.includes('Connection') && this.typeDefs.includes('Edge') && this.typeDefs.includes('PageInfo')) {
+				SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
+					connection: ConnectionDirective
+				});
+			}
+		}
+
 		if (visitUnique) {
 			SchemaDirectiveVisitor.visitSchemaDirectives(this.schema, {
 				unique: UniqueDirective

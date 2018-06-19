@@ -1,4 +1,4 @@
-import { defaultFieldResolver, getNamedType, GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { defaultFieldResolver, getNamedType, GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -210,20 +210,6 @@ export const clean = (obj): any => {
 		}
 	}
 	return returnObj;
-};
-
-const convertToConnectionReturn = (value: any) => {
-	value = isArray(value) ? value : [value];
-	const returnValue = {
-		edges: new Array()
-	};
-	value.forEach((value) => {
-		returnValue.edges.push({
-			node: value,
-			cursor: value
-		});
-	});
-	return returnValue;
 };
 
 const setupArgs = (results: any[], args: any[]) => {
@@ -554,15 +540,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				// if everything was already done on the object (updates, deletions and disconnects) it should be the currRecord but with changes
 				data = currRecord;
 			}
-			if (isObjectType(returnType) || isInterfaceType(returnType)) {
-				Object.values(returnType.getFields()).forEach(field => {
-					if (data.hasOwnProperty(field.name) && isObjectType(field.type)) {
-						if (field.type.name.endsWith('Connection')) {
-							data[field.name] = convertToConnectionReturn(data[field.name]);
-						}
-					}
-				});
-			}
+
 			return {
 				data,
 				clientMutationId
@@ -920,4 +898,13 @@ export const capFirst = (val: string) => {
 
 export const lowerFirst = (val: string) => {
 	return val ? val.charAt(0).toLowerCase() + val.slice(1) : '';
+};
+
+export const isConnectionType = (type: GraphQLType): boolean => {
+	let isConnection = false;
+	if (isObjectType(type) && type.name.endsWith('Connection')) {
+		isConnection = true;
+		// could add more logic to not have to ban fields ending with Connection
+	}
+	return isConnection;
 };

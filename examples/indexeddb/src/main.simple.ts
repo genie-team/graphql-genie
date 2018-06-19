@@ -3,6 +3,7 @@ import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import indexedDBAdapter from 'fortune-indexeddb';
 import { graphql, subscribe } from 'graphql';
+import gql from 'graphql-tag';
 import { FortuneOptions, GraphQLGenie } from '../../../src/index';
 
 const typeDefs = `
@@ -80,30 +81,34 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
+
+	await client.mutate({
+		mutation: gql`mutation {
+			createUser (input: {
+				data: {
+					liked: {
+						comments: {
+							create: {
+								text: "bam"
+							}
+						}
+					}
+				}
+			}) {
+				data {
+					id
+					liked {
+						edges {
+							node {
+								text
+							}
+						}
+					}
+				}
+			}
+		}
+		`
+	});
 };
 
 buildClient(genie);
-// mutation {
-//   createUser (input: {
-//     data: {      
-//       liked: {
-//         comments: {
-//           create: {
-//             text: "bam"
-//           }
-//         }
-//       }
-//     }
-//   }) {
-//     data {
-//       id
-//       liked {
-//         edges {
-//           node {
-//             text
-//           }
-//         }
-//       }
-//     }
-//   }
-// }

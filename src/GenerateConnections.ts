@@ -67,6 +67,21 @@ export class GenerateConnections implements TypeGenerator {
 			const type = this.schema.getType(typeName);
 			if (isInterfaceType(type) || isUnionType(type)) {
 				this.createNewTypes(typeName);
+				const edgeFieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
+				edgeFieldResolvers.set('node', (
+					root: any
+				): any => {
+					return root;
+				});
+	
+				edgeFieldResolvers.set('cursor', (
+					root: any
+				): any => {
+					const fortuneReturn = root && root.fortuneReturn ? root.fortuneReturn : root;
+					return fortuneReturn.id;
+				});
+	
+				this.edgeResolvers.set(`${typeName}Edge`, edgeFieldResolvers);
 			}
 		});
 
