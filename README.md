@@ -17,8 +17,6 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 
 ### Installation
 
-Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
-
 `npm install graphql-genie fortune graphql graphql-tools lodash` or `yarn add graphql-genie fortune graphql graphql-tools lodash`
 
 ### Getting started
