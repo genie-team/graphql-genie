@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "GraphQL Genie",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",

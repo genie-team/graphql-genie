@@ -12,10 +12,41 @@ const typeDefs = `
 #
 
 
-
-type Bam {
-  id: ID!
+interface Submission {
+	id: ID! @unique
+	text: Strig!
+	author: User @relation(name: "SubmissionsByUser")
 }
+
+type Story implements Submission @model {
+	id: ID! @unique
+	title: String!
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
+}
+
+type Comment implements Submission @model {
+	id: ID! @unique
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	approved: Boolean @default(value: "true")
+}
+
+type User @model {
+	id: ID! @unique
+	email: String @unique
+	submissions: [Submission!] @relation(name: "SubmissionsByUser")
+	address: Address
+	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
+}
+
+type Address @model {
+	id: ID! @unique
+	city: String!
+	user: User
+}
+
 
 
 
@@ -36,7 +67,12 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateUpsert: true
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	await genie.init();
+	try {
+		await genie.init();
+	} catch (e) {
+		console.error('genie error');
+		console.error(e);
+	}
 	const schema = genie.getSchema();
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({

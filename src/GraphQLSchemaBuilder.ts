@@ -76,11 +76,11 @@ export class GraphQLSchemaBuilder {
 			this.typeDefs += $typeDefs;
 		}
 		if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
-			this.typeDefs = 'directive @model on OBJECT ' + this.typeDefs;
+			this.typeDefs = '\ndirective @model on OBJECT' + this.typeDefs;
 		}
 
 		if (this.typeDefs.includes('@connection') && !this.typeDefs.includes('directive @connection')) {
-			this.typeDefs = 'directive @connection on FIELD_DEFINITION' + this.typeDefs;
+			this.typeDefs = '\ndirective @connection on FIELD_DEFINITION' + this.typeDefs;
 		}
 
 		if ((this.config.generateGetAll || this.config.generateConnections) && !this.typeDefs.includes('enum ORDER_BY_OPTIONS')) {

@@ -16,6 +16,8 @@
 	*  Note that the value argument is of type String for all scalar fields
 *  **@connection**
 	*  The directive @connection can be put on a list field to turn it into a type following the [Relay Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm) rather than just returning a normal list.
+*  **@model**
+	*  By default any object type will be part of the CRUD model, using the @model directive will limit to just types that use this directive
 
 
 #### Scalar Types
@@ -30,7 +32,7 @@ interface Submission {
 	author: User @relation(name: "SubmissionsByUser")
 }
 
-type Story implements Submission {
+type Story implements Submission @model {
 	id: ID! @unique
 	title: String!
 	text: String!
@@ -38,14 +40,14 @@ type Story implements Submission {
 	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
 }
 
-type Comment implements Submission {
+type Comment implements Submission @model {
 	id: ID! @unique
 	text: String!
 	author: User @relation(name: "SubmissionsByUser")
 	approved: Boolean @default(value: "true")
 }
 
-type User {
+type User @model {
 	id: ID! @unique
 	email: String @unique
 	submissions: [Submission!] @relation(name: "SubmissionsByUser")
@@ -53,7 +55,7 @@ type User {
 	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
 }
 
-type Address {
+type Address @model {
 	id: ID! @unique
 	city: String!
 	user: User
