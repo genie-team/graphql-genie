@@ -450,7 +450,6 @@ describe('genie', () => {
 		testData.users.push(zain.data.createUser.data);
 		testData.users.push(steve.data.createUser.data);
 		testData.users.push(pete.data.createUser.data);
-
 		const users = gql`
 				{
 					users(where:{

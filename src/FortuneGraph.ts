@@ -170,6 +170,9 @@ export default class FortuneGraph implements DataResolver {
 				ids = get(options, 'match.id');
 				delete options.match.id;
 			}
+			if (ids) {
+				ids = isArray(ids) ? ids : [ids];
+			}
 			options = this.generateOptions(options, graphQLTypeName, ids);
 			results = this.transaction ? await this.transaction.find(fortuneType, ids, options, include, meta) : await this.store.find(fortuneType, ids, options, include, meta);
 		}
