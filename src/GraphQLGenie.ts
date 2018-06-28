@@ -1,12 +1,12 @@
 
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, graphql, isObjectType, printType } from 'graphql';
-import { assign, forOwn, get } from 'lodash';
+import { GenerateUpdate } from './GenerateUpdate';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, getNamedType, graphql, isObjectType, isScalarType, printType } from 'graphql';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { GenerateUpdate } from './GenerateUpdate';
+import { assign, forOwn, get, isArray, isEmpty } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
@@ -223,6 +223,96 @@ export class GraphQLGenie {
 
 	public printSchema = (): string => {
 		return this.schemaBuilder.printSchemaWithDirectives();
+	}
+
+	public importRawData = async (data: any[]) => {
+		console.log(JSON.stringify(data));
+		const createPromises = [];
+		data.forEach(object => {
+			const typeName = object['__typename'];
+			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
+			const fieldMap = schemaType.getFields();
+			const objectFields = Object.keys(object);
+			const record = {};
+			objectFields.forEach(fieldName => {
+				const schemaField = fieldMap[fieldName];
+				const currVal = object[fieldName];
+				let addToRecord = false;
+				if (isArray(currVal) && !isEmpty(currVal)) {
+					addToRecord = true;
+				} else if (currVal !== undefined && currVal !== null) {
+					addToRecord = true;
+				}
+				if (addToRecord && fieldName !== 'id' && schemaField) {
+					const schemaFieldType = getNamedType(schemaField.type);
+					if (isScalarType(schemaFieldType)) {
+						record[fieldName] = currVal;
+					}
+				}
+			});
+			createPromises.push(this.graphQLFortune.create(typeName, record));
+		});
+		const createdObjects = await Promise.all(createPromises);
+		const idMap = new Map<String, String>();
+		let index = 0;
+		data.forEach(object => {
+			idMap.set(object.id, createdObjects[index].id);
+			index++;
+		});
+		index = 0;
+		const updatePromies = [];
+		data.forEach(object => {
+			const typeName = object['__typename'];
+			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
+			const fieldMap = schemaType.getFields();
+			const objectFields = Object.keys(object);
+			const update = {};
+			objectFields.forEach(fieldName => {
+				const schemaField = fieldMap[fieldName];
+				if (schemaField) {
+					const schemaFieldType = getNamedType(schemaField.type);
+					if (!isScalarType(schemaFieldType)) {
+						let currValue = object[fieldName];
+						if (!isEmpty(currValue)) {
+							currValue = isArray(currValue) ? currValue.map(id => idMap.get(id)) : currValue = idMap.get(currValue);
+							update[fieldName] = currValue;
+						}
+					}
+				}
+			});
+			if (!isEmpty(update)) {
+				update['id'] = createdObjects[index].id;
+				updatePromies.push(this.graphQLFortune.update(typeName, update));
+			}
+			index++;
+		});
+		await Promise.all(updatePromies);
+	}
+
+	public getRawData = async (): Promise<any> => {
+		let nodes = [];
+		const result = await graphql(this.schema, `{
+			__schema {
+				types {
+					name
+					kind
+				}
+			}
+		}`);
+		const types = get(result, 'data.__schema.types');
+		if (types) {
+			const userObjects = result.data.__schema.types.filter(
+				type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
+			);
+			const promises = [];
+			userObjects.forEach(object => {
+				promises.push(this.graphQLFortune.find(object.name));
+			});
+			const allData = await Promise.all(promises);
+			nodes = [].concat.apply([], allData); // flatten
+
+		}
+		return nodes;
 	}
 
 	public getFragmentTypes = async (): Promise<any> => {

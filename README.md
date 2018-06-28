@@ -105,6 +105,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 - [ ] Authentication Example
 - [ ] GraphQL Yoga Example
 - [ ] Seeds/Data transfer
+- [ ] createdAt/updatedAt
 
 #### Thanks/Credit
 

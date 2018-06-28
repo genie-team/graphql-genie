@@ -274,7 +274,15 @@ export class GraphQLSchemaBuilder {
 
 	public isUserType(type: GraphQLType): boolean {
 		let isUserType = false;
-		if (isObjectType(type) && type.name !== 'PageInfo' && !type.name.includes('__') && !type.name.endsWith('Aggregate') && !type.name.endsWith('Connection') && !type.name.endsWith('Edge') && !type.name.endsWith('Payload') && !type.name.endsWith('PreviousValues') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+		if (isObjectType(type) && this.isUserTypeByName(type.name)) {
+			isUserType = true;
+		}
+		return isUserType;
+	}
+
+	public isUserTypeByName(typeName: string): boolean {
+		let isUserType = false;
+		if (typeName !== 'PageInfo' && !typeName.includes('__') && !typeName.endsWith('Aggregate') && !typeName.endsWith('Connection') && !typeName.endsWith('Edge') && !typeName.endsWith('Payload') && !typeName.endsWith('PreviousValues') && !(typeName.toLowerCase() === 'query') && !(typeName.toLowerCase() === 'mutation') && !(typeName.toLowerCase() === 'subscription')) {
 			isUserType = true;
 		}
 		return isUserType;

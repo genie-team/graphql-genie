@@ -3,7 +3,6 @@ import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import indexedDBAdapter from 'fortune-indexeddb';
 import { graphql, subscribe } from 'graphql';
-import gql from 'graphql-tag';
 import { FortuneOptions, GraphQLGenie } from '../../../src/index';
 
 const typeDefs = `
@@ -14,7 +13,7 @@ const typeDefs = `
 
 interface Submission {
 	id: ID! @unique
-	text: Strig!
+	text: String!
 	author: User @relation(name: "SubmissionsByUser")
 }
 
@@ -36,6 +35,7 @@ type Comment implements Submission @model {
 type User @model {
 	id: ID! @unique
 	email: String @unique
+	name: String
 	submissions: [Submission!] @relation(name: "SubmissionsByUser")
 	address: Address
 	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
@@ -73,6 +73,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 		console.error('genie error');
 		console.error(e);
 	}
+	const rawData = await genie.getRawData();
+	console.log(rawData);
+	// await genie.importRawData(rawData);
+	// console.log(await genie.getRawData());
 	const schema = genie.getSchema();
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
@@ -91,33 +95,33 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
 
-	await client.mutate({
-		mutation: gql`mutation {
-			createUser (input: {
-				data: {
-					liked: {
-						comments: {
-							create: {
-								text: "bam"
-							}
-						}
-					}
-				}
-			}) {
-				data {
-					id
-					liked {
-						edges {
-							node {
-								text
-							}
-						}
-					}
-				}
-			}
-		}
-		`
-	});
+	// await client.mutate({
+	// 	mutation: gql`mutation {
+	// 		createUser (input: {
+	// 			data: {
+	// 				liked: {
+	// 					comments: {
+	// 						create: {
+	// 							text: "bam"
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}) {
+	// 			data {
+	// 				id
+	// 				liked {
+	// 					edges {
+	// 						node {
+	// 							text
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	`
+	// });
 };
 
 buildClient(genie);
