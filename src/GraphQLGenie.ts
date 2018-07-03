@@ -276,10 +276,12 @@ export class GraphQLGenie {
 				}
 			});
 			createPromises.push(
-				new Promise((resolve) => {
+				new Promise((resolve, reject) => {
 					this.graphQLFortune.create(typeName, record).then(createdObj => {
 						objectsMap.set(object['id'], createdObj);
 						resolve(createdObj);
+					}).catch(reason => {
+						reject(reason);
 					});
 				})
 			);
