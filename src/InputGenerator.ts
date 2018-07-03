@@ -56,6 +56,20 @@ export class InputGenerator {
 		return inputType;
 	}
 
+	private isAutomaticField(field: IntrospectionField): boolean {
+		let isAutoField = false;
+		if (field) {
+			if (field.name === 'id') {
+				isAutoField = true;
+			} else if (get(field, 'metadata.updatedTimestamp') === true) {
+				isAutoField = true;
+			} else if (get(field, 'metadata.createdTimestamp') === true) {
+				isAutoField = true;
+			}
+		}
+		return isAutoField;
+	}
+
 	private generateInputTypeForFieldInfo(field: IntrospectionField, mutation: Mutation): GraphQLInputType {
 		let inputType: GraphQLInputType;
 		const fieldTypeName = getReturnType(field.type);
@@ -335,7 +349,7 @@ export class InputGenerator {
 			const fields = {};
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
-				if (field.name !== relationFieldName && field.name !== 'id') {
+				if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 					let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
 					if (field.type.kind === 'NON_NULL') {
 						inputType = new GraphQLNonNull(inputType);
@@ -414,31 +428,37 @@ export class InputGenerator {
 
 	generateCreateInput(): GraphQLInputType {
 		const name = this.type.name + 'CreateInput';
+		const infoType = this.schemaInfo[this.type.name];
 		const fields = {};
 		if (isObjectType(this.type) && !this.currInputObjectTypes.has(name)) {
+			const infoTypeFields: IntrospectionField[] = infoType.fields;
 			each(this.type.getFields(), field => {
 				if (field.name !== 'id') {
 					let inputType;
 					if (isInputType(field.type)) {
-						inputType = field.type;
+						const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
+						if (!this.isAutomaticField(infoTypeField)) {
+							inputType = field.type;
+						}
 					} else if (isObjectType(field.type)) {
 						inputType = this.generateInputTypeForField(field, this.generateCreateManyWithoutInput,
 							this.generateCreateOneWithoutInput,
 							this.generateCreateManyInput,
 							this.generateCreateOneInput);
 					} else {
-						const infoTypeFields: IntrospectionField[] = this.schemaInfo[this.type.name].fields;
 						inputType = this.generateInputTypeForFieldInfo(
 							infoTypeFields.find(currField => currField.name === field.name),
 						 	Mutation.Create);
 					}
-					if (isNonNullType(field.type) && !isNonNullType(inputType)) {
+					if (inputType && isNonNullType(field.type) && !isNonNullType(inputType)) {
 						inputType = new GraphQLNonNull(inputType);
 					}
-					merge(fields, this.generateFieldForInput(
-						field.name,
-						inputType,
-						get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
+					if (inputType) {
+						merge(fields, this.generateFieldForInput(
+							field.name,
+							inputType,
+							get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
+					}
 				}
 			});
 			if (isEmpty(fields)) {
@@ -465,7 +485,7 @@ export class InputGenerator {
 			const fields = {};
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
-				if (field.name !== relationFieldName && field.name !== 'id') {
+				if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update);
 					merge(fields, this.generateFieldForInput(
 						field.name,
@@ -579,25 +599,31 @@ export class InputGenerator {
 		const name = this.type.name + 'UpdateInput';
 		const fields = {};
 		if (isObjectType(this.type) && !this.currInputObjectTypes.has(name)) {
+			const infoTypeFields: IntrospectionField[] = this.schemaInfo[this.type.name].fields;
+
 			each(this.type.getFields(), field => {
 				if (field.name !== 'id') {
 					let inputType;
 					if (isInputType(field.type)) {
-						inputType = getNullableType(field.type);
+						const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
+						if (!this.isAutomaticField(infoTypeField)) {
+							inputType = getNullableType(field.type);
+						}
 					} else if (isObjectType(field.type)) {
 						inputType = this.generateInputTypeForField(field, this.generateUpdateManyWithoutInput,
 							this.generateUpdateOneWithoutInput,
 							this.generateUpdateManyInput,
 							this.generateUpdateOneInput);
 					} else {
-						const infoTypeFields: IntrospectionField[] = this.schemaInfo[this.type.name].fields;
 						inputType = this.generateInputTypeForFieldInfo(
 							infoTypeFields.find(currField => currField.name === field.name),
 						 	Mutation.Update);
 					}
-					merge(fields, this.generateFieldForInput(
-						field.name,
-						inputType));
+					if (inputType) {
+						merge(fields, this.generateFieldForInput(
+							field.name,
+							inputType));
+					}
 				}
 			});
 			if (isEmpty(fields)) {

@@ -32,6 +32,10 @@ export class GraphQLSchemaBuilder {
 
 		directive @unique on FIELD_DEFINITION
 
+		directive @updatedTimestamp on FIELD_DEFINITION
+
+		directive @createdTimestamp on FIELD_DEFINITION
+
 		"""
 		An object with an ID
 		"""
@@ -117,7 +121,9 @@ export class GraphQLSchemaBuilder {
 			schemaDirectives: {
 				relation: RelationDirective,
 				default: DefaultDirective,
-				unique: UniqueDirective
+				unique: UniqueDirective,
+				createdTimestamp: CreatedTimestampDirective,
+				updatedTimestamp: UpdatedTimestampDirective
 			},
 			resolverValidationOptions: {
 				requireResolversForResolveType: false
@@ -371,6 +377,23 @@ class ModelDirective extends SchemaDirectiveVisitor {
 class UniqueDirective extends SchemaDirectiveVisitor {
 	public visitFieldDefinition(field) {
 		field.unique = true;
+	}
+}
+
+class UpdatedTimestampDirective extends SchemaDirectiveVisitor {
+	public visitFieldDefinition(field) {
+		const type = field.type;
+		if (type.name === 'DateTime') {
+			field['updatedTimestamp'] = true;
+		}
+	}
+}
+class CreatedTimestampDirective extends SchemaDirectiveVisitor {
+	public visitFieldDefinition(field) {
+		const type = field.type;
+		if (type.name === 'DateTime') {
+			field.createdTimestamp = true;
+		}
 	}
 }
 

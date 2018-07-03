@@ -18,6 +18,12 @@
 	*  The directive @connection can be put on a list field to turn it into a type following the [Relay Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm) rather than just returning a normal list.
 *  **@model**
 	*  By default any object type will be part of the CRUD model, using the @model directive will limit to just types that use this directive
+*  **@createdTimestamp**
+	*  The field will be automatically set when the record is created
+	*  Must be of type DateTime
+*  **@updatedTimestamp**
+	*  The field will automatically be updated when the record is updated
+	*  Must be of type DateTime
 
 
 #### Scalar Types
@@ -38,6 +44,8 @@ type Story implements Submission @model {
 	text: String!
 	author: User @relation(name: "SubmissionsByUser")
 	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
+	createdAt: DateTime @createdTimestamp
+	lastUpdatedAt: DateTime @updatedTimestamp
 }
 
 type Comment implements Submission @model {

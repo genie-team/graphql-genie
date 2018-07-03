@@ -149,8 +149,8 @@ export default class FortuneGraph implements DataResolver {
 
 	public create = async (graphQLTypeName: string, records, include?, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-
 		records['__typename'] = graphQLTypeName;
+
 		if (!records['id']) {
 			records['id'] = this.computeId(graphQLTypeName);
 		}
@@ -391,6 +391,27 @@ export default class FortuneGraph implements DataResolver {
 							}
 							this.uniqueIndexes.get(name).push(field.name);
 						}
+
+						if (get(field, 'metadata.createdTimestamp') === true) {
+							this.addInputHook(name, (context, record) => {
+								switch (context.request.method) {
+									case 'create':
+										record[field.name] = new Date();
+										return record;
+								}
+							});
+						}
+						if (get(field, 'metadata.updatedTimestamp') === true) {
+							this.addInputHook(name, (context, _record, update) => {
+								switch (context.request.method) {
+									case 'update':
+										if (!('replace' in update)) update.replace = {};
+										update.replace[field.name] = new Date();
+										return update;
+								}
+							});
+						}
+
 						currType = currType.kind === 'ENUM' ? 'String' : currType.name;
 						if (currType === 'ID' || currType === 'String') {
 							currType = String;
