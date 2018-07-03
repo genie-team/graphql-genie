@@ -87,12 +87,13 @@ If you want guidance feel free to open an issue and label it as a question.
 
 **Additional documentation is in development, see [examples](https://github.com/genie-team/graphql-genie/tree/master/examples) and [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests) for implementation examples.**
 
-## Advantages/Differences
+## Features/Advantages/Differences
 
 GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/prisma) and the resulting API has a lot of similarities but they have different goals. Because GraphQL Genie gives you a fully functioning graphql api but is not opinionated about anything else you have the flexibility to use that schema wherever you want and integrate it with any existing services you use. 
 
 * Bi-directional relationships in any database with a GraphQL API
 * Portable storage options, use anywhere for any purpose which is essential for some applications.
+* Export/Import/Merge data between data sources
 * Share GraphQL data model on server and client
 * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/), [GraphQL Bindings](https://github.com/graphql-binding/graphql-binding) or any of the many other tools in the growing GraphQL ecosystem. 
 * You can use your existing [authentication](#authentication) methods or one provided by an outside service.
@@ -104,7 +105,6 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 - [ ] API Documentation
 - [ ] Authentication Example
 - [ ] GraphQL Yoga Example
-- [ ] Seeds/Data transfer
 - [ ] createdAt/updatedAt
 
 #### Thanks/Credit
