@@ -93,6 +93,7 @@ export class GenerateDelete implements TypeGenerator {
 					const schemaType = this.schema.getType(type.name);
 					const options = parseFilter(filter, schemaType);
 					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 					count = fortuneReturn.length;
 
 					if (count > 0) {

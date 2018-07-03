@@ -6,7 +6,7 @@ import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { assign, forOwn, get, isArray, isEmpty } from 'lodash';
+import { assign, forOwn, get, isArray, isEmpty, isObject } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
@@ -64,13 +64,13 @@ export class GraphQLGenie {
 		const typeMap = this.schema.getTypeMap();
 		Object.keys(typeMap).forEach(name => {
 			const type = typeMap[name];
-			if (isObjectType(type) && !type.name.includes('__')  && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
+			if (isObjectType(type) && !type.name.includes('__') && !(type.name.toLowerCase() === 'query') && !(type.name.toLowerCase() === 'mutation') && !(type.name.toLowerCase() === 'subscription')) {
 				if (type.name.endsWith('Connection')) {
-					throw new Error( `${type.name} is invalid because it ends with Connection which could intefere with necessary generated types and genie logic`);
+					throw new Error(`${type.name} is invalid because it ends with Connection which could intefere with necessary generated types and genie logic`);
 				} else if (type.name.endsWith('Edge')) {
-					throw new Error( `${type.name} is invalid because it ends with Edge which could intefere with necessary generated types and genie logic`);
+					throw new Error(`${type.name} is invalid because it ends with Edge which could intefere with necessary generated types and genie logic`);
 				} else if (this.config.generateConnections && type.name === 'PageInfo') {
-					throw new Error( `${type.name} is invalid. PageInfo type is auto generated for connections`);
+					throw new Error(`${type.name} is invalid. PageInfo type is auto generated for connections`);
 				}
 			}
 		});
@@ -225,11 +225,36 @@ export class GraphQLGenie {
 		return this.schemaBuilder.printSchemaWithDirectives();
 	}
 
-	public importRawData = async (data: any[]) => {
+	public importRawData = async (data: any[], merge = false, defaultTypename?: string) => {
 		console.log(JSON.stringify(data));
+		let index = 0;
 		const createPromises = [];
-		data.forEach(object => {
-			const typeName = object['__typename'];
+		let createData = data;
+		const objectsMap = new Map<String, Object>();
+		data = data.map(object => {
+			const typeName = object['__typename'] || defaultTypename;
+			object.id = object.id || this.graphQLFortune.computeId(typeName);
+			return object;
+		});
+		if (merge) {
+			createData = [];
+			const findPromises = [];
+			data.forEach(object => {
+				const typeName = object['__typename'] || defaultTypename;
+				findPromises.push(this.graphQLFortune.find(typeName, object['id']));
+			});
+			const findResults = await Promise.all(findPromises);
+			findResults.forEach(result => {
+				if (isEmpty(result)) {
+					createData.push(data[index]);
+				} else {
+					objectsMap.set(result.id, result);
+				}
+				index++;
+			});
+		}
+		createData.forEach(object => {
+			const typeName = object['__typename'] || defaultTypename;
 			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
 			const fieldMap = schemaType.getFields();
 			const objectFields = Object.keys(object);
@@ -250,39 +275,86 @@ export class GraphQLGenie {
 					}
 				}
 			});
-			createPromises.push(this.graphQLFortune.create(typeName, record));
+			createPromises.push(
+				new Promise((resolve) => {
+					this.graphQLFortune.create(typeName, record).then(createdObj => {
+						objectsMap.set(object['id'], createdObj);
+						resolve(createdObj);
+					});
+				})
+			);
 		});
-		const createdObjects = await Promise.all(createPromises);
-		const idMap = new Map<String, String>();
-		let index = 0;
-		data.forEach(object => {
-			idMap.set(object.id, createdObjects[index].id);
-			index++;
-		});
+		await Promise.all(createPromises);
+
 		index = 0;
 		const updatePromies = [];
 		data.forEach(object => {
-			const typeName = object['__typename'];
+			const typeName = object['__typename'] || defaultTypename;
 			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
 			const fieldMap = schemaType.getFields();
 			const objectFields = Object.keys(object);
-			const update = {};
+			let update = {};
+			const pull = {};
 			objectFields.forEach(fieldName => {
 				const schemaField = fieldMap[fieldName];
 				if (schemaField) {
 					const schemaFieldType = getNamedType(schemaField.type);
-					if (!isScalarType(schemaFieldType)) {
+					if (merge || !isScalarType(schemaFieldType)) {
 						let currValue = object[fieldName];
 						if (!isEmpty(currValue)) {
-							currValue = isArray(currValue) ? currValue.map(id => idMap.get(id)) : currValue = idMap.get(currValue);
-							update[fieldName] = currValue;
+							if (!isScalarType(schemaFieldType)) {
+								if (isArray(currValue)) {
+									if (isObject(currValue[0])) {
+										currValue = currValue.map(element => element.id);
+									}
+									const fieldPush = [];
+									const fieldPull = [];
+									const existingObj = objectsMap.get(object['id']);
+									const existingObjField = existingObj ? existingObj[fieldName] : [];
+									currValue.forEach(element => {
+										if (!existingObjField.includes(element)) {
+											fieldPush.push(element);
+										}
+									});
+									existingObjField.forEach(element => {
+										if (!currValue.includes(element)) {
+											fieldPull.push(element);
+										}
+									});
+									if (!isEmpty(fieldPush)) {
+										update[fieldName] = fieldPush;
+									}
+									if (!isEmpty(fieldPull)) {
+										pull[fieldName] = fieldPull;
+									}
+								} else {
+									if (isObject(currValue)) {
+										currValue = currValue.id;
+									}
+									const existingObj = objectsMap.get(currValue);
+									// tslint:disable-next-line:prefer-conditional-expression
+									if (existingObj && currValue !== existingObj['id']) {
+										update[fieldName] = existingObj['id'];
+									} else {
+										update[fieldName] = currValue;
+									}
+								}
+							} else {
+								update[fieldName] = currValue;
+							}
+
 						}
 					}
 				}
 			});
 			if (!isEmpty(update)) {
-				update['id'] = createdObjects[index].id;
-				updatePromies.push(this.graphQLFortune.update(typeName, update));
+				update['id'] = objectsMap.get(object.id)['id'];
+				update = this.graphQLFortune.generateUpdates(typeName, update);
+				if (!isEmpty(pull)) {
+					update['pull'] = pull;
+				}
+				console.log(typeName, update);
+				updatePromies.push(this.graphQLFortune.update(typeName, update, undefined, { fortuneFormatted: true }));
 			}
 			index++;
 		});

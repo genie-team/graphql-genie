@@ -35,7 +35,8 @@ export default class FortuneGraph implements DataResolver {
 
 	}
 
-	private computeId = (id: string, graphType: string) => {
+	public computeId = (graphType: string) => {
+		const id = fortuneCommon.generateId();
 		return btoa(`${id}:${graphType}`);
 	}
 
@@ -150,7 +151,7 @@ export default class FortuneGraph implements DataResolver {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 
 		records['__typename'] = graphQLTypeName;
-		records['id'] = this.computeId(fortuneCommon.generateId(), graphQLTypeName);
+		records['id'] = this.computeId(graphQLTypeName);
 
 		let results = this.transaction ? await this.transaction.create(fortuneType, records, include, meta) : await this.store.create(fortuneType, records, include, meta);
 		results = results.payload.records;
@@ -229,7 +230,10 @@ export default class FortuneGraph implements DataResolver {
 
 	public update = async (graphQLTypeName: string, records, meta?, options?: object) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
-		const updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
+		let updates = records;
+		if (!options || !options['fortuneFormatted']) {
+			updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
+		}
 		let results = this.transaction ? await this.transaction.update(fortuneType, updates, meta) : await this.store.update(fortuneType, updates, meta);
 		results = results.payload.records;
 		return isArray(records) ? results : results[0];
@@ -243,7 +247,7 @@ export default class FortuneGraph implements DataResolver {
 		return true;
 	}
 
-	private generateUpdates = (fortuneTypeName: string, record, options: object = {}): FortuneUpdate => {
+	public generateUpdates = (fortuneTypeName: string, record, options: object = {}): FortuneUpdate => {
 		const updates: FortuneUpdate  = { id: record['id'] };
 		for (const argName in record) {
 			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);

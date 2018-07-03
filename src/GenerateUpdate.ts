@@ -99,7 +99,8 @@ export class GenerateUpdate implements TypeGenerator {
 				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';
 				if (filter && updateArgs) {
 					const options = parseFilter(filter, schemaType);
-					const fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 					count = fortuneReturn.length;
 					await Promise.all(fortuneReturn.map(async (fortuneRecord) => {
 						return await updateResolver(this.dataResolver)(fortuneRecord, { update: updateArgs, where: true }, _context, _info, null, null, <GraphQLOutputType>schemaType);
