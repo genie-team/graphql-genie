@@ -1,7 +1,7 @@
 import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
-import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isString, keys, set } from 'lodash';
+import {each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isString, keys, set, toString } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
@@ -151,7 +151,9 @@ export default class FortuneGraph implements DataResolver {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 
 		records['__typename'] = graphQLTypeName;
-		records['id'] = this.computeId(graphQLTypeName);
+		if (!records['id']) {
+			records['id'] = this.computeId(graphQLTypeName);
+		}
 
 		let results = this.transaction ? await this.transaction.create(fortuneType, records, include, meta) : await this.store.create(fortuneType, records, include, meta);
 		results = results.payload.records;
@@ -179,7 +181,10 @@ export default class FortuneGraph implements DataResolver {
 		}
 		let graphReturn: any[] = get(results, 'payload.records');
 		if (graphReturn) {
-
+			graphReturn = graphReturn.map((element) => {
+				element.id = isString(element.id) ? element.id : toString(element.id);
+				return element;
+			});
 			if (!options.sort) {
 				// to support relay plural identifying root fields results should be in the order in which they were requested,
 				// with null being returned by failed finds

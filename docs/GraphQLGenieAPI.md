@@ -81,6 +81,75 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 
 ---
 
+**getRawData**
+
+```
+getRawData(): Promise<any[]>
+```
+
+Returns all of the data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. It will look something like:
+
+```json
+[
+   {
+      "id":"eFRKZHZNM2xPaURGU3ljOlVzZXI=",
+      "__typename":"User",
+      "importID":null,
+      "email":null,
+      "name":"Update5",
+      "submissions":[
+         "VkhoRzNWNWJkNHlUVDBuOkNvbW1lbnQ="
+      ],
+      "address":"UldLemkxNnVld1N0Q1pOOkFkZHJlc3M=",
+      "liked":[]
+   },
+   {
+      "id":"UldLemkxNnVld1N0Q1pOOkFkZHJlc3M=",
+      "__typename":"Address",
+      "importID":null,
+      "city":"EC",
+      "user":"eFRKZHZNM2xPaURGU3ljOlVzZXI="
+   },
+   {
+      "id":"VkhoRzNWNWJkNHlUVDBuOkNvbW1lbnQ=",
+      "__typename":"Comment",
+      "importID":null,
+      "title":null,
+      "text":"update5",
+      "author":"eFRKZHZNM2xPaURGU3ljOlVzZXI=",
+      "approved":true
+   }
+]
+```
+
+---
+
+**importRawData**
+
+```
+importRawData(data: any[], merge = false, defaultTypename?: string): Promise
+```
+
+Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
+
+**data**
+
+an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query  and __typename fields are not added the defaultTypename must be provided
+
+
+
+**merge**
+
+If false every object will create a new object, the id won't be preserved from the current data but relationships will still be built as they were in the provided data.
+
+If true data will be merged based on ID, with new entries only being created if the given id does not exist already. Provided id will be used for creating data as well.
+
+**defaultTypename**
+
+Must be provided if every object in data does not have a `__typename` property
+
+---
+
 **getDataResolver**
 
 ```typescript

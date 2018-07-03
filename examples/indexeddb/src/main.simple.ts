@@ -73,32 +73,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 		console.error('genie error');
 		console.error(e);
 	}
-	const rawData = await genie.getRawData();
-	console.log(rawData);
-	rawData.forEach(element => {
-		if (element.name && element.name !== 'test') {
-			element.name = 'Update5';
-		} else if (element.text) {
-			element.text = 'update5';
-		}
-	});
-	console.log(rawData);
-	await genie.importRawData(rawData, true);
-	console.log('imported');
-	console.log(await genie.getRawData());
-	// await genie.importRawData([{
-	// 	'name': 'test',
-	// 	'address': {
-	// 		'id': 'VEpvX2xRYnJyUmpIdUNoOkFkZHJlc3M='
-	// 	},
-	// 	'submissions': [
-	// 		{
-	// 			'id': 'SzNmT210dkpXR1lZM2JNOkNvbW1lbnQ='
-	// 		}
-	// 	]
-	// }], true, 'User');
-	// console.log('imported');
-	// console.log(await genie.getRawData());
+
 	const schema = genie.getSchema();
 	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
@@ -116,6 +91,35 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
+
+	const rawData = await genie.getRawData();
+	console.log(rawData);
+	rawData.forEach(element => {
+		if (element.name && element.name !== 'test') {
+			element.name = 'Update5';
+		} else if (element.text) {
+			element.text = 'update5';
+		}
+	});
+	console.log(rawData);
+	await genie.importRawData(rawData, true);
+	console.log('imported');
+	console.log(await genie.getRawData());
+	// await genie.importRawData([{
+	// 	'id': '2d',
+	// 	'name': 'test2',
+	// 	'address': {
+	// 		'id': 'bGExb1dGdlBKc1FZa1RBOkFkZHJlc3M='
+	// 	},
+	// 	'submissions': [
+	// 		{
+	// 			'id': 'ZEpQa1dRTlNxN0xyVG4yOkNvbW1lbnQ='
+	// 		}
+	// 	]
+	// }], true, 'User');
+	// console.log('imported');
+	// console.log(await genie.getRawData());
+
 
 	// await client.mutate({
 	// 	mutation: gql`mutation {

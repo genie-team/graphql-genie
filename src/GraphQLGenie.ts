@@ -226,13 +226,15 @@ export class GraphQLGenie {
 	}
 
 	public importRawData = async (data: any[], merge = false, defaultTypename?: string) => {
-		console.log(JSON.stringify(data));
 		let index = 0;
 		const createPromises = [];
 		let createData = data;
 		const objectsMap = new Map<String, Object>();
 		data = data.map(object => {
 			const typeName = object['__typename'] || defaultTypename;
+			if (!typeName) {
+				throw new Error('Every object must have a __typename or defaultTypeName must be provided');
+			}
 			object.id = object.id || this.graphQLFortune.computeId(typeName);
 			return object;
 		});
@@ -259,6 +261,9 @@ export class GraphQLGenie {
 			const fieldMap = schemaType.getFields();
 			const objectFields = Object.keys(object);
 			const record = {};
+			if (merge && object.id) {
+				record['id'] = object.id;
+			}
 			objectFields.forEach(fieldName => {
 				const schemaField = fieldMap[fieldName];
 				const currVal = object[fieldName];
