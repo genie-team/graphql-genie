@@ -28,7 +28,7 @@
     "fortune": "^5.4.3",
     "fortune-indexeddb": "^1.0.3",
     "graphql": "^0.13.2",
-    "graphql-genie": "^0.1.0",
+    "graphql-genie": ">=0.2.0",
     "graphql-genie-subscriptions": "^1.0.1",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",
