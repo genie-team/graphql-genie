@@ -316,7 +316,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		dataResolver.canAdd(returnTypeName, updateArgs)]);
 		const cannotAdd = canAddResults.includes(false);
 		if (cannotAdd) {
-			throw new Error('can not create record with duplicate on unique field on type ' + returnTypeName + ' ' + JSON.stringify(createArgs) + ' ' + JSON.stringify(updateArgs));
+			throw new Error('Can not create record with duplicate on unique field on type ' + returnTypeName + ' ' + JSON.stringify(createArgs) + ' ' + JSON.stringify(updateArgs));
 		}
 
 		const dataResolverPromises: Array<Promise<any>> = [];

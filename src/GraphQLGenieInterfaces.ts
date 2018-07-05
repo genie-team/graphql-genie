@@ -69,7 +69,7 @@ export interface GraphQLGenieOptions {
 	schemaBuilder?: GraphQLSchemaBuilder;
 	typeDefs?: string;
 	generatorOptions?: GenerateConfig;
-	fortuneOptions: FortuneOptions;
+	fortuneOptions?: FortuneOptions;
 }
 
 export interface FortuneSettings {
@@ -81,7 +81,7 @@ export interface FortuneOptions {
 	adapter?: any;
 	hooks?: object;
 	documentation?: object;
-	settings: FortuneSettings;
+	settings?: FortuneSettings;
 }
 
 export interface GeniePlugin {

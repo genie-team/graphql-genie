@@ -16,7 +16,7 @@ interface GraphQLGenieOptions {
     schemaBuilder?: GraphQLSchemaBuilder;
     typeDefs?: string;
     generatorOptions?: GenerateConfig;
-    fortuneOptions: FortuneOptions;
+    fortuneOptions?: FortuneOptions;
 }
 // All default to true
 interface GenerateConfig {

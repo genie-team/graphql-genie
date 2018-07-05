@@ -37,10 +37,10 @@ export class GraphQLGenie {
 	public ready: boolean;
 	constructor(options: GraphQLGenieOptions) {
 		this.ready = false;
-		if (!options.fortuneOptions) {
-			throw new Error('Fortune Options is required');
-		} else {
-			this.fortuneOptions = options.fortuneOptions;
+		this.fortuneOptions  = options.fortuneOptions ? options.fortuneOptions : {};
+		this.fortuneOptions.settings = this.fortuneOptions.settings ? this.fortuneOptions.settings : {};
+		if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
+			this.fortuneOptions.settings.enforceLinks = true;
 		}
 
 		if (options.generatorOptions) {

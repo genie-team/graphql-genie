@@ -15,6 +15,8 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 
 [See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
 
+Or for a server demo see the  [graphql yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis) (no external db setup required as it uses a mock redis) or [graphql yoga postgres example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)
+
 ### Installation
 
 `npm install graphql-genie fortune graphql graphql-tools lodash` or `yarn add graphql-genie fortune graphql graphql-tools lodash`
@@ -59,7 +61,7 @@ const schema: GraphQLSchema = genie.getSchema();
 
 ### Data Store
 
-GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any [fortune adapter](http://fortune.js.org/plugins/) will work, plugins currently exist for memory ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/memory)), [IndexedDB](https://github.com/fortunejs/fortune-indexeddb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb)), [MongoDB](https://github.com/fortunejs/fortune-mongodb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb)), [Postgres](https://github.com/fortunejs/fortune-postgres) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/postgresql)), [Redis](https://github.com/thibremy/fortune-redis), [Google Cloud Datastore](https://github.com/patrinhani-ciandt/fortune-datastore), [NeDB](https://github.com/fortunejs/fortune-nedb) and [File System](https://github.com/fortunejs/fortune-fs). Or you could write your own.
+GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any [fortune adapter](http://fortune.js.org/plugins/) will work, plugins currently exist for memory ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/memory)), [IndexedDB](https://github.com/fortunejs/fortune-indexeddb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb)), [MongoDB](https://github.com/fortunejs/fortune-mongodb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb)), [Postgres](https://github.com/fortunejs/fortune-postgres) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)), [Redis](https://github.com/thibremy/fortune-redis), [Google Cloud Datastore](https://github.com/patrinhani-ciandt/fortune-datastore), [NeDB](https://github.com/fortunejs/fortune-nedb) and [File System](https://github.com/fortunejs/fortune-fs). Or you could write your own.
 
 ### Subscriptions
 
@@ -104,7 +106,6 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 - [ ] API Documentation
 - [ ] Authentication Example
-- [ ] GraphQL Yoga Example
 
 #### Thanks/Credit
 
