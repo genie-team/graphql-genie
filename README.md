@@ -19,7 +19,11 @@ Or for a server demo see the  [graphql yoga redis example](https://github.com/ge
 
 ### Installation
 
-`npm install graphql-genie fortune graphql graphql-tools lodash` or `yarn add graphql-genie fortune graphql graphql-tools lodash`
+`npm install graphql-genie fortune graphql graphql-tools lodash`
+
+or 
+
+`yarn add graphql-genie fortune graphql graphql-tools lodash`
 
 ### Getting started
 
