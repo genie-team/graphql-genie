@@ -13,7 +13,7 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 
 ## Demo
 
-[See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
+[See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search icon to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
 
 Or for a server demo see the  [graphql yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis) (no external db setup required as it uses a mock redis) or [graphql yoga postgres example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)
 
