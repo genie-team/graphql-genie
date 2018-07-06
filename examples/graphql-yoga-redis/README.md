@@ -1,4 +1,6 @@
 ### Run Server
-`yarn install`
-`yarn run build`
-`yarn run start`
+`npm install`
+
+`npm run build`
+
+`npm run start`
