@@ -13,13 +13,17 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 
 ## Demo
 
-[See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
+[See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search icon to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
 
 Or for a server demo see the  [graphql yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis) (no external db setup required as it uses a mock redis) or [graphql yoga postgres example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)
 
 ### Installation
 
-`npm install graphql-genie fortune graphql graphql-tools lodash` or `yarn add graphql-genie fortune graphql graphql-tools lodash`
+`npm install graphql-genie fortune graphql graphql-tools lodash`
+
+or 
+
+`yarn add graphql-genie fortune graphql graphql-tools lodash`
 
 ### Getting started
 
@@ -83,7 +87,7 @@ Some options to add authentication
 
 ### How do I do/add [thing]
 
-You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilder()) to add types and re``solvers to the generated schema. Or since it is just a normal schema you can use any tool you want (such as [graphql-tools](https://www.apollographql.com/docs/graphql-tools)) to alter the schema in any way. Including adding resolvers, mocking, stitching, transforming, etc.
+You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilder()) to add types and resolvers to the generated schema. Or since it is just a normal schema you can use any tool you want (such as [graphql-tools](https://www.apollographql.com/docs/graphql-tools)) to alter the schema in any way. Including adding resolvers, mocking, stitching, transforming, etc.
 
 If you want guidance feel free to open an issue and label it as a question.
 
