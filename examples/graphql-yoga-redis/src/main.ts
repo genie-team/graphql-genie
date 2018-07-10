@@ -34,7 +34,7 @@ type Comment implements Submission {
 }
 
 
-type User {
+type User @auth {
 	id: ID! @unique
 	email: String! @unique
   name : String!
@@ -88,7 +88,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 		context: {
 			authenticate: (method, requiredRoles, record) => {
 				console.log(method, requiredRoles, record);
-				return true;
+				return method === 'read';
 			}
 		}
 	});

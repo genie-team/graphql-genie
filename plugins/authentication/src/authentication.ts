@@ -1,4 +1,4 @@
-import { GraphQLObjectType, defaultFieldResolver, graphql, isObjectType } from 'graphql';
+import { GraphQLObjectType, defaultFieldResolver, getNamedType, graphql, isObjectType } from 'graphql';
 import { GeniePlugin, GraphQLGenie } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { isArray } from 'lodash';
@@ -51,10 +51,28 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 				}
 				const topLevelFields = Object.keys(graphqlFields(info));
 				const resolveResult = await resolve.apply(this, [record, args, context, info]);
-				let arrayResults = resolveResult && resolveResult.fortuneReturn ? resolveResult.fortuneReturn : resolveResult;
+				console.log('resolve result');
+				console.log(resolveResult);
+				// if it's blank we still want to check the type auth so as to not leak that it's just empty
+				if (!resolveResult) {
+					let schemaType = getNamedType(field.type);
+					if (schemaType.name.endsWith('Connection')) {
+						schemaType = schema.getType(schemaType.name.replace('Connection', ''));
+					}
+					const requiredRoles = schemaType['_requiredAuth'];
+					if (requiredRoles) {
+						const allowed = context.authenticate('read', requiredRoles, resolveResult, args, context);
+						if (!allowed) {
+							throw new Error('Not Authorized');
+						}
+					}
+					return resolveResult;
+				}
 				// if it's a connection type we want to get to the actual data
-				arrayResults = resolveResult && resolveResult.edges ? resolveResult.edges : resolveResult;
-
+				let arrayResults = resolveResult && resolveResult.fortuneReturn ? resolveResult.fortuneReturn : resolveResult;
+				console.log(arrayResults);
+				arrayResults = arrayResults && arrayResults.edges ? arrayResults.edges : arrayResults;
+				console.log(arrayResults);
 				const checkedTypes = [];
 				arrayResults = isArray(arrayResults) ? arrayResults : [arrayResults];
 				const checkResultsPromises: Promise<any>[] = [];
