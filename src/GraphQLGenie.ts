@@ -210,7 +210,7 @@ export class GraphQLGenie {
 	}
 
 	public getSchema = (): GraphQLSchema => {
-		return this.schema;
+		return this.schemaBuilder.getSchema();
 	}
 
 	public getDataResolver = (): DataResolver => {

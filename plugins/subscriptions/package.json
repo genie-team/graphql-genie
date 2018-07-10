@@ -37,6 +37,7 @@
     "lodash": ">=4.17.5"
   },
   "devDependencies": {
+    "@types/graphql": "^0.13.3",
     "@types/jest": "^21.1.10",
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",

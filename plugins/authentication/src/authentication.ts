@@ -1,7 +1,7 @@
 import { GraphQLObjectType, defaultFieldResolver, graphql, isObjectType } from 'graphql';
 import { GeniePlugin, GraphQLGenie } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
-import { isArray } from 'util';
+import { isArray } from 'lodash';
 import graphqlFields from 'graphql-fields';
 
 interface RequiredRoles {
@@ -11,11 +11,9 @@ interface RequiredRoles {
 	delete: string;
 }
 
-export default (roles = ['ADMIN', 'USER', 'OWNER'], defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
+export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
 		console.log('start auth plugin');
-		const schema = genie.getSchema();
-		const dataResolver = genie.getDataResolver();
 		const newDefsAsString: string[] = [];
 		newDefsAsString.push(`
 			enum Role {
@@ -33,6 +31,8 @@ export default (roles = ['ADMIN', 'USER', 'OWNER'], defaultCreateRole = 'ADMIN',
 
 		// wrap type resolvers
 		genie.getSchemaBuilder().addTypeDefsToSchema(newDefsAsString.join('\n'));
+		const schema = genie.getSchemaBuilder().getSchema();
+		const dataResolver = genie.getDataResolver();
 		SchemaDirectiveVisitor.visitSchemaDirectives(schema, {
 			auth: AuthDirective,
 			authorized: AuthDirective,
@@ -182,6 +182,7 @@ export default (roles = ['ADMIN', 'USER', 'OWNER'], defaultCreateRole = 'ADMIN',
 class AuthDirective extends SchemaDirectiveVisitor {
 	visitObject(type) {
 		this.ensureFieldsWrapped(type);
+		console.log(this.args);
 		type._requiredAuth = {
 			create: this.args.create,
 			read: this.args.read,
@@ -194,6 +195,7 @@ class AuthDirective extends SchemaDirectiveVisitor {
 	// the parent and grandparent types.
 	visitFieldDefinition(field, details) {
 		this.ensureFieldsWrapped(details.objectType);
+		console.log(this.args);
 		field._requiredAuth = {
 			create: this.args.create,
 			read: this.args.read,

@@ -337,7 +337,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				// this is a nested update an a list type so we need to individually do updates
 				updateArgs.forEach((currArg) => {
 					dataResolverPromises.push(
-						new Promise((resolve) => {
+						new Promise((resolve, reject) => {
 							mutateResolver(mutation, dataResolver)(currRecord, { update: currArg.data, where: currArg.where }, _context, _info, index, key, returnType).then((result) => {
 								if (recursed) {
 									resolve();
@@ -345,7 +345,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 									resolve(result[0]);
 								}
 							}).catch(reason => {
-								throw new Error(reason);
+								reject(reason);
 							});
 						})
 					);
@@ -381,7 +381,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					newArgs = { where: true, update: currArg.update };
 				}
 				dataResolverPromises.push(
-					new Promise((resolve) => {
+					new Promise((resolve, reject) => {
 						mutateResolver(mutation, dataResolver)(upsertRecord, newArgs, _context, _info, index, key, returnType).then((result) => {
 							if (result[0]) {
 								resolve(result[0]);
@@ -389,7 +389,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 								resolve();
 							}
 						}).catch(reason => {
-							throw new Error(reason);
+							reject(reason);
 						});
 					})
 				);
@@ -406,12 +406,12 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			createArg = createArg.hasOwnProperty ? createArg : Object.assign({}, createArg);
 			createArg = clean(createArg);
 			if (createArg && !isEmpty(createArg)) {
-				dataResolverPromises.push(new Promise((resolve) => {
+				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.create(returnTypeName, createArg, undefined, {context: _context, info: _info}).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			}
@@ -432,13 +432,13 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			}
 			const cleanArg = clean(updateArg);
 			if (cleanArg && !isEmpty(cleanArg)) {
-				dataResolverPromises.push(new Promise((resolve) => {
+				dataResolverPromises.push(new Promise((resolve, reject) => {
 					cleanArg.id = currRecord.id;
 					dataResolver.update(returnTypeName, cleanArg, {context: _context, info: _info}).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			} else if (currRecord) {
@@ -456,7 +456,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						reject(new Error('tried to connect using unique value that does not exist ' + JSON.stringify(connectArg)));
 					}
 				}).catch(reason => {
-					throw new Error(reason);
+					reject(reason);
 				});
 			}));
 		});
@@ -465,11 +465,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const disconnectPromises: Array<Promise<any>> = [];
 		disconnectArgs.forEach(disconnectArg => {
 			if (disconnectArg === true) {
-				dataResolverPromises.push(new Promise((resolve) => {
+				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }, {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			} else {
@@ -481,7 +481,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 							reject();
 						}
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			}
@@ -489,11 +489,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 		const disconnectIds = await Promise.all(disconnectPromises);
 		if (!isEmpty(disconnectIds)) {
-			dataResolverPromises.push(new Promise((resolve) => {
+			dataResolverPromises.push(new Promise((resolve, reject) => {
 				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, {context: _context, info: _info}, { pull: true }).then(data => {
 					resolve({ index, key, id: data[key], data });
 				}).catch(reason => {
-					throw new Error(reason);
+					reject(reason);
 				});
 			}));
 		}
@@ -503,15 +503,15 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const deletePromises: Array<Promise<any>> = [];
 		deleteArgs.forEach(deleteArg => {
 			if (deleteArg === true) {
-				dataResolverPromises.push(new Promise((resolve) => {
+				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], undefined, {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			} else if (whereArgs && !currRecord) {
-				dataResolverPromises.push(new Promise((resolve) => {
+				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info}).then(whereData => {
 						currRecord = whereData;
 						if (!currRecord || isEmpty(currRecord)) {
@@ -520,10 +520,10 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						dataResolver.delete(currRecord.__typename, [currRecord.id], undefined, {context: _context, info: _info}).then(() => {
 							resolve({ index, key, id: null, currRecord });
 						}).catch(reason => {
-							throw new Error(reason);
+							reject(reason);
 						});
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			} else {
@@ -535,7 +535,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 							reject();
 						}
 					}).catch(reason => {
-						throw new Error(reason);
+						reject(reason);
 					});
 				}));
 			}
@@ -543,11 +543,11 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 		const deleteIds = await Promise.all(deletePromises);
 		if (!isEmpty(deleteIds)) {
-			dataResolverPromises.push(new Promise((resolve) => {
+			dataResolverPromises.push(new Promise((resolve, reject) => {
 				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds, undefined, {context: _context, info: _info}).then(data => {
 					resolve({ index, key, id: data[key], data });
 				}).catch(reason => {
-					throw new Error(reason);
+					reject(reason);
 				});
 			}));
 		}
