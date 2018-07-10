@@ -4,6 +4,7 @@ import { PubSub } from 'graphql-subscriptions';
 import { GraphQLServer } from 'graphql-yoga';
 import redisAdapter from 'fortune-redis';
 import RedisMock from 'ioredis-mock';
+import authPlugin from '../../../plugins/authentication/lib/module';
 
 const typeDefs = `
 
@@ -13,7 +14,7 @@ interface Submission {
 	text: String
 }
 
-type Post implements Submission {
+type Post implements Submission @auth {
   id: ID! @unique
 	title: String!
 	text: String
@@ -80,8 +81,17 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 const buildClient = async (genie: GraphQLGenie) => {
 	await genie.init();
 	await genie.use(subscriptionPlugin(new PubSub()));
+	await genie.use(authPlugin());
 	const schema = genie.getSchema();
-	const server = new GraphQLServer({ schema });
+	const server = new GraphQLServer({
+		schema,
+		context: {
+			authenticate: (method, requiredRoles, record) => {
+				console.log(method, requiredRoles, record);
+				return true;
+			}
+		}
+	});
 	server.start(() => console.log('Server is running on localhost:4000'));
 };
 buildClient(genie);

@@ -51,24 +51,24 @@ export default class FortuneGraph implements DataResolver {
 		return result;
 	}
 
-	public getValueByUnique = async (returnTypeName: string, args): Promise<Object> => {
+	public getValueByUnique = async (returnTypeName: string, args, meta): Promise<Object> => {
 		let currValue;
 		// tslint:disable-next-line:prefer-conditional-expression
 		if (args.id) {
-			currValue = await this.find(returnTypeName, [args.id]);
+			currValue = await this.find(returnTypeName, [args.id], undefined, undefined, meta);
 		} else {
-			currValue = await this.find(returnTypeName, undefined, { match: args });
+			currValue = await this.find(returnTypeName, undefined, { match: args }, undefined, meta);
 		}
 		return isArray(currValue) ? currValue[0] : currValue;
 	}
 
-	public canAdd = async (graphQLTypeName: string, inputRecords: object[]): Promise<boolean> => {
+	public canAdd = async (graphQLTypeName: string, inputRecords: object[], meta): Promise<boolean> => {
 		let canAdd = true;
 		if (inputRecords && this.uniqueIndexes.has(graphQLTypeName)) {
 			await Promise.all(this.uniqueIndexes.get(graphQLTypeName).map(async (fieldName) => {
 				await Promise.all(inputRecords.map(async (inputRecord) => {
 					if (canAdd && inputRecord[fieldName]) {
-						const dbRecord = await this.getValueByUnique(graphQLTypeName, { [fieldName]: inputRecord[fieldName] });
+						const dbRecord = await this.getValueByUnique(graphQLTypeName, { [fieldName]: inputRecord[fieldName] }, meta);
 						if (dbRecord) {
 							canAdd = false;
 						}
@@ -185,7 +185,7 @@ export default class FortuneGraph implements DataResolver {
 				element.id = isString(element.id) ? element.id : toString(element.id);
 				return element;
 			});
-			if (!options.sort) {
+			if (!get(options, 'sort')) {
 				// to support relay plural identifying root fields results should be in the order in which they were requested,
 				// with null being returned by failed finds
 				if (ids) {
@@ -473,19 +473,54 @@ export default class FortuneGraph implements DataResolver {
 
 	private inputHook(_fortuneType: string) {
 		return (context, record, update) => {
+			const promises = [];
 			if (record['__typename'] && this.inputHooks.has(record['__typename'])) {
 				this.inputHooks.get(record['__typename']).forEach(hook => {
-					hook(context, record, update);
+					const returnVal = hook(context, record, update);
+					if (returnVal instanceof Promise) {
+						promises.push(returnVal);
+					}
 				});
 			}
+			return new Promise((resolve, reject) => {
+				Promise.all(promises).then(() => {
+					switch (context.request.method) {
+						// If it's a create request, return the record.
+						case 'create':
+							resolve(record);
+							break;
+						// If it's an update request, return the update.
+						case 'update':
+							resolve(update);
+							break;
+						// If it's a delete request, the return value doesn't matter.
+						case 'delete':
+							resolve(null);
+							break;
+					}
+				}).catch(reason => {
+					reject(reason);
+				});
+			});
 		};
 	}
 
 	private outputHook(_fortuneType: string) {
 		return (context, record) => {
 			if (record['__typename'] && this.outputHooks.has(record['__typename'])) {
+				const promises = [];
 				this.outputHooks.get(record['__typename']).forEach(hook => {
-					hook(context, record);
+					const returnVal = hook(context, record);
+					if (returnVal instanceof Promise) {
+						promises.push(returnVal);
+					}
+				});
+				return new Promise((resolve, reject) => {
+					Promise.all(promises).then(() => {
+						resolve(record);
+					}).catch(reason => {
+						reject(reason);
+					});
 				});
 			}
 		};

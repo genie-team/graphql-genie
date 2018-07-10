@@ -38,11 +38,11 @@ export class GenerateGetAll implements TypeGenerator {
 			const schemaType = this.schema.getType(type.name);
 			const generator = new InputGenerator(schemaType, null, this.currInputObjectTypes, this.schemaInfo, this.schema, this.relations);
 			const args = Object.assign({
-				where: {type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators)},
-				orderBy: {type: generator.generateOrderByInput()}
+				where: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators) },
+				orderBy: { type: generator.generateOrderByInput() }
 			},
-			queryArgs,
-			getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
+				queryArgs,
+				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
 
 			const fieldName = `${pluralize(type.name.toLowerCase())}`;
 
@@ -66,9 +66,10 @@ export class GenerateGetAll implements TypeGenerator {
 			}
 		};
 
-		this.resolvers.set('node', async (_root: any, _args: { [key: string]: any }) => {
+		this.resolvers.set('node', async (_root: any, _args: { [key: string]: any }, _context, _info) => {
+			console.log('args', _args);
 			const id = _args.id;
-			const fortuneReturn = await this.dataResolver.find('Node', [id]);
+			const fortuneReturn = await this.dataResolver.find('Node', [id], undefined, undefined, {context: _context, info: _info});
 			if (fortuneReturn) {
 				const cache = new Map<string, object>();
 				cache.set(id, fortuneReturn);

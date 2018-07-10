@@ -44,8 +44,8 @@ export interface DataResolver {
 	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
 	find(graphQLTypeName: string, ids?: string[], options?, include?, meta?): Promise<any>;
 	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
-	getValueByUnique(returnTypeName: string, args): Promise<Object>;
-	canAdd(graphQLTypeName: string, records: Object): Promise<boolean>;
+	getValueByUnique(returnTypeName: string, args, meta): Promise<Object>;
+	canAdd(graphQLTypeName: string, records: Object, meta): Promise<boolean>;
 	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
 	getFeatures(): Features;
 	applyOptions(graphQLTypeName: string, records, options, meta?);

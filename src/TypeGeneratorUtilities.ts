@@ -312,8 +312,8 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 		// lets make sure we are able to add this (prevent duplicates on unique fields, etc)
 
-		const canAddResults = await Promise.all([dataResolver.canAdd(returnTypeName, createArgs),
-		dataResolver.canAdd(returnTypeName, updateArgs)]);
+		const canAddResults = await Promise.all([dataResolver.canAdd(returnTypeName, createArgs, {context: _context, info: _info}),
+		dataResolver.canAdd(returnTypeName, updateArgs, {context: _context, info: _info})]);
 		const cannotAdd = canAddResults.includes(false);
 		if (cannotAdd) {
 			throw new Error('Can not create record with duplicate on unique field on type ' + returnTypeName + ' ' + JSON.stringify(createArgs) + ' ' + JSON.stringify(updateArgs));
@@ -327,7 +327,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				// pass true to where args if currRecord is already the one we want
 				if (whereArgs !== true) {
 					const returnTypeName = getReturnType(returnType);
-					currRecord = await dataResolver.getValueByUnique(returnTypeName, whereArgs);
+					currRecord = await dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info});
 					if (!currRecord || isEmpty(currRecord)) {
 						throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 					}
@@ -353,7 +353,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				updateArgs = [];
 			} else if (key && currRecord) {
 				// this is a nested input on a single field so we already know the where
-				const recordToUpdate = await dataResolver.getValueByUnique(returnTypeName, { id: currRecord[key] });
+				const recordToUpdate = await dataResolver.getValueByUnique(returnTypeName, { id: currRecord[key] }, {context: _context, info: _info});
 				if (recordToUpdate) {
 					currRecord = recordToUpdate;
 				} else {
@@ -369,10 +369,10 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				let upsertRecord = currRecord;
 				if (whereArg) {
 					// this is a root upsert or nested upsert with a where field
-					upsertRecord = await dataResolver.getValueByUnique(returnTypeName, whereArg);
+					upsertRecord = await dataResolver.getValueByUnique(returnTypeName, whereArg, {context: _context, info: _info});
 				} else if (upsertRecord && key) {
 					// this is a nested upsert on a single field so we already have the where
-					upsertRecord = upsertRecord[key] ? await dataResolver.getValueByUnique(returnTypeName, { id: upsertRecord[key] }) : null;
+					upsertRecord = upsertRecord[key] ? await dataResolver.getValueByUnique(returnTypeName, { id: upsertRecord[key] }, {context: _context, info: _info}) : null;
 				}
 
 				let newArgs: object = { create: currArg.create };
@@ -407,7 +407,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			createArg = clean(createArg);
 			if (createArg && !isEmpty(createArg)) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					dataResolver.create(returnTypeName, createArg).then(data => {
+					dataResolver.create(returnTypeName, createArg, undefined, {context: _context, info: _info}).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					}).catch(reason => {
@@ -434,7 +434,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			if (cleanArg && !isEmpty(cleanArg)) {
 				dataResolverPromises.push(new Promise((resolve) => {
 					cleanArg.id = currRecord.id;
-					dataResolver.update(returnTypeName, cleanArg).then(data => {
+					dataResolver.update(returnTypeName, cleanArg, {context: _context, info: _info}).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					}).catch(reason => {
@@ -449,7 +449,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		// now add the connect types
 		connectArgs.forEach(connectArg => {
 			dataResolverPromises.push(new Promise((resolve, reject) => {
-				dataResolver.getValueByUnique(returnTypeName, connectArg).then(data => {
+				dataResolver.getValueByUnique(returnTypeName, connectArg, {context: _context, info: _info}).then(data => {
 					if (data && data['id']) {
 						resolve({ index, key, id: data['id'], data });
 					} else {
@@ -466,7 +466,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		disconnectArgs.forEach(disconnectArg => {
 			if (disconnectArg === true) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }).then(data => {
+					dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: null }, {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
 					}).catch(reason => {
 						throw new Error(reason);
@@ -474,7 +474,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else {
 				disconnectPromises.push(new Promise((resolve, reject) => {
-					dataResolver.getValueByUnique(returnTypeName, disconnectArg).then(data => {
+					dataResolver.getValueByUnique(returnTypeName, disconnectArg, {context: _context, info: _info}).then(data => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
@@ -490,7 +490,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const disconnectIds = await Promise.all(disconnectPromises);
 		if (!isEmpty(disconnectIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
-				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, null, { pull: true }).then(data => {
+				dataResolver.update(currRecord.__typename, { id: currRecord.id, [key]: disconnectIds }, {context: _context, info: _info}, { pull: true }).then(data => {
 					resolve({ index, key, id: data[key], data });
 				}).catch(reason => {
 					throw new Error(reason);
@@ -504,7 +504,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		deleteArgs.forEach(deleteArg => {
 			if (deleteArg === true) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]]).then(data => {
+					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], undefined, {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
 					}).catch(reason => {
 						throw new Error(reason);
@@ -512,12 +512,12 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else if (whereArgs && !currRecord) {
 				dataResolverPromises.push(new Promise((resolve) => {
-					dataResolver.getValueByUnique(returnTypeName, whereArgs).then(whereData => {
+					dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info}).then(whereData => {
 						currRecord = whereData;
 						if (!currRecord || isEmpty(currRecord)) {
 							throw new GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 						}
-						dataResolver.delete(currRecord.__typename, [currRecord.id]).then(() => {
+						dataResolver.delete(currRecord.__typename, [currRecord.id], undefined, {context: _context, info: _info}).then(() => {
 							resolve({ index, key, id: null, currRecord });
 						}).catch(reason => {
 							throw new Error(reason);
@@ -528,7 +528,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else {
 				deletePromises.push(new Promise((resolve, reject) => {
-					dataResolver.getValueByUnique(dataResolver.getLink(currRecord.__typename, key), deleteArg).then(data => {
+					dataResolver.getValueByUnique(dataResolver.getLink(currRecord.__typename, key), deleteArg, {context: _context, info: _info}).then(data => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
@@ -544,7 +544,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const deleteIds = await Promise.all(deletePromises);
 		if (!isEmpty(deleteIds)) {
 			dataResolverPromises.push(new Promise((resolve) => {
-				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds).then(data => {
+				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds, undefined, {context: _context, info: _info}).then(data => {
 					resolve({ index, key, id: data[key], data });
 				}).catch(reason => {
 					throw new Error(reason);
@@ -659,7 +659,7 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				findOptions = options;
 			}
 			if (!isEmpty(ids)) {
-				let findResult = await dataResolver.find(typeName, ids, findOptions);
+				let findResult = await dataResolver.find(typeName, ids, findOptions, undefined, {context: _context, info: _info});
 				if (findResult) {
 					findResult = isArray(findResult) ? findResult : [findResult];
 					// remove null values
@@ -677,7 +677,7 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 			}
 
 			if ((_args.orderBy || where) && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
-				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
+				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver, _context, _info);
 				result = result.filter(entry => !pullIds.has(entry.id));
 			}
 
@@ -731,7 +731,6 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 
 export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema, type: IntrospectionObjectType, returnConnection = false) => {
 	return async (_root: any, _args: { [key: string]: any }, _context: any, _info: GraphQLResolveInfo) => {
-
 		let options = {};
 		let where = null;
 		_args = moveArgsIntoWhere(_args);
@@ -750,7 +749,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 		}
 		let connection: Connection;
 		let result: any;
-		let fortuneReturn = await dataResolver.find(type.name, null, options);
+		let fortuneReturn = await dataResolver.find(type.name, null, options, undefined, {context: _context, info: _info});
 		if (fortuneReturn && !isEmpty(fortuneReturn)) {
 			fortuneReturn = isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
 			connection = dataResolver.getConnection(fortuneReturn, _args.before, _args.after, _args.first, _args.last);
@@ -763,7 +762,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 				}
 			});
 			if ((_args.orderBy || where)  && (isObjectType(schemaType) || isInterfaceType(schemaType))) {
-				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver);
+				const pullIds = await filterNested(where, _args.orderBy, schemaType, fortuneReturn, cache, dataResolver, _context, _info);
 				fortuneReturn = pullIds.size > 0  ? fortuneReturn.filter(result => !pullIds.has(result ? result.id : '')) : fortuneReturn;
 			}
 			result = fortuneReturn.map((result) => {
@@ -856,7 +855,7 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 
 };
 
-export const filterNested = async (filter: object, orderBy: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver): Promise<Set<string>> => {
+export const filterNested = async (filter: object, orderBy: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver, _context, _info): Promise<Set<string>> => {
 	// if they have nested filters on types we need to get that data now so we can filter at this root query
 	const pullIds = new Set<string>();
 	if ((orderBy || filter)  && (isObjectType(type) || isInterfaceType(type))) {
@@ -875,14 +874,14 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 						if (currOrderBy) {
 							options['orderBy'] = currOrderBy;
 						}
-						let childReturn = await dataResolver.find(childType.name, childIds, options);
+						let childReturn = await dataResolver.find(childType.name, childIds, options, undefined, {context: _context, info: _info});
 						if (isArray(childReturn) && !isEmpty(childReturn)) {
-							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, childReturn, cache, dataResolver);
+							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, childReturn, cache, dataResolver, _context, _info);
 							childReturn = childReturn ? childReturn.filter(result => {
 								if (!result) { return result; } return !recursePullIds.has(result.id);
 							}) : childReturn;
 						} else if (childReturn && (currOrderBy || currFilter)) {
-							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, [childReturn], cache, dataResolver);
+							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, [childReturn], cache, dataResolver, _context, _info);
 							childReturn = childReturn ? [childReturn].filter(result => {
 								if (!result) { return result; } return !recursePullIds.has(result.id);
 							}) : childReturn;

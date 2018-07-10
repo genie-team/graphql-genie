@@ -1,5 +1,5 @@
-import { getNamedType, graphql, GraphQLObjectType, isNonNullType, isScalarType } from 'graphql';
-import { DataResolver, filterNested, GeniePlugin, GraphQLGenie, parseFilter, typeIsList } from 'graphql-genie';
+import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType } from 'graphql';
+import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
 import { get, isEmpty } from 'lodash';
@@ -25,10 +25,10 @@ export default (pubsub: PubSub): GeniePlugin => {
 				}
 			}
 		}`);
-		const nodeNames = nodesResult.data.__type.possibleTypes;
+		const nodes = nodesResult.data.__type.possibleTypes;
 		let subscriptionQueries = '';
 		let subscriptionResolvers: IResolverObject = {};
-		nodeNames.forEach(node => {
+		nodes.forEach(node => {
 			const inputName = `${node.name}SubscriptionWhereInput`;
 			const payloadName = `${node.name}SubscriptionPayload`;
 			const schemaType = <GraphQLObjectType>typeMap[node.name];

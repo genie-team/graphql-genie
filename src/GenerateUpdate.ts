@@ -99,7 +99,7 @@ export class GenerateUpdate implements TypeGenerator {
 				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';
 				if (filter && updateArgs) {
 					const options = parseFilter(filter, schemaType);
-					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options);
+					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options, undefined, {context: _context, info: _info});
 					fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 					count = fortuneReturn.length;
 					await Promise.all(fortuneReturn.map(async (fortuneRecord) => {

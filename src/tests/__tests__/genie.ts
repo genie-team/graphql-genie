@@ -870,4 +870,20 @@ describe('genie', () => {
 			}
 		});
 	});
+
+	test('find - node', async () => {
+
+		const nodeQuery = gql`
+			{
+				node(id: "${testData.posts[0].id}") {
+					id
+				}
+			}
+		`;
+
+		const result = await client.query({
+			query: nodeQuery
+		});
+		expect(result.data['node']['id']).toBe(testData.posts[0].id);
+	});
 });
