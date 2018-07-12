@@ -1,7 +1,7 @@
 {
-  "name": "graphql-genie-postgresql-example",
+  "name": "graphql-genie-memory-example",
   "version": "1.0.0",
-  "description": "GraphQL Genie Postgresql Example",
+  "description": "GraphQL Genie Memory Example",
   "browser": "lib/bundle.umd.js",
   "author": "Genie Team",
   "license": "MIT",

@@ -1,4 +1,4 @@
-import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLScalarType, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isInterfaceType, isListType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
@@ -175,21 +175,6 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 	return relations;
 };
 
-export const generateFieldsForInput = (fieldName: string, inputTypes: GraphQLInputType[], defaultValue?: string): object => {
-	const fields = {};
-	fields[fieldName] = {
-		type: inputTypes[0],
-		defaultValue: defaultValue
-	};
-	if (inputTypes[1] && !isScalarType(getNamedType(inputTypes[0]))) {
-		const idName = isListType(inputTypes[1]) ? fieldName + 'Ids' : fieldName + 'Id';
-		fields[idName] = {
-			type: inputTypes[1]
-		};
-	}
-	return fields;
-};
-
 export enum Mutation {
 	Create,
 	Update,
@@ -251,7 +236,7 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 					argReturnType = new GraphQLList(argReturnRootType);
 				}
 			}
-			if (argReturnRootType && !isScalarType(argReturnRootType)) {
+			if (argReturnRootType && !isScalarType(argReturnRootType) && !isEnumType(argReturnRootType)) {
 				const arg = currArg[argName];
 				if (isObject(arg) && argReturnType) {
 					currArg[argName] = typeIsList(argReturnType) ? [] : undefined;
@@ -595,7 +580,7 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 	const schemaType = schema.getType(getReturnType(field.type));
 
 	let resolver;
-	if (!isScalarType(schemaType)) {
+	if (!isScalarType(schemaType) && !isEnumType(schemaType)) {
 		resolver = async (
 			root: any,
 			_args: { [key: string]: any },
@@ -836,7 +821,6 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 	if (!filter || !isObject(filter) || isArray(filter)) {
 		return filter;
 	}
-	const fieldMap = new Map<string, GraphQLScalarType>();
 	each(type.getFields(), field => {
 		if (!fortuneFilters.includes(field.name) && filter[field.name]) {
 			if (filter['and']) {
@@ -844,10 +828,6 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 			} else {
 				set(filter, `exists.${field.name}`, true);
 			}
-		}
-		const fieldOutputType = getNamedType(field.type);
-		if (isScalarType(fieldOutputType)) {
-			fieldMap.set(field.name, fieldOutputType);
 		}
 	});
 
@@ -864,7 +844,7 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 			const currOrderBy = orderBy && orderBy[field.name] ? orderBy[field.name] : orderBy && orderBy[`f_${field.name}`] ? orderBy[`f_${field.name}`] : null;
 			const childType = getNamedType(field.type);
 
-			if (!isScalarType(childType) && (currFilter || currOrderBy)) {
+			if (!isScalarType(childType) && !isEnumType(childType) && (currFilter || currOrderBy)) {
 
 				const options = currFilter ? parseFilter(currFilter, childType) : {};
 				await Promise.all(fortuneReturn.map(async (result) => {

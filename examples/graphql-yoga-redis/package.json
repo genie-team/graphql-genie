@@ -1,12 +1,13 @@
 {
-  "name": "graphql-genie-postgresql-example",
+  "name": "graphql-genie-redis-example",
   "version": "1.0.0",
-  "description": "GraphQL Genie Postgresql Example",
+  "description": "GraphQL Genie Redis Example",
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "watch": "webpack --watch --config webpack.config.js"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
@@ -21,15 +22,19 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.15.6",
     "fortune": "^5.4.2",
     "fortune-redis": "^2.1.0",
     "graphql": "^0.13.2",
     "graphql-genie": ">=0.2.0",
+    "graphql-genie-authentication": "^1.0.2",
     "graphql-genie-subscriptions": "^1.0.1",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^3.0.0",
     "graphql-yoga": "^1.14.12",
     "ioredis-mock": "^3.10.1",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "ms": "^2.1.1"
   }
 }

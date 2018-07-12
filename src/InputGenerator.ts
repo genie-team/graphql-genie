@@ -1,5 +1,5 @@
 
-import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isInputType, isInterfaceType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isInputType, isInterfaceType, isNonNullType, isObjectType, isUnionType } from 'graphql';
 import { each, get, isEmpty, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
@@ -240,8 +240,9 @@ export class InputGenerator {
 						GraphQLBoolean));
 
 					let inputType;
-					if (isScalarType(schemaType)) {
-						inputType = schemaType;
+					if (isInputType(schemaType)) {
+						inputType = getNamedType(schemaType);
+
 						merge(matchFields, this.generateFieldForInput(
 							field.name,
 							new GraphQLList(new GraphQLNonNull(inputType))));
@@ -297,8 +298,8 @@ export class InputGenerator {
 					const schemaType = this.schema.getType(getReturnType(field.type));
 
 					let inputType;
-					if (isScalarType(schemaType)) {
-						inputType = schemaType;
+					if (isInputType(schemaType)) {
+						inputType = getNamedType(schemaType);
 						merge(fields, this.generateFieldForInput(
 							field.name,
 							orderByEnum

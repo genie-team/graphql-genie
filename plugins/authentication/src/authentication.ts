@@ -1,4 +1,4 @@
-import { GraphQLObjectType, defaultFieldResolver, getNamedType, graphql, isObjectType } from 'graphql';
+import { GraphQLObjectType, defaultFieldResolver, getNamedType, graphql, isObjectType, isEnumType } from 'graphql';
 import { GeniePlugin, GraphQLGenie } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { isArray } from 'lodash';
@@ -11,23 +11,23 @@ interface RequiredRoles {
 	delete: string;
 }
 
-export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
+export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
 		console.log('start auth plugin');
 		const newDefsAsString: string[] = [];
 		newDefsAsString.push(`
-			enum Role {
-				${roles.join('\n')}
-			}
-		`);
-		newDefsAsString.push(`
 			directive @auth(
-				create: Role = ${defaultCreateRole},
-				read: Role = ${defaultReadRole},
-				update: Role = ${defaultUpdateRole},
-				delete: Role = ${defaultDeleteRole}
+				create: [Role] = [${defaultCreateRole}],
+				read: [Role] = [${defaultReadRole}],
+				update: [Role] = [${defaultUpdateRole}],
+				delete: [Role] = [${defaultDeleteRole}]
 			) on OBJECT | FIELD_DEFINITION
 		`);
+
+
+		if (!genie.getSchema().getType('Role') || !isEnumType(genie.getSchema().getType('Role'))) {
+			throw new Error('Type Definitions must have Role ENUM');
+		}
 
 		// wrap type resolvers
 		genie.getSchemaBuilder().addTypeDefsToSchema(newDefsAsString.join('\n'));
@@ -40,7 +40,7 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 			requireAuth: AuthDirective,
 		});
 
-		// find queries
+		// find queries, while the type resolver may solve some of this we want to say not authorized if there is no data and save time and not bother if not allowed
 		const queryFields = schema.getQueryType().getFields();
 		Object.keys(queryFields).forEach(fieldName => {
 			const field = queryFields[fieldName];
@@ -51,8 +51,6 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 				}
 				const topLevelFields = Object.keys(graphqlFields(info));
 				const resolveResult = await resolve.apply(this, [record, args, context, info]);
-				console.log('resolve result');
-				console.log(resolveResult);
 				// if it's blank we still want to check the type auth so as to not leak that it's just empty
 				if (!resolveResult) {
 					let schemaType = getNamedType(field.type);
@@ -61,18 +59,16 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 					}
 					const requiredRoles = schemaType['_requiredAuth'];
 					if (requiredRoles) {
-						const allowed = context.authenticate('read', requiredRoles, resolveResult, args, context);
+						const allowed = await context.authenticate('read', requiredRoles, resolveResult, args, context);
 						if (!allowed) {
 							throw new Error('Not Authorized');
 						}
 					}
 					return resolveResult;
 				}
-				// if it's a connection type we want to get to the actual data
 				let arrayResults = resolveResult && resolveResult.fortuneReturn ? resolveResult.fortuneReturn : resolveResult;
-				console.log(arrayResults);
+				// if it's a connection type we want to get to the actual data
 				arrayResults = arrayResults && arrayResults.edges ? arrayResults.edges : arrayResults;
-				console.log(arrayResults);
 				const checkedTypes = [];
 				arrayResults = isArray(arrayResults) ? arrayResults : [arrayResults];
 				const checkResultsPromises: Promise<any>[] = [];
@@ -80,6 +76,8 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 				arrayResults.forEach(result => {
 					// if it's a connection type we want to get to the actual data
 					result = result.node ? result.node : result;
+					result = result.fortuneReturn ? result.fortuneReturn : result;
+
 					const typeName = result.__typename;
 					if (typeName && !checkedTypes.includes(typeName)) {
 						checkedTypes.push(typeName);
@@ -200,7 +198,6 @@ export default (roles = ['ADMIN', 'USER', 'OWNER', 'NONE'], defaultCreateRole = 
 class AuthDirective extends SchemaDirectiveVisitor {
 	visitObject(type) {
 		this.ensureFieldsWrapped(type);
-		console.log(this.args);
 		type._requiredAuth = {
 			create: this.args.create,
 			read: this.args.read,
@@ -213,7 +210,6 @@ class AuthDirective extends SchemaDirectiveVisitor {
 	// the parent and grandparent types.
 	visitFieldDefinition(field, details) {
 		this.ensureFieldsWrapped(details.objectType);
-		console.log(this.args);
 		field._requiredAuth = {
 			create: this.args.create,
 			read: this.args.read,

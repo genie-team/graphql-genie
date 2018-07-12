@@ -337,12 +337,10 @@ class RelationDirective extends SchemaDirectiveVisitor {
 
 class DefaultDirective extends SchemaDirectiveVisitor {
 	public visitFieldDefinition(field) {
-		let type = field.type;
-		while (isListType(type) || isNonNullType(type)) {
-			type = type.ofType;
-		}
-		if (!isScalarType(type)) {
-			throw new Error('Can not set default on non scalar type which was attempted on ' + field.name);
+		const type = getNamedType(<GraphQLType>field.type);
+
+		if (!isInputType(type)) {
+			throw new Error('Can not set default on non input (scalar, enum, input) type which was attempted on ' + field.name);
 		}
 		if (this.args.value) {
 			const currType = type.name;

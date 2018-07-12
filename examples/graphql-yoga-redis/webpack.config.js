@@ -8,6 +8,9 @@ const root = (dir) => {
 module.exports = (options) => {
   return {
 		mode: 'development',
+		watchOptions: {
+			ignored: /node_modules/
+		},
     entry: {
       'main': './src/main.ts'
     },
@@ -15,7 +18,9 @@ module.exports = (options) => {
       extensions: ['.ts', '.mjs', '.js'],
       modules: [root('node_modules'), root('src')]
 		},
-		externals: [nodeExternals()],
+		externals: [
+			nodeExternals()
+		],
     target: 'node',
     module: {
       rules: [
