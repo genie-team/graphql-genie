@@ -913,3 +913,12 @@ export const isConnectionType = (type: GraphQLType): boolean => {
 	}
 	return isConnection;
 };
+	// resolvers may have meta info that's not wanted
+export const getRecordFromResolverReturn = (record)  => {
+	record = record && record.fortuneReturn ? record.fortuneReturn : record;
+	record = record && record.edges ? record.edges : record;
+	record = record && record.node ? record.node : record;
+	record = record && record.fortuneReturn ? record.fortuneReturn : record;
+	record = record && record.data ? record.data : record;
+	return record;
+};

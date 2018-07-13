@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-authentication",
-  "version": "1.0.4",
+  "version": "1.0.9",
   "description": "GraphQL Genie Authentication",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -31,7 +31,7 @@
     ]
   },
   "peerDependencies": {
-    "graphql-genie": ">=0.2.0",
+    "graphql-genie": ">=0.2.11",
     "graphql-tools": "^3.0.0",
     "lodash": ">=4.17.5"
   },
@@ -41,7 +41,7 @@
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",
     "fortune": "^5.4.2",
-    "graphql-genie": ">=0.2.0",
+    "graphql-genie": ">=0.2.11",
     "graphql-tools": "^3.0.0",
     "jest": "^22.4.0",
     "lodash": "^4.17.10",

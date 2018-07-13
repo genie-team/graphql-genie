@@ -160,6 +160,8 @@ DataResolver handles all the operations with your actual data. Such as CRUD and 
 
 Most likely use of this is to add hooks into the CRUD operations against your database. The DataResolver has 2 functions to add hooks. For more info on the context, record and update objects see the [fortune documentation](http://fortune.js.org/#input-and-output-hooks).
 
+Note that when using fortune hooks the resolvers context and info arguments can be had at context.request.meta.context and context.request.meta.info
+
 ```typescript
  interface DataResolverInputHook {
     (context?, record?, update?): any;

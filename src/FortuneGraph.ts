@@ -239,7 +239,7 @@ export default class FortuneGraph implements DataResolver {
 		if (!options || !options['fortuneFormatted']) {
 			updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
 		}
-		let results = this.transaction ? await this.transaction.update(fortuneType, updates, meta) : await this.store.update(fortuneType, updates, meta);
+		let results = this.transaction ? await this.transaction.update(fortuneType, updates, undefined, meta) : await this.store.update(fortuneType, updates, undefined, meta);
 		results = results.payload.records;
 		return isArray(records) ? results : results[0];
 	}
@@ -247,7 +247,7 @@ export default class FortuneGraph implements DataResolver {
 	public delete = async (graphQLTypeName: string, ids?: string[], meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		if (ids.length > 0) {
-			this.transaction ? await this.transaction.delete(fortuneType, ids, meta) : await this.store.delete(fortuneType, ids, meta);
+			this.transaction ? await this.transaction.delete(fortuneType, ids, undefined, meta) : await this.store.delete(fortuneType, ids, undefined, meta);
 		}
 		return true;
 	}

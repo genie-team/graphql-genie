@@ -417,7 +417,6 @@ export class GraphQLGenie {
 		}
 		return result.data;
 	}
-
 }
 
 // cache.writeData({ data });

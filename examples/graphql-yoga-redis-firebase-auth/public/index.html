@@ -1,0 +1,79 @@
+<html>
+
+<head>
+	<script src="https://www.gstatic.com/firebasejs/5.2.0/firebase.js"></script>
+	<script>
+		// Initialize Firebase
+		var config = {
+			apiKey: "AIzaSyDoCsjaPHbNCT_dnAf-8uPkaLw3x2Q7Xz0",
+			authDomain: "tabletop-companion-5f73c.firebaseapp.com",
+			databaseURL: "https://tabletop-companion-5f73c.firebaseio.com",
+			projectId: "tabletop-companion-5f73c",
+			storageBucket: "tabletop-companion-5f73c.appspot.com",
+			messagingSenderId: "637652130589"
+		};
+		firebase.initializeApp(config);
+
+	</script>
+	<script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+	<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+	<script type="text/javascript">
+		// FirebaseUI config.
+		var uiConfig = {
+			callbacks: {
+				signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+					console.log(authResult);
+					var user = authResult.user;
+					var credential = authResult.credential;
+					var isNewUser = authResult.additionalUserInfo.isNewUser;
+					var providerId = authResult.additionalUserInfo.providerId;
+					var operationType = authResult.operationType;
+					// Do something with the returned AuthResult.
+					// Return type determines whether we continue the redirect automatically
+					// or whether we leave that to developer to handle.
+					return false;
+				},
+				signInFailure: function(error) {
+					// Some unrecoverable error occurred during sign-in.
+					// Return a promise when error handling is completed and FirebaseUI
+					// will reset, clearing any UI. This commonly occurs for error code
+					// 'firebaseui/anonymous-upgrade-merge-conflict' when merge conflict
+					// occurs. Check below for more details on this.
+					return handleUIError(error);
+				},
+				uiShown: function() {
+					// The widget is rendered.
+					// Hide the loader.
+					document.getElementById('loader').style.display = 'none';
+				}
+			},
+			credentialHelper: firebaseui.auth.CredentialHelper.ACCOUNT_CHOOSER_COM,
+			
+			// popup or redirect.
+			signInFlow: 'redirect',
+			signInOptions: [
+				// Leave the lines as is for the providers you want to offer your users.
+				firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+				firebase.auth.EmailAuthProvider.PROVIDER_ID
+			],
+			// Terms of service url.
+			tosUrl: '/'
+		};
+
+		var ui = new firebaseui.auth.AuthUI(firebase.auth());
+		// The start method will wait until the DOM is loaded.
+		ui.start('#firebaseui-auth-container', uiConfig);
+
+	</script>
+	<script src="index.js"></script>
+	<title> GraphQL Genie with JWT </title>
+</head>
+
+<body>
+
+	<h1>GraphQL Genie with JWT</h1>
+	<div id="firebaseui-auth-container"></div>
+	<div id="loader">Loading...</div>
+</body>
+
+</html>

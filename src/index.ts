@@ -18,7 +18,8 @@ export {
 } from './GraphQLUtils';
 export {
 	filterNested,
-	parseFilter
+	parseFilter,
+	getRecordFromResolverReturn
 } from './TypeGeneratorUtilities';
 export { GraphQLGenie } from './GraphQLGenie';
 export { InputGenerator } from './InputGenerator';

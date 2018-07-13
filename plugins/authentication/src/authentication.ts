@@ -1,5 +1,5 @@
-import { GraphQLObjectType, defaultFieldResolver, getNamedType, graphql, isObjectType, isEnumType } from 'graphql';
-import { GeniePlugin, GraphQLGenie } from 'graphql-genie';
+import { GraphQLObjectType, defaultFieldResolver, getNamedType, graphql, isEnumType, isObjectType } from 'graphql';
+import { GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { isArray } from 'lodash';
 import graphqlFields from 'graphql-fields';
@@ -23,7 +23,6 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 				delete: [Role] = [${defaultDeleteRole}]
 			) on OBJECT | FIELD_DEFINITION
 		`);
-
 
 		if (!genie.getSchema().getType('Role') || !isEnumType(genie.getSchema().getType('Role'))) {
 			throw new Error('Type Definitions must have Role ENUM');
@@ -59,24 +58,21 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 					}
 					const requiredRoles = schemaType['_requiredAuth'];
 					if (requiredRoles) {
-						const allowed = await context.authenticate('read', requiredRoles, resolveResult, args, context);
+						const allowed = await authenticate(context.authenticate, 'read', requiredRoles, resolveResult, null, schemaType.name);
 						if (!allowed) {
 							throw new Error('Not Authorized');
 						}
 					}
 					return resolveResult;
 				}
-				let arrayResults = resolveResult && resolveResult.fortuneReturn ? resolveResult.fortuneReturn : resolveResult;
-				// if it's a connection type we want to get to the actual data
-				arrayResults = arrayResults && arrayResults.edges ? arrayResults.edges : arrayResults;
+				let arrayResults = getRecordFromResolverReturn(resolveResult);
 				const checkedTypes = [];
 				arrayResults = isArray(arrayResults) ? arrayResults : [arrayResults];
 				const checkResultsPromises: Promise<any>[] = [];
 				// check the results at the object level
 				arrayResults.forEach(result => {
 					// if it's a connection type we want to get to the actual data
-					result = result.node ? result.node : result;
-					result = result.fortuneReturn ? result.fortuneReturn : result;
+					result = getRecordFromResolverReturn(result);
 
 					const typeName = result.__typename;
 					if (typeName && !checkedTypes.includes(typeName)) {
@@ -84,7 +80,7 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 						const schemaType = schema.getType(typeName);
 						const requiredRoles = schemaType['_requiredAuth'];
 						if (requiredRoles) {
-							checkResultsPromises.push(context.authenticate('read', requiredRoles, result, args, context));
+							checkResultsPromises.push(authenticate(context.authenticate, 'read', requiredRoles, result, null, schemaType.name));
 						}
 						// check the results at the field level
 						if (isObjectType(schemaType)) {
@@ -94,7 +90,7 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 								if (currField) {
 									const fieldRequiredRoles = currField['_requiredAuth'];
 									if (fieldRequiredRoles) {
-										checkResultsPromises.push(context.authenticate('read', fieldRequiredRoles, result, args, context));
+										checkResultsPromises.push(authenticate(context.authenticate, 'read', fieldRequiredRoles, result, null, schemaType.name, fieldName));
 									}
 								}
 							});
@@ -124,14 +120,14 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 		nodes.forEach(node => {
 			const schemaType = <GraphQLObjectType>typeMap[node.name];
 			dataResolver.addInputHook(node.name, (context, record, update) => {
-				const authenticate = context.request.meta.context && context.request.meta.context.authenticate;
-				if (!authenticate) {
+				const authFN = context.request.meta.context && context.request.meta.context.authenticate;
+				if (!authFN) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
 				const checkResultsPromises: Promise<any>[] = [];
 				const requiredRoles = schemaType['_requiredAuth'];
 				if (requiredRoles) {
-					checkResultsPromises.push(authenticate(context.request.method, requiredRoles, record));
+					checkResultsPromises.push(authenticate(authFN, context.request.method, requiredRoles, record, update, schemaType.name));
 				}
 				let fieldsToCheck = [];
 				switch (context.request.method) {
@@ -158,7 +154,7 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 						if (currField) {
 							const fieldRequiredRoles = currField['_requiredAuth'];
 							if (fieldRequiredRoles) {
-								checkResultsPromises.push(authenticate(context.request.method, fieldRequiredRoles, record));
+								checkResultsPromises.push(authenticate(authFN, context.request.method, fieldRequiredRoles, record, update, schemaType.name, fieldName));
 							}
 						}
 					});
@@ -193,6 +189,11 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 			});
 		});
 	};
+};
+
+const authenticate = async (authFN, method: string, requiredRoles, record, updates, typeName: string, fieldName?: string) => {
+	record = getRecordFromResolverReturn(record);
+	return await authFN.call(this, method, requiredRoles, record, updates, typeName, fieldName);
 };
 
 class AuthDirective extends SchemaDirectiveVisitor {
@@ -239,7 +240,7 @@ class AuthDirective extends SchemaDirectiveVisitor {
 				if (!requiredRoles) {
 					return resolve.apply(this, [record, args, context, info]);
 				}
-				const allowed = await context.authenticate('read', requiredRoles, record);
+				const allowed = await authenticate(context.authenticate, 'read', requiredRoles, record, null, objectType.name, fieldName);
 				if (!allowed) {
 					throw new Error('Not Authorized');
 				}
