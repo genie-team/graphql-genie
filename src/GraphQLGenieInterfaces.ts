@@ -54,6 +54,7 @@ export interface DataResolver {
 	addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
 	beginTransaction(): Promise<void>;
 	endTransaction(): Promise<void>;
+	computeId(graphType: string, id?: string): string;
 }
 
 export interface GenerateConfig {

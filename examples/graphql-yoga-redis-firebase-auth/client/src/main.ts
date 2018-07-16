@@ -4,7 +4,10 @@ import { setContext } from 'apollo-link-context';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import gql from 'graphql-tag';
 declare var firebase;
-
+window['logout'] = () => {
+	firebase.auth().signOut();
+	location.reload();
+};
 const initApp = () => {
 	firebase.auth().onAuthStateChanged(function (user) {
 		console.log('state changed', !!user);
@@ -12,7 +15,15 @@ const initApp = () => {
 			user.getIdToken().then(function (accessToken) {
 
 				const playground = localStorage.getItem('graphql-playground');
-				
+
+				document.getElementById('firebaseui-auth-container').innerHTML = `
+					<strong>Go to <a href="/playground">/playground</a> and set HTTP Headers to</strong>
+					<br/><br/>
+					{<br/>
+						"authorization": "Bearer ${accessToken}"<br/>
+					}<br/><br/><br/>
+					<a href="#" onclick="logout()"> Logout </a>
+				`;
 
 				localStorage.setItem('token', accessToken);
 				const httpLink = createHttpLink({

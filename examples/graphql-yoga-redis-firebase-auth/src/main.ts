@@ -11,6 +11,7 @@ import admin, { ServiceAccount } from 'firebase-admin';
 import express from 'express';
 import { get } from 'lodash';
 import path from 'path';
+import { atob } from 'abab';
 const typeDefs = `
 # ANY is open to all requests, USER means they must be logged in, OWNER the user must have created or be the type
 enum Role {
@@ -29,12 +30,11 @@ type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
 
 type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 	id: ID! @unique
-	username: String! @unique
+	displayname: String @unique
 	email: String! @unique @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
-	password: String! @auth(create: ANY, read: ADMIN, update: OWNER, delete: ADMIN)
-  name : String
+  name : String @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
 	posts: [Post] @relation(name: "posts")
-	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN)
+	roles: [Role] @default(value: "USER") @auth(create: ADMIN, read: ADMIN, update: ADMIN, delete: ADMIN)
 }
 `;
 
@@ -67,18 +67,6 @@ const startServer = async (genie: GraphQLGenie) => {
 
 	await genie.init();
 
-	// // setup a basic admin user
-	// await genie.importRawData([
-	// 	{import { genie } from '../../../src/tests/setupTests';
-
-	// 		username: 'admin',
-	// 		email: 'admin@example.com',
-	// 		password: bcrypt.hashSync('admin', 10),
-	// 		roles: ['ADMIN', 'USER'],
-	// 		__typename: 'User'
-	// 	}
-	// ], true);
-
 	// load all the users so that we don't have to constantly do db calls to check roles, etc
 	const users = new Map<String, object>();
 	loadUsers(genie, users);
@@ -98,24 +86,97 @@ const startServer = async (genie: GraphQLGenie) => {
 		}
 	};
 	const schema = genie.getSchema();
+
 	// start the server. Must pass in an authenticate function which returns true if the operation is allowed.
 	// if the operation is not allowed either return false or throw an error
 	const server = new GraphQLServer({
-		schema,
-		context: req => ({
-			...req,
-			authenticate: async (_method, _requiredRoles, _record, _updates, _typeName, _fieldName) => {
-				const bearer = parseAuthorizationBearer(req.request);
-				console.log(req.request.headers);
-				console.log(bearer);
-				const start = Date.now();
-				const decodedToken = await admin.auth().verifyIdToken(bearer);
-				console.log('time to verify :', Date.now() - start);
-				console.log('decodedToken :', decodedToken);
-				return true;
-			}
-		})
+		schema
 	});
+	server.context = async (req) => {
+		// first check the logged in user.
+		const bearer = parseAuthorizationBearer(req.request);
+		let decodedToken;
+		let uid;
+		let currUser;
+		let currRoles = [];
+		let error;
+		if (bearer) {
+			try {
+				decodedToken = await admin.auth().verifyIdToken(bearer);
+				uid = decodedToken.uid;
+
+				if (!users.has(uid)) {
+					const dataResolver = genie.getDataResolver();
+					const id = dataResolver.computeId('User', uid);
+					currUser = await dataResolver.create('User', {
+						id,
+						name: decodedToken.name,
+						email: decodedToken.email,
+						roles: ['USER']
+					}, null, {
+							context: {
+								authenticate: () => true
+							}
+						});
+				} else {
+					currUser = users.get(uid);
+				}
+				console.log('decodedToken :', decodedToken);
+
+				currRoles = currUser.roles;
+			} catch (e) {
+				console.error(e);
+				error = e;
+			}
+		}
+
+		// set the context with authenticate function
+		return {
+			...req,
+			authenticate: async (method, requiredRoles, record, _updates, typeName, fieldName) => {
+				if (error) {
+					throw new Error('You probably need to login again to get a new JWT. ' + error.message);
+				}
+				const requiredRolesForMethod: any[] = requiredRoles[method];
+				if (currRoles.includes('ADMIN')) {
+					return true;
+				}
+
+				// specific field constraints
+
+				// users shouldn't be able to set posts author other than to themselves
+				if (currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
+					if (!record.author || record.author !== currUser.id) {
+						throw new Error('Author field must be set to logged in USER');
+					}
+				}
+
+				if (requiredRolesForMethod.includes('ANY')) {
+					return true;
+				}
+
+				if (requiredRolesForMethod.includes('OWNER') && currUser) {
+					if (record.author === currUser.id || record.id === currUser.id) {
+						return true;
+					}
+				}
+
+				// check if currRoles has any of the required Roles
+				const hasNecessaryRole = requiredRolesForMethod.some((role) => {
+					return currRoles.includes(role);
+				});
+				if (!hasNecessaryRole) {
+					if (fieldName) {
+						throw new Error(`Not authorized to ${method} ${fieldName} on type ${typeName}`);
+					} else {
+						throw new Error(`Not authorized to ${method} ${typeName}`);
+					}
+				}
+				return true;
+
+			}
+		};
+	};
 	// assumed cwd is root of graphql-genie, may need to change
 	server.express.use(express.static(path.join(process.cwd(), 'examples/graphql-yoga-redis-firebase-auth/public/')));
 	server.start(opts, () => {
@@ -136,6 +197,8 @@ const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
 	}`);
 	const usersResult = get(dbUsers, 'data.users') || [];
 	usersResult.forEach(user => {
+		// the uid is stored in the id
+		users.set(atob(user.id).split(':')[0], user);
 		users.set(user.id, user);
 	});
 
@@ -144,9 +207,11 @@ const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
 		switch (context.request.method) {
 			case 'create':
 			case 'update':
+				users.set(atob(record.id).split(':')[0], record);
 				users.set(record.id, record);
 				return record;
 			case 'delete':
+				users.delete(atob(record.id).split(':')[0]);
 				users.delete(record.id);
 				return record;
 		}

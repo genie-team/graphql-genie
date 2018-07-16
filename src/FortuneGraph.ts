@@ -35,8 +35,8 @@ export default class FortuneGraph implements DataResolver {
 
 	}
 
-	public computeId = (graphType: string) => {
-		const id = fortuneCommon.generateId();
+	public computeId = (graphType: string, id?: string): string => {
+		id = id || fortuneCommon.generateId();
 		return btoa(`${id}:${graphType}`);
 	}
 
