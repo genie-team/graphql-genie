@@ -81,8 +81,7 @@ type UserSubscriptionWhereInput {
 	node: UserWhereInput
 }
 ```
-* `MutationType` is CREATED, UPDATED or DELETED. 
-
+* `mutation_in`: Select which mutations you want to subscribe to (`MutationType` is CREATED, UPDATED or DELETED)
 * `updatedFields_contains`: Matches if any of the fields specified have been updated.
 * `updatedFields_contains_every`: Matches if all fields specified have been updated.
 * `node`: To select specific nodes that you want to be notified about. The WhereInput is the same one used in other Queries and Mutations for this node
