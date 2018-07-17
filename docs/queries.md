@@ -37,28 +37,31 @@ Let's take a close look at what a generated query looks like
 
 ```graphql
 cities(
+	# Filter the results
 	where: CityWhereInput
+	# Sort the results
 	orderBy: CityOrderByInput
-	# Slice result from the start
+	# Slice result from the start of the cursor
 	first: Int
-	# Slice result from the end
+	# Slice result from the start of the cursor
 	last: Int
-	# Skip results
+	# Skip results from the start of the data
 	skip: Int
-	# Before this ID in the data, see connection queries documentation for more info
+	# Before this cursor (ID) in the data, see connection queries documentation for more info
 	before: String
-	# After this ID in the data, see connection queries documentation for more info
+	# After this cursor (ID) in the data, see connection queries documentation for more info
 	after: String
-	#id matches at least one of argument
+	# id matches at least one of argument
 	id: [ID!]
-	#name matches at least one of argument
+	# name matches at least one of argument
 	name: [String!]
-	#neighborhoods matches at least one of argument
+	# neighborhoods matches at least one of argument
 	neighborhoods: [String!]
-	#founded matches at least one of argument
+	# founded matches at least one of argument
 	founded: [Date!]
-	#population matches at least one of argument
+	# population matches at least one of argument
 	population: [Int!]
+)
 ```
 
 The where argument will filter the returned results. 
@@ -72,8 +75,8 @@ input CityWhereInput {
 	exists: CityExistsInput
 	# Filter on whether or not a field value matches. Can only check scalar and enum fields
 	# name: 'New York' // exact match
-	# neighborhoods: 'chinatown' //if contains as neighborhoods is a list type
 	# name:  ['New York', 'LA'] // match any one of these values
+	# neighborhoods: 'chinatown' //if neighborhoods contains 'chinatown' as neighborhoods is a list type
 	match: CityMatchInput
 	# Filter between lower and upper bounds, takes precedence over match
 	# name: [ 'a', 'd' ], // Starting with letters A through C.
@@ -98,7 +101,7 @@ enum ORDER_BY_OPTIONS {
 }
 ```
 
-You can also sort related types. So the OrderByInput looks like.
+You can also sort related types. 
 
 **Note:** Sorting on user here will sort the user type if it is part of the query, not change the sorting of the cities
 
@@ -116,17 +119,17 @@ input CityOrderByInput{
 
 ### Examples
 
-**Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests)**
-Look at the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src/tests/setupTests.ts) file to see the schema and then checkout the [__tests__](https://github.com/genie-team/graphql-genie/tree/master/src/tests/__tests__) folder for many different examples.
+**Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests).**
+See the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src/tests/setupTests.ts) file to see the schema and then see the files in the [__tests__](https://github.com/genie-team/graphql-genie/tree/master/src/tests/__tests__) folder for many different examples.
 
 get all the cities
 
 ```graphql
 query allCities {
-  cities {
+	cities {
 		id
 		name
-  }
+	}
 }
 ```
 
@@ -158,13 +161,13 @@ use more options
 query filteredCities {
   cities(
 		where: {range: {founded: [null, "1990-01-01"]}}
-    orderBy: {founded: ASCENDING}
+		orderBy: {founded: ASCENDING}
 		skip: 5
 		) {
-    name
-    population
-    founded
-  }
+			name
+			population
+			founded
+		}
 }
 
 ```
@@ -174,11 +177,11 @@ Note when requesting objects you can filter as part of the query, this is differ
 ```graphql
 query allCities {
   cities {
-    name
-    population
-    user(where: {exists:{email: true}}) {
-      email
-    }
+		name
+		population
+		user(where: {exists:{email: true}}) {
+			email
+		}
   }
 }
 ```
