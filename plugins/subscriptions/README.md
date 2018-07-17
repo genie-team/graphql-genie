@@ -14,7 +14,11 @@ Pass in a pubsub object from [graphql-subscriptions](https://github.com/apollogr
 ### Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
 
-`npm install graphql-genie-subscriptions graphql-subscriptions` or `yarn add graphql-genie-subscriptions graphql-subscriptions`
+`npm install graphql-genie-subscriptions graphql-subscriptions` 
+
+or 
+
+`yarn add graphql-genie-subscriptions graphql-subscriptions`
 
 
 ### Enable plugin
