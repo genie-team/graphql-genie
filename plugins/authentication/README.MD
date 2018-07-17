@@ -7,7 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/graphql-genie-authentication.svg)](https://www.npmjs.com/package/graphql-genie-authentication)
 [![npm](https://img.shields.io/npm/l/graphql-genie-authentication.svg)](https://github.com/genie-team/graphql-genie/blob/master/LICENSE)
 
-Pass in a pubsub object from [graphql-subscriptions](https://github.com/apollographql/graphql-subscriptions) and the necessary types and resolvers will be added to your schema
+Helps add authentication to your graphql-genie schema. Creates a `@auth` directive that allows role based authentication down to individual fields
 
 ### Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
@@ -24,6 +24,8 @@ or
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
 import authPlugin from 'graphql-genie-authentication';
 
+
+// typedefs must have an enum named Role
 const genie = new GraphQLGenie(...args);
 
 await genie.init();
@@ -42,18 +44,66 @@ You can pass in the default required of each operation which will be used in you
 
 ### Authentication Requirements
 
+Your schema must have an enum named "Role". These will then be used to define necessary roles on CRUD operations.
+
+All graphql requests must have a context with a property named `authenticate`. `authenticate` must be a function which returns (or resolves to) true if the operation is allowed. If the operation is not allowed either return/resolve to false or throw an error. 
+
+An example setting up context with GraphQL Yoga
+```typescript
+const server = new GraphQLServer({
+	schema,
+	context: req => ({
+		...req,
+		authenticate: (method, allowedRoles, record, updates, typeName, fieldName) => {
+			return true;
+		}
+	})
+});
+```
+The authenticate function recieves the following.
+
+* `method: String`: 
+	* The CRUD operation being performed
+	* 'create', 'read', 'update' or 'delete'
+* `allowedRoles: {create: string[]; read: string[]; update: string[]; delete: string[];}`
+	* The configured roles allowed for this type/field
+	* To get just the allowed roles for the current method just do `const allowedRolesForMethod: any[] = allowedRoles[method];`
+* `record: object`
+	* The record (without updates) being queried/mutated.
+	* You may need to look at this if you have a role like `Owner` to see if the current user has permission
+* `updates: {id: ID, replace: {}, push: {}, pull: {}}`
+	* example
+		```{
+		// ID being updated
+		id: 1,
+
+		// Values being replaced
+		replace: { name: 'Bob' },
+
+		// Values (if a scalar type) or IDs (if a object type) being pushed to a list field
+		push: { posts: 1 },
+
+		// Values (if a scalar type) or IDs (if a object type) being removed from a list field
+		pull: { posts: [ 2, 3 ] },
+		```
+* `typeName: string`
+	* The type being queried/mutated.
+* `fieldName: string`
+	* The field being queried/mutated.
+	* May be null if the check is just on the type
+
+
+The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves
 		
 ### Examples
 
-All the graphql-yoga [code examples](https://github.com/genie-team/graphql-genie/blob/master/examples) use the subscriptions plugin.
+See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Would be simple to adapt to returning a JWT on login as well
 
-The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.ts) are a good place to see example subscription queries.
+See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider.
 
 #### Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
 
 
-Must have a Role ENUM
 
-Context: Must pass in an authenticate function which returns true if the operation is allowed if the operation is not allowed either return false or throw an error. The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves
