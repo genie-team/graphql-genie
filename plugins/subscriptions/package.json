@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-subscriptions",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "GraphQL Genie Subscriptions",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",

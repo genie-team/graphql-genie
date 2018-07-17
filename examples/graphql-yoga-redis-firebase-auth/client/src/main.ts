@@ -13,7 +13,7 @@ const initApp = () => {
 		console.log('state changed', !!user);
 		if (user) {
 			user.getIdToken().then(function (accessToken) {
-
+				console.log('accessToken :', accessToken);
 				document.getElementById('firebaseui-auth-container').innerHTML = `
 					<strong>Go to <a href="/playground">/playground</a> and set HTTP Headers to</strong>
 					<br/><br/>
@@ -50,8 +50,7 @@ const initApp = () => {
 					query {
 						users {
 							id
-							name
-							email
+							displayname
 						}
 					}
 				`,

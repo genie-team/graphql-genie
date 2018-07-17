@@ -12,14 +12,17 @@ import ms from 'ms';
 import { GraphQLSchema, assertObjectType, graphql } from 'graphql';
 import { get } from 'lodash';
 const typeDefs = `
-# ANY is open to all requests, USER means they must be logged in, OWNER the user must have created or be the type
 enum Role {
+	# Open to all requests
 	ANY
+	# Must be logged in
 	USER
+	# User must have created/be the type
 	OWNER
 	ADMIN
 }
 
+# Only users can create posts, anybody can read posts, only the person who created the post can update/delete it
 type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
   id: ID! @unique
 	title: String!
@@ -27,13 +30,17 @@ type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
   author: User @relation(name: "posts")
 }
 
+# Anyone can create users (aka signup), be able to see user info by default, can only update yourself, and only admins can delete
 type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 	id: ID! @unique
 	username: String! @unique
+	# don't let anyone read email
 	email: String! @unique @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
+	# only admins can read password
 	password: String! @auth(create: ANY, read: ADMIN, update: OWNER, delete: ADMIN)
   name : String
 	posts: [Post] @relation(name: "posts")
+	# Only admins can alter roles, will need additional logic in authenticate function so users can only set themself to USER role
 	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN)
 }
 `;

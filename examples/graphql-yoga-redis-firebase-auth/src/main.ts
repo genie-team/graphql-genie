@@ -90,7 +90,8 @@ const startServer = async (genie: GraphQLGenie) => {
 	});
 	server.context = async (req) => {
 		// first check the logged in user.
-		const bearer = parseAuthorizationBearer(req.request);
+		console.log('req :', req);
+		const bearer = parseAuthorizationBearer(req.request || req.connection);
 		let decodedToken;
 		let uid;
 		let currUser;
@@ -109,6 +110,8 @@ const startServer = async (genie: GraphQLGenie) => {
 					if (users.size === 0) {
 						roles = ['ADMIN'];
 					}
+
+					// create the user with the data resolver, note the meta argument can have a context which is needed to allow the create
 					currUser = await dataResolver.create('User', {
 						id,
 						name: decodedToken.name,
@@ -223,9 +226,11 @@ const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
 	});
 };
 
-const parseAuthorizationBearer = req => {
-	if (!req.headers.authorization) return;
-	const headerParts = req.headers.authorization.split(' ');
+const parseAuthorizationBearer = params => {
+	let authorization = params.headers && params.headers.authorization;
+	authorization = authorization ? authorization : params.context && params.context.authorization;
+	if (!authorization) return;
+	const headerParts = authorization.split(' ');
 	if (headerParts[0].toLowerCase() === 'bearer') return headerParts[1];
 };
 

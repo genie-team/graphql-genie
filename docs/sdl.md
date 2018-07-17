@@ -68,3 +68,4 @@ type Address @model {
 	city: String!
 	user: User
 }
+```

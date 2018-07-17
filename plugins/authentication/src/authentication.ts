@@ -5,10 +5,10 @@ import { isArray } from 'lodash';
 import graphqlFields from 'graphql-fields';
 
 interface RequiredRoles {
-	create: string;
-	read: string;
-	update: string;
-	delete: string;
+	create: string[];
+	read: string[];
+	update: string[];
+	delete: string[];
 }
 
 export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
