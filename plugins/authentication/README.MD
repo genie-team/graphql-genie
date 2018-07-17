@@ -51,7 +51,7 @@ directive @auth(
 
 ### Arguments
 
-(defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin
+`(defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin`
 
 You can pass in the default required of each operation which will be used in you don't pass in the required role when using the directive
 
