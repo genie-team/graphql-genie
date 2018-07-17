@@ -67,9 +67,8 @@ export class GenerateGetAll implements TypeGenerator {
 		};
 
 		this.resolvers.set('node', async (_root: any, _args: { [key: string]: any }, _context, _info) => {
-			console.log('args', _args);
 			const id = _args.id;
-			const fortuneReturn = await this.dataResolver.find('Node', [id], undefined, undefined, {context: _context, info: _info});
+			const fortuneReturn = await this.dataResolver.find('Node', [id], undefined, {context: _context, info: _info});
 			if (fortuneReturn) {
 				const cache = new Map<string, object>();
 				cache.set(id, fortuneReturn);

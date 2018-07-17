@@ -20,5 +20,6 @@ config.json
 Thumbs.db
 UserInterfaceState.xcuserstate
 .env
+.nvmrc
 examples/
 plugins/

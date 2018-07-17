@@ -13,7 +13,6 @@ interface RequiredRoles {
 
 export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
 	return async (genie: GraphQLGenie) => {
-		console.log('start auth plugin');
 		const newDefsAsString: string[] = [];
 		newDefsAsString.push(`
 			directive @auth(

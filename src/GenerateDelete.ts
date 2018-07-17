@@ -94,7 +94,7 @@ export class GenerateDelete implements TypeGenerator {
 				if (filter) {
 					const schemaType = this.schema.getType(type.name);
 					const options = parseFilter(filter, schemaType);
-					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options, undefined, {context: _context, info: _info});
+					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options, {context: _context, info: _info});
 					fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 					count = fortuneReturn.length;
 
@@ -102,7 +102,7 @@ export class GenerateDelete implements TypeGenerator {
 						fortuneReturn = fortuneReturn.map((value) => {
 							return value.id;
 						});
-						await this.dataResolver.delete(type.name, fortuneReturn, undefined, {context: _context, info: _info});
+						await this.dataResolver.delete(type.name, fortuneReturn, {context: _context, info: _info});
 					}
 				}
 				return {

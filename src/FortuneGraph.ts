@@ -40,10 +40,21 @@ export default class FortuneGraph implements DataResolver {
 		return btoa(`${id}:${graphType}`);
 	}
 
-	private getTypeFromId = (inputId: string): string => {
+	public getTypeFromId = (inputId: string): string => {
 		let result: string;
 		try {
 			result = atob(inputId).split(':')[1];
+		} catch (e) {
+			result = inputId;
+		}
+
+		return result;
+	}
+
+	public getOriginalIdFromObjectId = (inputId: string): string => {
+		let result: string;
+		try {
+			result = atob(inputId).split(':')[0];
 		} catch (e) {
 			result = inputId;
 		}
@@ -55,9 +66,9 @@ export default class FortuneGraph implements DataResolver {
 		let currValue;
 		// tslint:disable-next-line:prefer-conditional-expression
 		if (args.id) {
-			currValue = await this.find(returnTypeName, [args.id], undefined, undefined, meta);
+			currValue = await this.find(returnTypeName, [args.id], undefined, meta);
 		} else {
-			currValue = await this.find(returnTypeName, undefined, { match: args }, undefined, meta);
+			currValue = await this.find(returnTypeName, undefined, { match: args }, meta);
 		}
 		return isArray(currValue) ? currValue[0] : currValue;
 	}
@@ -147,7 +158,7 @@ export default class FortuneGraph implements DataResolver {
 		return graphQLTypeName;
 	}
 
-	public create = async (graphQLTypeName: string, records, include?, meta?) => {
+	public create = async (graphQLTypeName: string, records, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		records['__typename'] = graphQLTypeName;
 
@@ -155,17 +166,17 @@ export default class FortuneGraph implements DataResolver {
 			records['id'] = this.computeId(graphQLTypeName);
 		}
 
-		let results = this.transaction ? await this.transaction.create(fortuneType, records, include, meta) : await this.store.create(fortuneType, records, include, meta);
+		let results = this.transaction ? await this.transaction.create(fortuneType, records, undefined, meta) : await this.store.create(fortuneType, records, undefined, meta);
 		results = results.payload.records;
 		return isArray(records) ? results : results[0];
 	}
 
-	public find = async (graphQLTypeName: string, ids?: string[], options?, include?, meta?) => {
+	public find = async (graphQLTypeName: string, ids?: string[], options?, meta?) => {
 		let results;
 		let fortuneType: string;
 		if (graphQLTypeName === 'Node') {
 			fortuneType = this.getFortuneTypeName(this.getTypeFromId(ids[0]));
-			results = this.transaction ? await this.transaction.find(fortuneType, ids[0], options, include, meta) : await this.store.find(fortuneType, ids[0], options, include, meta);
+			results = this.transaction ? await this.transaction.find(fortuneType, ids[0], options, undefined, meta) : await this.store.find(fortuneType, ids[0], options, undefined, meta);
 		} else {
 			fortuneType = this.getFortuneTypeName(graphQLTypeName);
 			// pull the id out of the match options
@@ -177,7 +188,7 @@ export default class FortuneGraph implements DataResolver {
 				ids = isArray(ids) ? ids : [ids];
 			}
 			options = this.generateOptions(options, graphQLTypeName, ids);
-			results = this.transaction ? await this.transaction.find(fortuneType, ids, options, include, meta) : await this.store.find(fortuneType, ids, options, include, meta);
+			results = this.transaction ? await this.transaction.find(fortuneType, ids, options, undefined, meta) : await this.store.find(fortuneType, ids, options, undefined, meta);
 		}
 		let graphReturn: any[] = get(results, 'payload.records');
 		if (graphReturn) {

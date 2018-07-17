@@ -22,7 +22,7 @@ log.txt
 npm-debug*
 node_modules/
 $RECYCLE.BIN/
-
+.nvmrc
 .DS_Store
 Thumbs.db
 UserInterfaceState.xcuserstate

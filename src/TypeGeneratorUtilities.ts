@@ -392,7 +392,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			createArg = clean(createArg);
 			if (createArg && !isEmpty(createArg)) {
 				dataResolverPromises.push(new Promise((resolve, reject) => {
-					dataResolver.create(returnTypeName, createArg, undefined, {context: _context, info: _info}).then(data => {
+					dataResolver.create(returnTypeName, createArg, {context: _context, info: _info}).then(data => {
 						const id = isArray(data) ? map(data, 'id') : data.id;
 						resolve({ index, key, id, data });
 					}).catch(reason => {
@@ -489,7 +489,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		deleteArgs.forEach(deleteArg => {
 			if (deleteArg === true) {
 				dataResolverPromises.push(new Promise((resolve, reject) => {
-					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], undefined, {context: _context, info: _info}).then(data => {
+					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
 					}).catch(reason => {
 						reject(reason);
@@ -502,7 +502,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						if (!currRecord || isEmpty(currRecord)) {
 							throw new GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
 						}
-						dataResolver.delete(currRecord.__typename, [currRecord.id], undefined, {context: _context, info: _info}).then(() => {
+						dataResolver.delete(currRecord.__typename, [currRecord.id], {context: _context, info: _info}).then(() => {
 							resolve({ index, key, id: null, currRecord });
 						}).catch(reason => {
 							reject(reason);
@@ -529,7 +529,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const deleteIds = await Promise.all(deletePromises);
 		if (!isEmpty(deleteIds)) {
 			dataResolverPromises.push(new Promise((resolve, reject) => {
-				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds, undefined, {context: _context, info: _info}).then(data => {
+				dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), deleteIds, {context: _context, info: _info}).then(data => {
 					resolve({ index, key, id: data[key], data });
 				}).catch(reason => {
 					reject(reason);
@@ -644,7 +644,7 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				findOptions = options;
 			}
 			if (!isEmpty(ids)) {
-				let findResult = await dataResolver.find(typeName, ids, findOptions, undefined, {context: _context, info: _info});
+				let findResult = await dataResolver.find(typeName, ids, findOptions, {context: _context, info: _info});
 				if (findResult) {
 					findResult = isArray(findResult) ? findResult : [findResult];
 					// remove null values
@@ -734,7 +734,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 		}
 		let connection: Connection;
 		let result: any;
-		let fortuneReturn = await dataResolver.find(type.name, null, options, undefined, {context: _context, info: _info});
+		let fortuneReturn = await dataResolver.find(type.name, null, options, {context: _context, info: _info});
 		if (fortuneReturn && !isEmpty(fortuneReturn)) {
 			fortuneReturn = isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
 			connection = dataResolver.getConnection(fortuneReturn, _args.before, _args.after, _args.first, _args.last);
@@ -854,7 +854,7 @@ export const filterNested = async (filter: object, orderBy: object, type: GraphQ
 						if (currOrderBy) {
 							options['orderBy'] = currOrderBy;
 						}
-						let childReturn = await dataResolver.find(childType.name, childIds, options, undefined, {context: _context, info: _info});
+						let childReturn = await dataResolver.find(childType.name, childIds, options, {context: _context, info: _info});
 						if (isArray(childReturn) && !isEmpty(childReturn)) {
 							const recursePullIds = await filterNested(currFilter, currOrderBy, childType, childReturn, cache, dataResolver, _context, _info);
 							childReturn = childReturn ? childReturn.filter(result => {

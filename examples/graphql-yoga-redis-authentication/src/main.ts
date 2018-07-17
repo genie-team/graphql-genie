@@ -121,7 +121,6 @@ const startServer = async (genie: GraphQLGenie) => {
 		context: req => ({
 			...req,
 			authenticate: (method, requiredRoles, record, _updates, typeName, fieldName) => {
-				console.log('updates :', _updates);
 				// throw your own error or just return false if not authorized
 				const requiredRolesForMethod: any[] = requiredRoles[method];
 				const currUser = get(req, 'request.session.user');

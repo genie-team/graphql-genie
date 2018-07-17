@@ -40,10 +40,10 @@ export interface Features {
 }
 export interface DataResolver {
 	getLink(graphQLTypeName: string, field: string): string;
-	delete(graphQLTypeName: string, ids?: string[], include?, meta?): Promise<any>;
+	delete(graphQLTypeName: string, ids?: string[], meta?): Promise<any>;
 	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
-	find(graphQLTypeName: string, ids?: string[], options?, include?, meta?): Promise<any>;
-	create(graphQLTypeName: string, records, include?, meta?): Promise<any>;
+	find(graphQLTypeName: string, ids?: string[], options?, meta?): Promise<any>;
+	create(graphQLTypeName: string, records, meta?): Promise<any>;
 	getValueByUnique(returnTypeName: string, args, meta): Promise<Object>;
 	canAdd(graphQLTypeName: string, records: Object, meta): Promise<boolean>;
 	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
@@ -55,6 +55,8 @@ export interface DataResolver {
 	beginTransaction(): Promise<void>;
 	endTransaction(): Promise<void>;
 	computeId(graphType: string, id?: string): string;
+	getTypeFromId(inputId: string): string;
+	getOriginalIdFromObjectId(inputId: string): string;
 }
 
 export interface GenerateConfig {

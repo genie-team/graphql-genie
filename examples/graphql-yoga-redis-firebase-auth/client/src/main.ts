@@ -14,8 +14,6 @@ const initApp = () => {
 		if (user) {
 			user.getIdToken().then(function (accessToken) {
 
-				const playground = localStorage.getItem('graphql-playground');
-
 				document.getElementById('firebaseui-auth-container').innerHTML = `
 					<strong>Go to <a href="/playground">/playground</a> and set HTTP Headers to</strong>
 					<br/><br/>

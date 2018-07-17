@@ -11,7 +11,6 @@ import admin, { ServiceAccount } from 'firebase-admin';
 import express from 'express';
 import { get } from 'lodash';
 import path from 'path';
-import { atob } from 'abab';
 const typeDefs = `
 # ANY is open to all requests, USER means they must be logged in, OWNER the user must have created or be the type
 enum Role {
@@ -77,13 +76,10 @@ const startServer = async (genie: GraphQLGenie) => {
 
 	// options for graphql yoga
 	const opts = {
-		port: 3000,
+		port: 4000,
 		endpoint: '/graphql',
 		subscriptions: '/subscriptions',
-		playground: '/playground',
-		cors: {
-			origin: true
-		}
+		playground: '/playground'
 	};
 	const schema = genie.getSchema();
 
@@ -104,24 +100,28 @@ const startServer = async (genie: GraphQLGenie) => {
 			try {
 				decodedToken = await admin.auth().verifyIdToken(bearer);
 				uid = decodedToken.uid;
+				const dataResolver = genie.getDataResolver();
+				const id = dataResolver.computeId('User', uid);
 
-				if (!users.has(uid)) {
-					const dataResolver = genie.getDataResolver();
-					const id = dataResolver.computeId('User', uid);
+				if (!users.has(id)) {
+					// if this is the first user ever created, give them ADMIN
+					let roles = ['USER'];
+					if (users.size === 0) {
+						roles = ['ADMIN'];
+					}
 					currUser = await dataResolver.create('User', {
 						id,
 						name: decodedToken.name,
 						email: decodedToken.email,
-						roles: ['USER']
-					}, null, {
+						roles
+					}, {
 							context: {
 								authenticate: () => true
 							}
 						});
 				} else {
-					currUser = users.get(uid);
+					currUser = users.get(id);
 				}
-				console.log('decodedToken :', decodedToken);
 
 				currRoles = currUser.roles;
 			} catch (e) {
@@ -177,15 +177,24 @@ const startServer = async (genie: GraphQLGenie) => {
 			}
 		};
 	};
-	// assumed cwd is root of graphql-genie, may need to change
-	server.express.use(express.static(path.join(process.cwd(), 'examples/graphql-yoga-redis-firebase-auth/public/')));
+	const cwd = process.cwd();
+	let publicPath: string;
+	// assumed cwd is root of this project or graphql-genie, may need to change
+	// tslint:disable-next-line:prefer-conditional-expression
+	if (cwd.includes('graphql-yoga-redis-firebase-auth')) {
+		publicPath = path.join(cwd, 'public/');
+	} else {
+		publicPath = path.join(cwd, 'examples/graphql-yoga-redis-firebase-auth/public/');
+	}
+	server.express.use(express.static(publicPath));
 	server.start(opts, () => {
-		console.log('Server is running on localhost:3000');
+		console.log('Server is running on localhost:4000');
 	});
 
 };
 
 const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
+	const dataResolver = genie.getDataResolver();
 	const dbUsers = await graphql(genie.getSchema(), `{
 		users {
 			id
@@ -195,23 +204,19 @@ const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
 			roles
 		}
 	}`);
+
 	const usersResult = get(dbUsers, 'data.users') || [];
 	usersResult.forEach(user => {
-		// the uid is stored in the id
-		users.set(atob(user.id).split(':')[0], user);
 		users.set(user.id, user);
 	});
-
 	// add a hook so the users stay up to date
-	genie.getDataResolver().addOutputHook('User', (context, record) => {
+	dataResolver.addOutputHook('User', (context, record) => {
 		switch (context.request.method) {
 			case 'create':
 			case 'update':
-				users.set(atob(record.id).split(':')[0], record);
 				users.set(record.id, record);
 				return record;
 			case 'delete':
-				users.delete(atob(record.id).split(':')[0]);
 				users.delete(record.id);
 				return record;
 		}

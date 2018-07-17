@@ -360,7 +360,7 @@ export class GraphQLGenie {
 				if (!isEmpty(pull)) {
 					update['pull'] = pull;
 				}
-				console.log(typeName, update);
+				// console.log(typeName, update);
 				updatePromies.push(this.graphQLFortune.update(typeName, update, undefined, { fortuneFormatted: true }));
 			}
 			index++;

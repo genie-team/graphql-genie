@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-authentication",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "GraphQL Genie Authentication",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
