@@ -144,18 +144,7 @@ query singleCity {
 }
 ```
 
-get a single city with an id
-
-```graphql
-query singleCity {
-	cities (id: "ID") {
-		id
-		name
-	}
-}
-```
-
-use more options
+range, orderBy, skip
 
 ```graphql
 query filteredCities {
