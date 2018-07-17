@@ -72,15 +72,19 @@ enum Role {
 }
 ```
 
-And how the auth directive may be used with those roles
+And how the auth directive may be used with those roles.  
+
+	Setting auth on a type will also wrap all the fields with the same requirements.
+
+	Since auth fields have a default, when using on a field the default will override the type value, so set it again on the field even if it's the same as on tye type
 
 ```graphql
 # Only users can create posts, anybody can read posts, only the person who created the post can update/delete it
 type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
-  id: ID! @unique
+	id: ID! @unique
 	title: String!
 	text: String
-  author: User @relation(name: "posts")
+	author: User @relation(name: "posts")
 }
 
 # Anyone can create users (aka signup), be able to see user info by default, can only update yourself, and only admins can delete
