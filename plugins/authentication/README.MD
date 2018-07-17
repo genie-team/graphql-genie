@@ -53,7 +53,7 @@ directive @auth(
 
 `(defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin`
 
-You can pass in the default required of each operation which will be used in you don't pass in the required role when using the directive
+You can pass in the default required of each operation which will be used in you don't pass in the required role when using the directive. If you don't provide an argument 'ADMIN' will be the default, so make sure that is one of the roles.
 
 
 ### Authentication Requirements 
@@ -104,6 +104,8 @@ type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 
 
 All graphql requests must have a context with a property named `authenticate`. `authenticate` must be a function which returns (or resolves to) true if the operation is allowed. If the operation is not allowed either return/resolve to false or throw an error. 
+
+This function is where you will check the current logged in users role (or however else you want to authenticate) against the requirments setup by your schema.
 
 An example setting up context with GraphQL Yoga
 ```typescript
