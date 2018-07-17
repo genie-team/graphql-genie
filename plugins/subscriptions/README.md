@@ -34,6 +34,87 @@ await genie.use(subscriptionPlugin(new PubSub()));
 const schema = genie.getSchema();
 ```
 
+### Subscription API
+
+Given you passed the following schema to Graphql Genie
+
+```graphql
+type Post {
+  id: ID! @unique
+	title: String!
+	text: String
+  author: User @relation(name: "posts")
+}
+
+type User {
+	id: ID! @unique
+	displayname: String @unique
+	email: String! @unique
+  name : String 
+	posts: [Post] @relation(name: "posts")
+}
+```
+
+2 Subscriptions will be created, `user` and `post`.
+
+Each will have a where input and a payload output
+
+```graphql
+user(
+where: UserSubscriptionWhereInput
+): UserSubscriptionPayload
+```
+
+The where input type looks like
+
+```graphql
+type UserSubscriptionWhereInput {
+	AND: [UserSubscriptionWhereInput!]
+	OR: [UserSubscriptionWhereInput!]
+	mutation_in: [MutationType!]
+	updatedFields_contains: [String!]
+	updatedFields_contains_every: [String!]
+	node: UserWhereInput
+}
+```
+`MutationType` is CREATED, UPDATED or DELETED. 
+
+	`updatedFields_contains`: Matches if any of the fields specified have been updated.
+	`updatedFields_contains_every`: Matches if all fields specified have been updated.
+	`node`: To select specific nodes that you want to be notified about. The WhereInput is the same one used in other Queries and Mutations for this node
+
+
+The payload output looks like
+
+```graphql
+type UserSubscriptionPayload {
+	mutation: MutationType!
+	node: User
+	updatedFields: [String!]
+	previousValues: UserPreviousValues
+}
+```
+
+    `mutation`: Which mutation happened
+    `node:` Information on the mutated node.
+		`updatedFields`: In case of an update, a list of the fields that changed.
+		`previousValues`: In case of an update, previous values of the node. Scalars return the actual value but other output types return just the id(s)
+
+		
+```graphql
+type UserPreviousValues {
+	id: ID!
+	displayname: String
+	email: String!
+	name: String
+	posts_ids: [String!]
+}
+```
+		
+### Examples
+
+The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.ts) are a good place to see examples
+
 #### Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
