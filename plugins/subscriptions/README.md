@@ -43,14 +43,14 @@ type Post {
   id: ID! @unique
 	title: String!
 	text: String
-  author: User @relation(name: "posts")
+	author: User @relation(name: "posts")
 }
 
 type User {
 	id: ID! @unique
 	displayname: String @unique
 	email: String! @unique
-  name : String 
+	name : String 
 	posts: [Post] @relation(name: "posts")
 }
 ```
@@ -61,7 +61,7 @@ Each will have a where input and a payload output
 
 ```graphql
 user(
-where: UserSubscriptionWhereInput
+	where: UserSubscriptionWhereInput
 ): UserSubscriptionPayload
 ```
 
@@ -77,11 +77,11 @@ type UserSubscriptionWhereInput {
 	node: UserWhereInput
 }
 ```
-`MutationType` is CREATED, UPDATED or DELETED. 
+* `MutationType` is CREATED, UPDATED or DELETED. 
 
-	`updatedFields_contains`: Matches if any of the fields specified have been updated.
-	`updatedFields_contains_every`: Matches if all fields specified have been updated.
-	`node`: To select specific nodes that you want to be notified about. The WhereInput is the same one used in other Queries and Mutations for this node
+* `updatedFields_contains`: Matches if any of the fields specified have been updated.
+* `updatedFields_contains_every`: Matches if all fields specified have been updated.
+* `node`: To select specific nodes that you want to be notified about. The WhereInput is the same one used in other Queries and Mutations for this node
 
 
 The payload output looks like
@@ -95,10 +95,10 @@ type UserSubscriptionPayload {
 }
 ```
 
-    `mutation`: Which mutation happened
-    `node:` Information on the mutated node.
-		`updatedFields`: In case of an update, a list of the fields that changed.
-		`previousValues`: In case of an update, previous values of the node. Scalars return the actual value but other output types return just the id(s)
+* `mutation`: Which mutation happened
+* `node:` Information on the mutated node.
+* `updatedFields`: In case of an update, a list of the fields that changed.
+* `previousValues`: In case of an update, previous values of the node. Scalars return the actual value but other output types return just the id(s)
 
 		
 ```graphql
