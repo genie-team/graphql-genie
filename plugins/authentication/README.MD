@@ -62,16 +62,16 @@ const server = new GraphQLServer({
 ```
 The authenticate function recieves the following.
 
-* `method: String`: 
+* **method: String**: 
 	* The CRUD operation being performed
 	* 'create', 'read', 'update' or 'delete'
-* `allowedRoles: {create: string[]; read: string[]; update: string[]; delete: string[];}`
+* **allowedRoles: {create: string[]; read: string[]; update: string[]; delete: string[];}**
 	* The configured roles allowed for this type/field
 	* To get just the allowed roles for the current method just do `const allowedRolesForMethod: any[] = allowedRoles[method];`
-* `record: object`
+* **record: object**
 	* The record (without updates) being queried/mutated.
 	* You may need to look at this if you have a role like `Owner` to see if the current user has permission
-* `updates: {id: ID, replace: {}, push: {}, pull: {}}`
+* **updates: {id: ID, replace: {}, push: {}, pull: {}}**
 	* example
 		```{
 		// ID being updated
@@ -86,9 +86,9 @@ The authenticate function recieves the following.
 		// Values (if a scalar type) or IDs (if a object type) being removed from a list field
 		pull: { posts: [ 2, 3 ] },
 		```
-* `typeName: string`
+* **typeName: string**
 	* The type being queried/mutated.
-* `fieldName: string`
+* **fieldName: string**
 	* The field being queried/mutated.
 	* May be null if the check is just on the type
 
