@@ -75,6 +75,12 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
 
 [GraphQL Genie](https://github.com/genie-team/graphql-genie) also supports subscriptions with the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions). 
 
+### GraphQL Genie Schema API
+ * **Queries**
+ 	* [Type Queries](https://github.com/genie-team/graphql-genie/blob/master/docs/queries.md)
+	
+WIP
+ 	
 ### GraphQLGenie API
 
 The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md) can be found in the docs folder 
