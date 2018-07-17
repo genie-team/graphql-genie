@@ -38,7 +38,7 @@ const schema = genie.getSchema();
 
 The plugin will create the auth directive and setup the necessary hooks/resolvers to allow you to decide whether or not to allow a specific request
 
-The auth directive looks like, where defaults are arguments to the plugin
+The auth directive is defined as shown below, where defaults are arguments to the plugin
 
 ```graphql
 directive @auth(
@@ -49,7 +49,7 @@ directive @auth(
 ) on OBJECT | FIELD_DEFINITION
 ```
 
-### Arguments
+#### Arguments
 
 `(defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin`
 
