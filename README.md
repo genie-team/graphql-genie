@@ -79,12 +79,16 @@ The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/
 
 ### Authentication
 
-Work is in progress on a plugin to make it extremely easy to add Authentication to a schema created with GraphQL Genie. There are a lot of ways to have some sort of authentication with a GraphQL API and Genie gives you the flexibility to do it any way you want or integrate into services such as Auth0 or Firebase.
+Checkout the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) to easily implement role based authentication down to individual fields. 
 
-Some options to add authentication
+See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Would be simple to adapt to returning a JWT on login as well.
 
-* At the schema level using the [addSchemaLevelResolveFunction](https://www.apollographql.com/docs/graphql-tools/resolvers.html#addSchemaLevelResolveFunction) from graphql-tools
-* At the resolver level use a tool like [graphql-resolvers](https://github.com/lucasconstantino/graphql-resolvers) to combine  a resolver with authentication logic with the resolvers that GraphQL Genie created
+See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider.
+
+Of course Genie creates a normal schema so you can add authentication in any other way you want. (the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) uses a combination of all of these)
+
+* At the schema level using the context function or [addSchemaLevelResolveFunction](https://www.apollographql.com/docs/graphql-tools/resolvers.html#addSchemaLevelResolveFunction) from graphql-tools
+* At the resolver level by wrapping the resolver functions that GraphQL Genie created in the schema, or use a tool like [graphql-resolvers](https://github.com/lucasconstantino/graphql-resolvers) to combine resolver, with authentication logic.
 * At the data level create an input hook and add it to the DataResolver (returned by getDataResolver) and throw an error if not authorized 
 
 ### How do I do/add [thing]
@@ -93,7 +97,7 @@ You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilde
 
 If you want guidance feel free to open an issue and label it as a question.
 
-**Additional documentation is in development, see [examples](https://github.com/genie-team/graphql-genie/tree/master/examples) and [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests) for implementation examples.**
+**See [examples](https://github.com/genie-team/graphql-genie/tree/master/examples) and [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests) for implementation examples.**
 
 ## Features/Advantages/Differences
 
@@ -111,7 +115,6 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 ### TODO
 
 - [ ] API Documentation
-- [ ] Authentication Example
 
 #### Thanks/Credit
 
