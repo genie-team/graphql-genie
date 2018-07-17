@@ -4,7 +4,7 @@
 create config.json at src/config.json. Add your firebase service account info with firebase key. 
 See the "Add Firebase to your app" section in the [admin setup guide](https://firebase.google.com/docs/admin/setup) to get your service account.
 E.G
-```json
+```
 {
 	"firebase": {
 		"type": "service_account",
