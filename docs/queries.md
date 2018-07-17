@@ -2,14 +2,14 @@
 
 If you would rather learn by playing with a demo checkout the [client demo](https://genie-team.github.io/graphql-genie-client/). Note you can set the Data Mode to Mock in settings to have queries return demo data
 
-If generateGetAll is true in the generatorOptions (defaults to true) queries will be created for every type in the model. The name of the query will be the plural version of the type name. 
+If `generateGetAll` is true in the generatorOptions (defaults to true) queries will be created for every type in the model. The name of the query will be the plural version of the type name. 
 
 Every query will have optional arguments `where`, `first`, `last`, `skip`, `before`, `after`. As well as identifying root fields for scalar types. These root fields are the same as doing {where: match:{}}. They are a convenience and allow some more advanced caching with [Relay](https://facebook.github.io/relay/). 
 
 For the following typedefs `users` and `cities` queries will be created.
 
 ```typescript 
-typeDefs = `
+const typeDefs = `
 type City {
 	id: ID! @unique
 	name: String!
@@ -25,10 +25,12 @@ type User {
 	address: City
 }
 `
-const genie = new GraphQLGenie({ typeDefs, 
+const genie = new GraphQLGenie({ 
+	typeDefs, 
 	generatorOptions: {
 		generateGetAll: true,
-	}});
+	}
+});
 ```
 
 Let's take a close look at what a generated query looks like
