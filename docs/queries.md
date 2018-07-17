@@ -137,10 +137,10 @@ get a single city with an id
 
 ```graphql
 query singleCity {
-  cities (id: "ID") {
+	cities (id: "ID") {
 		id
 		name
-  }
+	}
 }
 ```
 
@@ -148,10 +148,10 @@ get a single city with an id
 
 ```graphql
 query singleCity {
-  cities (id: "ID") {
+	cities (id: "ID") {
 		id
 		name
-  }
+	}
 }
 ```
 
@@ -159,15 +159,15 @@ use more options
 
 ```graphql
 query filteredCities {
-  cities(
+	cities(
 		where: {range: {founded: [null, "1990-01-01"]}}
 		orderBy: {founded: ASCENDING}
 		skip: 5
-		) {
-			name
-			population
-			founded
-		}
+	) {
+		name
+		population
+		founded
+	}
 }
 
 ```
@@ -176,13 +176,13 @@ Note when requesting objects you can filter as part of the query, this is differ
 
 ```graphql
 query allCities {
-  cities {
+	cities {
 		name
 		population
 		user(where: {exists:{email: true}}) {
 			email
 		}
-  }
+	}
 }
 ```
 
