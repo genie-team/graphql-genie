@@ -72,11 +72,11 @@ enum Role {
 }
 ```
 
-And how the auth directive may be used with those roles.  
+How the @auth directive may be used with those roles.  
 
-	Setting auth on a type will also wrap all the fields with the same requirements.
+**Note:** Setting auth on a type will also wrap all the fields with the same requirements.
 
-	Since auth fields have a default, when using on a field the default will override the type value, so set it again on the field even if it's the same as on tye type
+**Note:** Since auth fields have a default, when using on a field the default will override the type value, so set it again on the field even if it's the same as on tye type
 
 ```graphql
 # Only users can create posts, anybody can read posts, only the person who created the post can update/delete it
