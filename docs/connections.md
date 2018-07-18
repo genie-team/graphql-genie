@@ -102,7 +102,7 @@ type CityAggregate {
 **Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests).**
 See the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src/tests/setupTests.ts) file to see the schema and then see the files in the [__tests__](https://github.com/genie-team/graphql-genie/tree/master/src/tests/__tests__) folder for many different examples.
 
-If you wanted to query cities founded before 1990 2 at a time you would do a query like this
+If you wanted to query cities founded before 1990 two at a time you would do a query like this
 
 ```graphql
 query filteredCities {
@@ -143,7 +143,7 @@ Which would return something like
         {
           "node": {
             "name": "NY",
-            "population": -24,
+            "population": 500000,
             "founded": "1800-02-23"
           },
           "cursor": "ID1"
@@ -151,14 +151,14 @@ Which would return something like
         {
           "node": {
             "name": "LA",
-            "population": -30,
+            "population": -500000,
             "founded": "1988-02-23"
           },
           "cursor": "ID2"
         }
       ],
       "aggregate": {
-        "count": -11
+        "count": 12
       }
     }
   }
