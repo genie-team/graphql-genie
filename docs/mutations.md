@@ -2,6 +2,9 @@
 
 If you would rather learn by playing with a demo checkout the [client demo](https://genie-team.github.io/graphql-genie-client/).
 
+GraphQL Genie follows [Relay GraphQL Server Specifications](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#mutations). 
+
+> Uses a common pattern for mutations, where they are root fields on the mutation type with a single argument, input, and where the input and output both contain a client mutation identifier used to reconcile requests and responses.
 
 For each type in your model genie can generate create, update, delete and upsert mutations.
 
@@ -48,3 +51,5 @@ const genie = new GraphQLGenie({
 	}
 });
 ```
+
+## Create
