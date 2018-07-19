@@ -1,7 +1,7 @@
 import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
-import {each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isString, keys, set, toString } from 'lodash';
+import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, set, toString } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
@@ -248,7 +248,7 @@ export default class FortuneGraph implements DataResolver {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		let updates = records;
 		if (!options || !options['fortuneFormatted']) {
-			updates = isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
+			updates = isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 		}
 		let results = this.transaction ? await this.transaction.update(fortuneType, updates, undefined, meta) : await this.store.update(fortuneType, updates, undefined, meta);
 		results = results.payload.records;
@@ -263,40 +263,36 @@ export default class FortuneGraph implements DataResolver {
 		return true;
 	}
 
-	public generateUpdates = (fortuneTypeName: string, record, options: object = {}): FortuneUpdate => {
-		const updates: FortuneUpdate  = { id: record['id'] };
+	public generateUpdates = (record, options: object = {}): FortuneUpdate => {
+		const updates: FortuneUpdate = { id: record['id'] };
 		for (const argName in record) {
-			const link = get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
-			let arg = record[argName];
+			const arg = record[argName];
 			if (argName !== 'id') {
 				if (isArray(arg)) {
-					if (link && arg) {
-						arg = arg.map(currId => {
-							return currId;
-						});
-					}
 					if (options['pull']) {
-						if (!updates.pull) {
-							updates.pull = {};
-						}
+						updates.pull = updates.pull || {};
 						updates.pull[argName] = arg;
 					} else {
-						if (!updates.push) {
-							updates.push = {};
-						}
+						updates.push = updates.push || {};
 						updates.push[argName] = arg;
 					}
+				} else if (isPlainObject(arg)) {
+					if (arg.push) {
+						updates.push = updates.push || {};
+						updates.push[argName] = arg.push;
+					}
+					if (arg.pull) {
+						updates.pull = updates.pull || {};
+						updates.pull[argName] = arg.pull;
+					}
+					if (arg.set) {
+						updates.replace = updates.replace || {};
+						updates.replace[argName] = arg.set;
+					}
 				} else {
-					if (link && arg) {
-						arg = arg;
-					}
-					if (!updates.replace) {
-						updates.replace = {};
-					}
+					updates.replace = updates.replace || {};
 					updates.replace[argName] = arg;
 				}
-			} else {
-				arg = arg;
 			}
 		}
 		return updates;

@@ -1,5 +1,5 @@
 
-import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isInputType, isInterfaceType, isNonNullType, isObjectType, isUnionType } from 'graphql';
+import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLScalarType, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isEnumType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { each, get, isEmpty, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
@@ -75,7 +75,18 @@ export class InputGenerator {
 		const fieldTypeName = getReturnType(field.type);
 		const schemaType = this.schema.getType(fieldTypeName);
 		if (isInputType(schemaType)) {
-			inputType = schemaType;
+			if (mutation === Mutation.Update && !this.isAutomaticField(field)) {
+				const nullableType = getNullableType(schemaType);
+				const namedType = getNamedType(schemaType);
+				// tslint:disable-next-line:prefer-conditional-expression
+				if (typeIsList(field.type) && (isScalarType(namedType) || isEnumType(namedType))) {
+					inputType = this.getScalarListInput(namedType);
+				} else {
+					inputType = nullableType;
+				}
+			} else {
+				inputType = schemaType;
+			}
 		} else {
 			const isArray = typeIsList(field.type);
 			let fieldInputName = schemaType.name;
@@ -608,7 +619,14 @@ export class InputGenerator {
 					if (isInputType(field.type)) {
 						const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
 						if (!this.isAutomaticField(infoTypeField)) {
-							inputType = getNullableType(field.type);
+							const nullableType = getNullableType(field.type);
+							const namedType = getNamedType(field.type);
+							// tslint:disable-next-line:prefer-conditional-expression
+							if (isListType(nullableType) && (isScalarType(namedType) || isEnumType(namedType))) {
+								inputType = this.getScalarListInput(namedType);
+							} else {
+								inputType = nullableType;
+							}
 						}
 					} else if (isObjectType(field.type)) {
 						inputType = this.generateInputTypeForField(field, this.generateUpdateManyWithoutInput,
@@ -670,4 +688,20 @@ export class InputGenerator {
 		}
 		return this.currInputObjectTypes.get(name);
 	}
+
+	private getScalarListInput(scalarType: GraphQLScalarType | GraphQLEnumType): GraphQLInputType {
+		const name = scalarType.name + 'ScalarListInput';
+		if (!this.currInputObjectTypes.has(name)) {
+			const fields = {};
+			fields['set'] = {type: new GraphQLList(scalarType)};
+			fields['push'] = {type: new GraphQLList(scalarType)};
+			fields['pull'] = {type: new GraphQLList(scalarType)};
+			this.currInputObjectTypes.set(name, new GraphQLInputObjectType({
+				name,
+				fields
+			}));
+		}
+		return this.currInputObjectTypes.get(name);
+	}
+
 }

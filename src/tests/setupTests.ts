@@ -15,6 +15,7 @@ type Post implements Submission {
   id: ID! @unique
 	title: String!
 	text: String
+	tags: [String]
   author: User @relation(name: "WrittenSubmissions")
 	likedBy: [User!] @relation(name: "LikedPosts") @connection
 	comments: [Comment] @relation(name: "CommentsOnPost")

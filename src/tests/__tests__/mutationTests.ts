@@ -96,6 +96,7 @@ describe('mutationTests', () => {
 						data: {
 							title: "Genie is great"
 							text: "Look how fast I can create an executable schema"
+							tags: ["genie", "graphql", "database"]
 							author: {
 								connect:{
 									email: "zeus@example.com"
@@ -108,6 +109,7 @@ describe('mutationTests', () => {
 						id
 						title
 						text
+						tags
 						author {
 							email
 						}
@@ -119,7 +121,92 @@ describe('mutationTests', () => {
 		testData.posts.push(post.data.createPost.data);
 		expect(post.data.createPost.data.title).toBe('Genie is great');
 		expect(post.data.createPost.data.text).toBe('Look how fast I can create an executable schema');
+		expect(post.data.createPost.data.tags).toEqual(['genie', 'graphql', 'database']);
 		expect(post.data.createPost.data.author.email).toBe('zeus@example.com');
+
+	});
+
+	test('update - push onto tags', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								push: ["fortune"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						}
+					}
+				) {
+					data {
+						id
+						tags
+					}
+				}
+			}
+			`
+		});
+		expect(post.data.updatePost.data.tags).toEqual(['genie', 'graphql', 'database', 'fortune']);
+
+	});
+
+	test('update - pull from tags', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								pull: ["fortune"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						}
+					}
+				) {
+					data {
+						id
+						tags
+					}
+				}
+			}
+			`
+		});
+
+		post.data.updatePost.data.tags.forEach(x => expect(['genie', 'graphql', 'database']).toContain(x));
+		expect(post.data.updatePost.data.tags).toHaveLength(3);
+
+	});
+
+	test('update - set tags', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								set: ["fortune"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						}
+					}
+				) {
+					data {
+						id
+						tags
+					}
+				}
+			}
+			`
+		});
+		expect(post.data.updatePost.data.tags).toEqual(['fortune']);
+
 	});
 
 	test('update - create address on user and update age', async () => {
@@ -213,6 +300,9 @@ describe('mutationTests', () => {
 										{
 											data: {
 												title: "My Updated Post"
+												tags: {
+													set: ["updated"]
+												}
 											}
 											where: {
 												id: "${secondPostId}"
@@ -234,6 +324,7 @@ describe('mutationTests', () => {
 						age
 						writtenSubmissions {
 							title
+							tags
 						}
 					}
 				}
@@ -244,6 +335,7 @@ describe('mutationTests', () => {
 		expect(user.data.updateUser.data.age).toBe(5001);
 		expect(user.data.updateUser.data.email).toBe('zeus@example.com');
 		expect(user.data.updateUser.data.writtenSubmissions[1].title).toBe('My Updated Post');
+		expect(user.data.updateUser.data.writtenSubmissions[1].tags).toEqual(['updated']);
 
 	});
 

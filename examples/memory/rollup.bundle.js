@@ -35,7 +35,7 @@ export default [
 				include: ['node_modules/**'],
 				sourceMap: false,
 				namedExports: {
-					'node_modules/lodash/lodash.js': ['values', 'find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
+					'node_modules/lodash/lodash.js': ['values', 'find', 'eq', 'difference', 'union', 'uniq', 'pick', 'isDate', 'startsWith', 'includes', 'omitBy', 'omit', 'set', 'has', 'isString', 'isEqual', 'findIndex', 'concat', 'forOwn', 'keyBy', 'assign', 'each', 'get', 'merge', 'pickBy', 'endsWith', 'isEmpty', 'isArray', 'isPlainObject', 'isObject', 'map', 'keys', 'mapKeys', 'mapValues'],
 					'node_modules/graphql-genie/lib/browser.umd.js': ['GraphQLGenie', 'FortuneOptions']
 				}
 			}), // so Rollup can convert `ms` to an ES module

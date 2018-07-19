@@ -11,47 +11,20 @@ const typeDefs = `
 #
 
 
-interface Submission {
+type City {
 	id: ID! @unique
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
+	name: String!
+	neighborhoods: [String]
+	user: [User]
+	founded: Date
+	population: Int
 }
-
-type Story implements Submission @model {
+type User {
 	id: ID! @unique
-	title: String!
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
-	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
+	displayname: String @unique
+	email: String! @unique
+	address: City
 }
-
-type Comment implements Submission @model {
-	id: ID! @unique
-	text: String!
-	author: User @relation(name: "SubmissionsByUser")
-	approved: Boolean @default(value: "true")
-}
-
-type User @model {
-	id: ID! @unique
-	email: String @unique
-	name: String
-	submissions: [Submission!] @relation(name: "SubmissionsByUser")
-	address: Address
-	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
-	created: DateTime @createdTimestamp
-	updated: DateTime @updatedTimestamp
-}
-
-type Address @model {
-	id: ID! @unique
-	city: String!
-	user: User
-}
-
-
-
-
 `;
 
 const fortuneOptions: FortuneOptions = {
@@ -99,8 +72,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	rawData.forEach(element => {
 		if (element.name && element.name !== 'test') {
 			element.name = 'Update5';
-		} else if (element.text) {
-			element.text = 'update5';
 		}
 	});
 	console.log(rawData);
@@ -121,7 +92,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	// }], true, 'User');
 	// console.log('imported');
 	// console.log(await genie.getRawData());
-
 
 	// await client.mutate({
 	// 	mutation: gql`mutation {
