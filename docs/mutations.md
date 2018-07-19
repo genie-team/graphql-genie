@@ -5,7 +5,7 @@ If you would rather learn by playing with a demo checkout the [client demo](http
 
 For each type in your model genie can generate create, update, delete and upsert mutations.
 
-For the following typeDefs these mutations will be created:
+For the below schema definition these mutations will be created:
 * createCity
 * createUser
 * updateCity
