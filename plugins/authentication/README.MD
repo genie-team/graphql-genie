@@ -136,8 +136,7 @@ The authenticate function recieves the following.
 * **record: object | object[]**
 	* The record (without updates) being queried/mutated.
 	* You may need to look at this if you have a role like `Owner` to see if the current user has permission
-	* 
-	* Also note the record object may have the form `{fortuneReturn: object, cache: Map<string, object>}` in which fortuneReturn is the master record of the type being found and cache has other info necessary in the query. This cache object may contain additional info necessary when deciding if a find query is allowed when nested filtering is used in the `where` of a find query. If you want just the record you can call the 	getRecordFromResolverReturn function exported by GraphQLGenie
+	* Also note the record object may have the form `{fortuneReturn: object, cache: Map<string, object>}` in which fortuneReturn is the master record of the type being found and cache has other info necessary in the query. This cache object may contain additional info necessary when deciding if a find query is allowed when nested filtering is used in the `where` of a find query. If you want just the record you can call the 	getRecordFromResolverReturn function exported by GraphQLGenie. See the `getUserIDsOfRequestedData` function [here](https://github.com/genie-team/graphql-genie/blob/master/examples/apollo-server2-redis-jwt-auth/src/main.ts) for an example of how this might be done.
 
 * **updates: {id: ID, replace: {}, push: {}, pull: {}}**
 	* example
@@ -170,6 +169,7 @@ See the [apollo server 2 redis jwt example](https://github.com/genie-team/graphq
 See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Uses GraphQL Yoga
 
 See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider. Uses GraphQL Yoga.
+
 
 #### Thanks/Credit
 
