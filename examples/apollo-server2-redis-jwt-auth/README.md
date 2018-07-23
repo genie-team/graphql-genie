@@ -7,11 +7,28 @@
 
 Go to localhost:4000
 
-In Graphql Playground click the settings cog and change `request.credentials` to `include` or `same-origin` for authentication functionality to work
+
 
 Run the query
 ```graphql
 mutation {
   login(identifier: "admin", password: "admin")
+}
+```
+
+You will get back a jwt
+```graphql
+{
+  "data": {
+    "login": "JWT.JWT.KEY"
+  }
+}
+```
+
+Click "HTTP Headers" and paste the authentication header like so.
+
+```json
+{
+"authorization": "Bearer JWT.JWT.KEY"
 }
 ```
