@@ -162,19 +162,23 @@ input UpdateCityMutationInput {
 }
 
 # The update input is similar to the unique input. 
-# Note that updating a scalar list field will push the update onto the list
-
+# Note that updating a scalar field is an input object which has fields for push, pull and set
 
 ```
 
 ### Example
+
+Say we wanted to update the created city above, we could use the update resolver.
 
 ```graphql
 mutation {
   updateCity(input:{
     where: {id: "ID1"}
     data: {
-      name: "NY2",
+      name: "New York",
+			"""
+			neighborhoods is a list field, so we have the option of push, pull or set when updating
+			"""
       neighborhoods: {
         push: ["east side"]
       }      

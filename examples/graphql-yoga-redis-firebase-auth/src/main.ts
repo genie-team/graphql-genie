@@ -4,12 +4,12 @@ import { PubSub } from 'graphql-subscriptions';
 import { GraphQLServer } from 'graphql-yoga';
 import redisAdapter from 'fortune-redis';
 import RedisMock from 'ioredis-mock';
-import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
+import { FortuneOptions, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { graphql } from 'graphql';
 import config from './config.json';
 import admin, { ServiceAccount } from 'firebase-admin';
 import express from 'express';
-import { get } from 'lodash';
+import { get, isArray } from 'lodash';
 import path from 'path';
 const typeDefs = `
 # ANY is open to all requests, USER means they must be logged in, OWNER the user must have created or be the type
@@ -140,6 +140,11 @@ const startServer = async (genie: GraphQLGenie) => {
 				if (error) {
 					throw new Error('You probably need to login again to get a new JWT. ' + error.message);
 				}
+				if (isArray(record) && record.length === 1) {
+					record = record[0];
+				}
+				record = getRecordFromResolverReturn(record);
+
 				const requiredRolesForMethod: any[] = requiredRoles[method];
 				if (currRoles.includes('ADMIN')) {
 					return true;
@@ -158,7 +163,7 @@ const startServer = async (genie: GraphQLGenie) => {
 					return true;
 				}
 
-				if (requiredRolesForMethod.includes('OWNER') && currUser) {
+				if (requiredRolesForMethod.includes('OWNER') && currUser && record) {
 					if (record.author === currUser.id || record.id === currUser.id) {
 						return true;
 					}

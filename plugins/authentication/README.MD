@@ -38,7 +38,9 @@ const schema = genie.getSchema();
 
 The plugin will create the auth directive and setup the necessary hooks/resolvers to allow you to decide whether or not to allow a specific request
 
-The auth directive is defined as shown below, where defaults are arguments to the plugin
+The auth directive is defined as shown below, where defaults are arguments to the plugin.
+
+There is also an optional rules argument, these are passed along to your authenticate function to allow additional constraints you might want to manually impose on the type or field but still define in your schema.
 
 ```graphql
 directive @auth(
@@ -46,6 +48,7 @@ directive @auth(
 	read: [Role] = [${defaultReadRole}],
 	update: [Role] = [${defaultUpdateRole}],
 	delete: [Role] = [${defaultDeleteRole}]
+	rules: [String!]
 ) on OBJECT | FIELD_DEFINITION
 ```
 
@@ -84,20 +87,22 @@ type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
 	id: ID! @unique
 	title: String!
 	text: String
-	author: User @relation(name: "posts")
+	# Set a rule of "SELF" here that we can look for in our authenticate function so users aren't allowed to change it to other users
+	author: User @relation(name: "posts") @auth(create: USER, read: ANY, update: OWNER, delete: OWNER, rules: "SELF")
 }
 
 # Anyone can create users (aka signup), be able to see user info by default, can only update yourself, and only admins can delete
 type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 	id: ID! @unique
 	username: String! @unique
-	# don't let anyone read email
+	# only users can see their own email, it's not public
 	email: String! @unique @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
 	# only admins can read password
 	password: String! @auth(create: ANY, read: ADMIN, update: OWNER, delete: ADMIN)
 	posts: [Post] @relation(name: "posts")
 	# Only admins can alter roles, will need additional logic in authenticate function so users can only set themself to USER role
-	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN)
+	# So we set only:USER in the rules so we can find that later in our authenticate function
+	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN, rules: "only:USER")
 }
 
 ```
@@ -124,12 +129,16 @@ The authenticate function recieves the following.
 * **method: String**: 
 	* The CRUD operation being performed
 	* 'create', 'read', 'update' or 'delete'
-* **allowedRoles: {create: string[]; read: string[]; update: string[]; delete: string[];}**
-	* The configured roles allowed for this type/field
-	* To get just the allowed roles for the current method just do `const allowedRolesForMethod: any[] = allowedRoles[method];`
-* **record: object**
+* **allowedRoles: {create: string[]; read: string[]; update: string[]; delete: string[]; rules: string[]}**
+	* The configured roles allowed and rules for this type/field
+	* To get just the allowed roles for the current method just do `const allowedRolesForMethod: string[] = allowedRoles[method];`
+	* To get rules `const rules: string[] = allowedRoles.rules;`
+* **record: object | object[]**
 	* The record (without updates) being queried/mutated.
 	* You may need to look at this if you have a role like `Owner` to see if the current user has permission
+	* 
+	* Also note the record object may have the form `{fortuneReturn: object, cache: Map<string, object>}` in which fortuneReturn is the master record of the type being found and cache has other info necessary in the query. This cache object may contain additional info necessary when deciding if a find query is allowed when nested filtering is used in the `where` of a find query. If you want just the record you can call the 	getRecordFromResolverReturn function exported by GraphQLGenie
+
 * **updates: {id: ID, replace: {}, push: {}, pull: {}}**
 	* example
 		```{
@@ -156,9 +165,11 @@ The function should also have any other constraint logic necessary, such as user
 		
 ### Examples
 
-See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Would be simple to adapt to returning a JWT on login as well
+See the [apollo server 2 redis jwt example](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) for JWT authentication with users stored in the database. Uses Apollo Server 2.
 
-See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider.
+See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Uses GraphQL Yoga
+
+See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider. Uses GraphQL Yoga.
 
 #### Thanks/Credit
 

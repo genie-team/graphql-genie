@@ -89,7 +89,7 @@ The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/
 
 Checkout the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) to easily implement role based authentication down to individual fields. 
 
-See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database. Would be simple to adapt to returning a JWT on login as well.
+See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) for session authentication with users stored in the database.
 
 See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider.
 

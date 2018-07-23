@@ -356,7 +356,7 @@ export class GraphQLGenie {
 			});
 			if (!isEmpty(update)) {
 				update['id'] = objectsMap.get(object.id)['id'];
-				update = this.graphQLFortune.generateUpdates(typeName, update);
+				update = this.graphQLFortune.generateUpdates(update);
 				if (!isEmpty(pull)) {
 					update['pull'] = pull;
 				}

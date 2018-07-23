@@ -10,7 +10,7 @@ import session from 'express-session';
 import bcrypt from 'bcryptjs';
 import ms from 'ms';
 import { GraphQLSchema, assertObjectType, graphql } from 'graphql';
-import { get } from 'lodash';
+import { get, isArray } from 'lodash';
 const typeDefs = `
 enum Role {
 	# Open to all requests
@@ -136,6 +136,11 @@ const startServer = async (genie: GraphQLGenie) => {
 					return true;
 				}
 
+				if (isArray(record) && record.length === 1) {
+					record = record[0];
+				}
+				record = getRecordFromResolverReturn(record);
+
 				// specific field constraints
 
 				// we don't want users to be able to create themselves with any other role than USER
@@ -144,7 +149,7 @@ const startServer = async (genie: GraphQLGenie) => {
 				}
 
 				// users shouldn't be able to set posts author other than to themselves
-				if (currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
+				if (record && currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
 					if (!record.author || record.author !== currUser.id ) {
 						throw new Error('Author field must be set to logged in USER');
 					}
@@ -179,7 +184,7 @@ const startServer = async (genie: GraphQLGenie) => {
 	// session middleware
 	server.express.use(session({
 		name: 'qid',
-		secret: `insatiable-tacos-in-heaven`,
+		secret: '8adaf8ceea87f545e600477c37d9b5b461afe95fb26402646b0b58ecd9a2dbab',
 		resave: true,
 		saveUninitialized: true,
 		cookie: {

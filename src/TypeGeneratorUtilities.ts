@@ -1,5 +1,5 @@
 import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
-import { difference, each, eq, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
+import { difference, each, eq, find, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
@@ -243,9 +243,12 @@ const resolveArgs = async (args: Array<any>, returnType: GraphQLOutputType, muta
 
 					if (isInterfaceType(argReturnRootType) || isUnionType(argReturnRootType)) {
 						for (const argKey in arg) {
-							const argTypeName = capFirst(pluralize.singular(argKey));
-							argReturnRootType = <GraphQLOutputType>_info.schema.getType(argTypeName);
+							const argTypeName = pluralize.singular(argKey).toLowerCase();
+							argReturnRootType = <GraphQLOutputType> find(_info.schema.getTypeMap(), type => {
+								return type.name.toLowerCase() === argTypeName;
+							});
 							promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, argReturnRootType));
+
 						}
 					} else {
 						promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg, _context, _info, index, argName, argReturnRootType));
