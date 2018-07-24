@@ -172,29 +172,27 @@ Say we wanted to update the created city above, we could use the update resolver
 
 ```graphql
 mutation {
-  updateCity(input:{
-    where: {id: "ID1"}
-    data: {
-      name: "New York",
-			"""
-			neighborhoods is a list field, so we have the option of push, pull or set when updating
-			"""
-      neighborhoods: {
-        push: ["east side"]
-      }      
-    },
-    clientMutationId: "updateNY"
-  }) {
-    data {
-      id
-      name
-      neighborhoods
-      user {
-        displayname
-      }
-    }
-    clientMutationId
-  }
+	updateCity(input:{
+		where: {id: "ID1"}
+			data: {
+			name: "New York",
+			# neighborhoods is a list field, so we have the option of push, pull or set when updating
+			neighborhoods: {
+				push: ["east side"]
+			}      
+		},
+		clientMutationId: "updateNY"
+		}) {
+		data {
+			id
+			name
+			neighborhoods
+			user {
+				displayname
+			}
+		}
+		clientMutationId
+	}
 }
 ```
 
