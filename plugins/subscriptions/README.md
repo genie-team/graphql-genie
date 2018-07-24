@@ -2,6 +2,13 @@
 	<img width="128px" src="https://raw.githubusercontent.com/genie-team/graphql-genie/master/resources/logo.svg?sanitize=true" alt="GraphQL Genie Logo">
 </h1>
 
+- [GraphQL Genie Subscriptions](#graphql-genie-subscriptions)
+		- [Installation](#installation)
+		- [Enable plugin](#enable-plugin)
+		- [Subscription API](#subscription-api)
+		- [Examples](#examples)
+		- [Thanks/Credit](#thankscredit)
+
 # GraphQL Genie Subscriptions
 
 [![npm version](https://img.shields.io/npm/v/graphql-genie-subscriptions.svg)](https://www.npmjs.com/package/graphql-genie-subscriptions)
@@ -120,6 +127,6 @@ All the graphql-yoga [code examples](https://github.com/genie-team/graphql-genie
 
 The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.ts) are a good place to see example subscription queries.
 
-#### Thanks/Credit
+### Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)

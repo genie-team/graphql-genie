@@ -1,8 +1,28 @@
+- [GraphQLGenie API](#graphqlgenie-api)
+	- [**constructor**](#constructor)
+	- [**use**](#use)
+	- [**getSchema**](#getschema)
+	- [**printSchema**](#printschema)
+	- [**getFragmentTypes**](#getfragmenttypes)
+	- [**getRawData**](#getrawdata)
+	- [**importRawData**](#importrawdata)
+	- [**data**](#data)
+	- [**merge**](#merge)
+	- [**defaultTypename**](#defaulttypename)
+	- [**getDataResolver**](#getdataresolver)
+	- [**getSchemaBuilder**](#getschemabuilder)
+- [GraphQLSchemaBuilder API](#graphqlschemabuilder-api)
+	- [**printSchemaWithDirectives**](#printschemawithdirectives)
+	- [**addTypeDefsToSchema**](#addtypedefstoschema)
+	- [**setResolvers**](#setresolvers)
+	- [**setIResolvers**](#setiresolvers)
+	- [**isUserType**](#isusertype)
+
 ### GraphQLGenie API
 
 ---
 
-**constructor**
+#### **constructor**
 
 ```typescript
 constructor(options: GraphQLGenieOptions)
@@ -31,7 +51,7 @@ interface GenerateConfig {
 
 ---
 
-**use**
+####  **use**
 
 ```ts
 use(plugin: GeniePlugin): Promise<Void>
@@ -40,20 +60,18 @@ use(plugin: GeniePlugin): Promise<Void>
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
 
 > See info about the GeniePlugin interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
-> 
-> ---
-> 
-> **getSchema**
-> 
-> ```typescript
-> getSchema(): GraphQLSchema
-> ```
+
+#### **getSchema**
+
+```typescript
+getSchema(): GraphQLSchema
+```
 
 Get the schema
 
 ---
 
-**printSchema**
+#### **printSchema**
 
 ```ts
 printSchema(): string
@@ -63,7 +81,7 @@ Return a string of the full schema with directives
 
 ---
 
-**getFragmentTypes**
+#### **getFragmentTypes**
 
 ```typescript
 getFragmentTypes(): Promise<Void>
@@ -81,7 +99,7 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 
 ---
 
-**getRawData**
+#### **getRawData**
 
 ```
 getRawData(): Promise<any[]>
@@ -124,7 +142,7 @@ Returns all of the data in the database, this will look a little different than 
 
 ---
 
-**importRawData**
+#### **importRawData**
 
 ```
 importRawData(data: any[], merge = false, defaultTypename?: string): Promise
@@ -132,25 +150,25 @@ importRawData(data: any[], merge = false, defaultTypename?: string): Promise
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
 
-**data**
+#### **data**
 
 an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query  and __typename fields are not added the defaultTypename must be provided
 
 
 
-**merge**
+#### **merge**
 
 If false every object will create a new object, the id won't be preserved from the current data but relationships will still be built as they were in the provided data.
 
 If true data will be merged based on ID, with new entries only being created if the given id does not exist already. Provided id will be used for creating data as well.
 
-**defaultTypename**
+#### **defaultTypename**
 
 Must be provided if every object in data does not have a `__typename` property
 
 ---
 
-**getDataResolver**
+#### **getDataResolver**
 
 ```typescript
 getDataResolver(): DataResolver
@@ -174,18 +192,15 @@ Note that when using fortune hooks the resolvers context and info arguments can 
 ```
 
 > See info about the DataResolver interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
-> 
-> ---
-> 
-> **getSchemaBuilder**
-> 
-> ```ts
-> getSchemaBuilder(): GraphQLSchemaBuilder
-> ```
-> 
-> GraphQLSchemaBuilder has some additional helpers to add types and resolvers to a graphql schema
 
-See the [GraphQLSchemaBuilder API documentation](#graphqlschemabuilder-api)
+#### **getSchemaBuilder**
+
+```ts
+getSchemaBuilder(): GraphQLSchemaBuilder
+```
+
+> GraphQLSchemaBuilder has some additional helpers to add types and resolvers to a graphql schema
+> See the [GraphQLSchemaBuilder API documentation](#graphqlschemabuilder-api)
 
 ---
 
@@ -193,7 +208,7 @@ See the [GraphQLSchemaBuilder API documentation](#graphqlschemabuilder-api)
 
 ---
 
-**printSchemaWithDirectives**
+#### **printSchemaWithDirectives**
 
 ```typescript
 printSchemaWithDirectives()
@@ -203,17 +218,17 @@ Returns a string of the full schema with directives
 
 ---
 
-**addTypeDefsToSchema**
+#### **addTypeDefsToSchema**
 
 ```typescript
 addTypeDefsToSchema($typeDefs = ''): GraphQLSchema
 ```
 
-Completely rebuilds the schema with the new typeDefs. You need to use this if we want any of the custom directives to work on your new typeDefs. Other wise you can use the schema stitching tools from 
+Completely rebuilds the schema with the new typeDefs. You need to use this if we want any of the custom directives to work on your new typeDefs. Otherwise you can use the schema stitching tools from 
 
 ---
 
-**setResolvers**
+#### **setResolvers**
 
 ```typescript
 setResolvers(typeName: string, fieldResolvers: Map<string, GraphQLFieldResolver<any, any>>)
@@ -223,7 +238,7 @@ Set resolvers on the schema for the given typename and a map of the fild name to
 
 ---
 
-**setIResolvers**
+#### **setIResolvers**
 
 ```ts
 setIResolvers(iResolvers: IResolvers): GraphQLSchema
@@ -233,7 +248,7 @@ Set resolvers of type [IResolvers from graphql-tools](https://www.apollographql.
 
 ---
 
-**isUserType**
+#### **isUserType**
 
 ```ts
 isUserType(type: GraphQLType): boolean

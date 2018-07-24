@@ -1,3 +1,13 @@
+- [Queries](#queries)
+			- [Query docs](#query-docs)
+			- [where argument](#where-argument)
+			- [orderBy argument](#orderby-argument)
+		- [Examples](#examples)
+			- [get all the cities](#get-all-the-cities)
+			- [get a single city matching an id](#get-a-single-city-matching-an-id)
+			- [get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+			- [Get cities and filter the output](#get-cities-and-filter-the-output)
+
 # Queries
 
 If you would rather learn by playing with a demo checkout the [client demo](https://genie-team.github.io/graphql-genie-client/). Note you can set the Data Mode to Mock in settings to have queries return demo data
@@ -33,6 +43,9 @@ const genie = new GraphQLGenie({
 });
 ```
 
+#### Query docs
+
+
 Let's take a close look at what a generated query looks like
 
 ```graphql
@@ -64,6 +77,8 @@ cities(
 )
 ```
 
+#### where argument
+
 The where argument will filter the returned results. 
 
 ```graphql
@@ -89,6 +104,8 @@ input CityWhereInput {
 	not: CityWhereInput
 }
 ```
+
+#### orderBy argument
 
 The orderBy argument will sort the results. Scalar fields will simply take the ORDER_BY_OPTIONS enum which looks like.
 
@@ -122,7 +139,7 @@ input CityOrderByInput{
 **Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests).**
 See the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src/tests/setupTests.ts) file to see the schema and then see the files in the [__tests__](https://github.com/genie-team/graphql-genie/tree/master/src/tests/__tests__) folder for many different examples.
 
-get all the cities
+#### get all the cities
 
 ```graphql
 query allCities {
@@ -133,7 +150,7 @@ query allCities {
 }
 ```
 
-get a single city with an id
+#### get a single city matching an id
 
 ```graphql
 query singleCity {
@@ -144,7 +161,7 @@ query singleCity {
 }
 ```
 
-range, orderBy, skip
+#### get cities using a filter and skip
 
 ```graphql
 query filteredCities {
@@ -160,8 +177,9 @@ query filteredCities {
 }
 
 ```
+#### Get cities and filter the output
 
-Note when requesting objects you can filter as part of the query, this is different than filtering on that type in the arguments of the query in that it won't filter out cities that don't match the input, it will just filter out the results of the user
+When requesting objects you can filter as part of the query, this is different than filtering on that type in the arguments of the query in that it won't filter out cities that don't match the input, it will just filter out the results of the user
 
 ```graphql
 query allCities {

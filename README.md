@@ -2,6 +2,19 @@
     <img width="128px" src="https://raw.githubusercontent.com/genie-team/graphql-genie/master/resources/logo.svg?sanitize=true" alt="GraphQL Genie Logo">
 </h1>
 
+- [GraphQL Genie](#graphql-genie)
+		- [Demo](#demo)
+		- [Installation](#installation)
+		- [Getting started](#getting-started)
+		- [Data Store](#data-store)
+		- [Subscriptions](#subscriptions)
+		- [GraphQL Genie Schema API](#graphql-genie-schema-api)
+		- [GraphQLGenie API](#graphqlgenie-api)
+		- [Authentication](#authentication)
+		- [How do I do/add [thing]](#how-do-i-doadd-thing)
+	- [Features/Advantages/Differences](#featuresadvantagesdifferences)
+	- [Thanks/Credit](#thankscredit)
+
 # GraphQL Genie
 
 [![npm version](https://img.shields.io/npm/v/graphql-genie.svg)](https://www.npmjs.com/package/graphql-genie)
@@ -15,7 +28,7 @@ The schema uses best practices and is compliant with the [Relay GraphQL Server S
 
 In short GraphQL Genie handles creating the root Query, Mutation and Subscription types and resolvers for a variety of [data stores](#data-store). If that doesn't mean anything to you it may be good to read up on some [graphql basics](https://www.okgrow.com/posts/graphql-basics) or learn by experimenting with the [demo]((https://genie-team.github.io/graphql-genie-client/))
 
-## Demo
+### Demo
 
 [See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search icon to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
 
@@ -120,11 +133,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
 * You can make your api logic completely serverless
 
-### TODO
-
-- [ ] API Documentation
-
-#### Thanks/Credit
+## Thanks/Credit
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
 

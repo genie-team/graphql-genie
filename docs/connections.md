@@ -1,3 +1,7 @@
+- [Connections](#connections)
+		- [Connection output type](#connection-output-type)
+		- [Examples](#examples)
+
 # Connections
 
 If you would rather learn by playing with a demo checkout the [client demo](https://genie-team.github.io/graphql-genie-client/). Note you can set the Data Mode to Mock in settings to have queries return demo data
@@ -40,6 +44,8 @@ const genie = new GraphQLGenie({
 **Note:** You can use the @connection directive to have a field return a Connection rather than just the node. See the [SDL docs](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md) for more info.
 
  The Connection type follows the [Relay Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm). Reading this will give comprehensive documentation on how it works.
+
+### Connection output type
 
  Lets look at a the CityConnection returned by `citiesConnection` query
 

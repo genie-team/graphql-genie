@@ -1,4 +1,7 @@
 
+- [Custom directives you can use.](#custom-directives-you-can-use)
+- [Scalar Types](#scalar-types)
+
 **GraphQLGenie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**
 
 #### Custom directives you can use.

@@ -2,6 +2,16 @@
 	<img width="128px" src="https://raw.githubusercontent.com/genie-team/graphql-genie/master/resources/logo.svg?sanitize=true" alt="GraphQL Genie Logo">
 </h1>
 
+
+- [GraphQL Genie Authentication](#graphql-genie-authentication)
+		- [Installation](#installation)
+		- [Enable plugin](#enable-plugin)
+			- [Arguments](#arguments)
+		- [Authentication Requirements](#authentication-requirements)
+		- [Examples](#examples)
+		- [Thanks/Credit](#thankscredit)
+
+
 # GraphQL Genie Authentication
 
 [![npm version](https://img.shields.io/npm/v/graphql-genie-authentication.svg)](https://www.npmjs.com/package/graphql-genie-authentication)
@@ -177,7 +187,7 @@ See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/ma
 See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider. Uses GraphQL Yoga.
 
 
-#### Thanks/Credit
+### Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
 
