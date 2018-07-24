@@ -133,10 +133,14 @@ The authenticate function recieves the following.
 	* The configured roles allowed and rules for this type/field
 	* To get just the allowed roles for the current method just do `const allowedRolesForMethod: string[] = allowedRoles[method];`
 	* To get rules `const rules: string[] = allowedRoles.rules;`
-* **record: object | object[]**
-	* The record (without updates) being queried/mutated.
+* **records: object[]**
+	* The records (without updates) being queried/mutated.
 	* You may need to look at this if you have a role like `Owner` to see if the current user has permission
-	* Also note the record object may have the form `{fortuneReturn: object, cache: Map<string, object>}` in which fortuneReturn is the master record of the type being found and cache has other info necessary in the query. This cache object may contain additional info necessary when deciding if a find query is allowed when nested filtering is used in the `where` of a find query. If you want just the record you can call the 	getRecordFromResolverReturn function exported by GraphQLGenie. See the `getUserIDsOfRequestedData` function [here](https://github.com/genie-team/graphql-genie/blob/master/examples/apollo-server2-redis-jwt-auth/src/main.ts) for an example of how this might be done.
+
+* **filterRecords: object[]**
+  * In cases where records are obtained as part of filtering/finding data but aren't part of the main record they are in this argument. 
+	* This may contain additional info necessary when deciding if a read query is allowed when nested filtering is used in the `where` of a query
+	* See the `getUserIDsOfRequestedData` function [here](https://github.com/genie-team/graphql-genie/blob/master/examples/apollo-server2-redis-jwt-auth/src/main.ts) for an example of how this might be used.
 
 * **updates: {id: ID, replace: {}, push: {}, pull: {}}**
 	* example
@@ -158,6 +162,8 @@ The authenticate function recieves the following.
 * **fieldName: string**
 	* The field being queried/mutated.
 	* May be null if the check is just on the type
+* **isFromFilter: boolean**
+	* true if the authentication request is a result of a filter, such as checking if a user exists with an email.
 
 
 The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves

@@ -28,7 +28,7 @@
     "fortune-redis": "^2.1.0",
     "graphql": "^0.13.2",
     "graphql-genie": ">=0.2.0",
-    "graphql-genie-authentication": "^1.0.2",
+    "graphql-genie-authentication": "^1.0.20",
     "graphql-genie-subscriptions": "^1.0.1",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^3.0.0",

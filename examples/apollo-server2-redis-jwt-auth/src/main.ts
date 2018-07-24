@@ -66,6 +66,7 @@ type UserIdentifiers {
 	userID: ID
 	password: String
 	identifiers: [String]
+	roles: [Role]
 }
 
 `;
@@ -124,6 +125,7 @@ const startServer = async (genie: GraphQLGenie) => {
 			id: userIdentifierID,
 			userID: adminUserID,
 			password: adminPassword,
+			roles: ['ADMIN', 'USER'],
 			identifiers: ['admin', 'admin@example.com'],
 			__typename: 'UserIdentifiers'
 		}
@@ -173,7 +175,8 @@ const startServer = async (genie: GraphQLGenie) => {
 					id,
 					userID: record.id,
 					identifiers,
-					password: record.password
+					password: record.password,
+					roles: record.roles
 				};
 				const meta = {
 					context: {
@@ -206,7 +209,7 @@ const startServer = async (genie: GraphQLGenie) => {
 			return {
 				request,
 				currUser,
-				authenticate: (method, requiredRoles, rawRecord, _updates, typeName, fieldName) => {
+				authenticate: (method, requiredRoles, records, filterRecords, _updates, typeName, fieldName, _isFromFilter) => {
 					// throw your own error or just return false if not authorized
 					const requiredRolesForMethod: string[] = requiredRoles[method];
 					const rules: string[] = requiredRoles.rules || [];
@@ -214,39 +217,34 @@ const startServer = async (genie: GraphQLGenie) => {
 					if (currRoles.includes('ADMIN')) {
 						return true;
 					}
-					let record = rawRecord;
-					// lets deal with arrays with just 1 result to see if we are allowed to do this
-					if (isArray(record) && record.length === 1) {
-						record = record[0];
-					}
 
-					// just the record, no cache or typename meta
-					record = getRecordFromResolverReturn(record);
-
+					records = records || [];
 					// implement logic for our custom rules
-					rules.forEach(rule => {
-						// we don't want users to be able to create themselves with any other role than USER
-						if (['create', 'update'].includes(method) && rule.includes('only:')) {
-							const allowedValue = rule.split(':')[1];
-							if (record[fieldName]) {
-								if (isArray(record[fieldName])) {
-									if (record[fieldName].length > 1 || record[fieldName][0] !== allowedValue) {
-										throw new Error(`${fieldName} must be [${allowedValue}]`);
+					records.forEach(record => {
+						rules.forEach(rule => {
+							// we don't want users to be able to create themselves with any other role than USER
+							if (['create', 'update'].includes(method) && rule.includes('only:')) {
+								const allowedValue = rule.split(':')[1];
+								if (record[fieldName]) {
+									if (isArray(record[fieldName])) {
+										if (record[fieldName].length > 1 || record[fieldName][0] !== allowedValue) {
+											throw new Error(`${fieldName} must be [${allowedValue}]`);
+										}
+									} else if (record[fieldName] !== allowedValue) {
+										throw new Error(`${fieldName} must be ${allowedValue}`);
 									}
-								} else if (record[fieldName] !== allowedValue) {
-									throw new Error(`${fieldName} must be ${allowedValue}`);
+								}
+							} else if (rule === 'SELF') {
+								// users shouldn't be able to set posts author other than to themselves
+								if (['create', 'update'].includes(method)) {
+									if (isEmpty(currUser)) {
+										throw new Error(`Must be logged in to set ${fieldName}`);
+									} else if (record[fieldName] && record[fieldName] !== currUser['id']) {
+										throw new Error(`${fieldName} field must be set to logged in USER`);
+									}
 								}
 							}
-						} else if (rule === 'SELF') {
-							// users shouldn't be able to set posts author other than to themselves
-							if (['create', 'update'].includes(method)) {
-								if (isEmpty(currUser)) {
-									throw new Error(`Must be logged in to set ${fieldName}`);
-								} else if (record[fieldName] && record[fieldName] !== currUser['id']) {
-									throw new Error(`${fieldName} field must be set to logged in USER`);
-								}
-							}
-						}
+						});
 					});
 
 					if (requiredRolesForMethod.includes('ANY')) {
@@ -255,8 +253,8 @@ const startServer = async (genie: GraphQLGenie) => {
 
 					// the !isEmpty(record) may result in saying to permission even if it's actually just an empty result
 					// but it could be a security flaw that allows people to see what "OWNER" fields don't exist otherwise
-					if (requiredRolesForMethod.includes('OWNER') && !isEmpty(currUser) && !isEmpty(record)) {
-						const userIds = getUserIDsOfRequestedData(rawRecord);
+					if (requiredRolesForMethod.includes('OWNER') && !isEmpty(currUser) && !isEmpty(records)) {
+						const userIds = getUserIDsOfRequestedData(records, filterRecords);
 						if (userIds.size === 1 && userIds.values().next().value === currUser.id) {
 							return true;
 						}
@@ -285,25 +283,17 @@ const startServer = async (genie: GraphQLGenie) => {
 	});
 };
 
-const getUserIDsOfRequestedData = (records): Set<string> => {
-	let userIDs = new Set<string>();
-
+const getUserIDsOfRequestedData = (records: object[], filterRecords: object[]): Set<string> => {
+	const userIDs = new Set<string>();
+	records.push(filterRecords);
 	try {
 		records = isArray(records) ? records : [records];
 		records.forEach(record => {
-			const data = getRecordFromResolverReturn(record);
-			if (data.__typename === 'User') {
-				userIDs.add(data.id);
-			} else if (data.__typename === 'Post' && data.author) {
-				userIDs.add(data.author);
+			if (record['__typename'] === 'User') {
+				userIDs.add(record['id']);
+			} else if (record['__typename'] === 'Post' && record['author']) {
+				userIDs.add(record['author']);
 			}
-			const cache: Map<string, object> = record.cache;
-			if (cache) {
-				cache.forEach(entry => {
-					userIDs = new Set([...userIDs, ...getUserIDsOfRequestedData(entry)]);
-				});
-			}
-
 		});
 	} catch (e) {
 		// empty by design
@@ -376,13 +366,14 @@ const getSchemaWithAuth = (genie: GraphQLGenie): GraphQLSchema => {
 							identifiers: identifier
 						}
 					});
-					console.log('password :', password);
-					console.log('identifiedUser :', identifiedUser);
 					if (!isEmpty(identifiedUser)) {
 						if (bcrypt.compareSync(password, identifiedUser[0].password)) {
 							// set HTTP Headers to { "authorization": "Bearer ${accessToken} }
 							return jwt.sign(
-								pick(identifiedUser, ['id', 'roles']),
+								{
+									id: identifiedUser[0].userID,
+									roles: identifiedUser[0].roles
+								},
 								jwtSecret,
 								jwtOptions
 							);

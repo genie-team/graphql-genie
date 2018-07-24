@@ -127,7 +127,7 @@ const startServer = async (genie: GraphQLGenie) => {
 		schema,
 		context: req => ({
 			...req,
-			authenticate: (method, requiredRoles, record, _updates, typeName, fieldName) => {
+			authenticate: (method, requiredRoles, records, _filterRecords, _updates, typeName, fieldName) => {
 				// throw your own error or just return false if not authorized
 				const requiredRolesForMethod: any[] = requiredRoles[method];
 				const currUser = get(req, 'request.session.user');
@@ -136,21 +136,21 @@ const startServer = async (genie: GraphQLGenie) => {
 					return true;
 				}
 
-				if (isArray(record) && record.length === 1) {
-					record = record[0];
+				if (isArray(records) && records.length === 1) {
+					records = records[0];
 				}
-				record = getRecordFromResolverReturn(record);
+				records = getRecordFromResolverReturn(records);
 
 				// specific field constraints
 
 				// we don't want users to be able to create themselves with any other role than USER
-				if (method === 'create' && record.roles && (record.roles.length > 1 || record.roles[0] !== 'USER')) {
+				if (method === 'create' && records.roles && (records.roles.length > 1 || records.roles[0] !== 'USER')) {
 					throw new Error('Roles must be [USER]');
 				}
 
 				// users shouldn't be able to set posts author other than to themselves
-				if (record && currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
-					if (!record.author || record.author !== currUser.id ) {
+				if (records && currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
+					if (!records.author || records.author !== currUser.id ) {
 						throw new Error('Author field must be set to logged in USER');
 					}
 				}
@@ -160,7 +160,7 @@ const startServer = async (genie: GraphQLGenie) => {
 				}
 
 				if (requiredRolesForMethod.includes('OWNER') && currUser) {
-					if (record.author === currUser.id || record.id === currUser.id) {
+					if (records.author === currUser.id || records.id === currUser.id) {
 						return true;
 					}
 				}

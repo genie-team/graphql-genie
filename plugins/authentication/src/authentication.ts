@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLSchema, defaultFieldResolver, getNamedType, graphql, isEnumType, isInterfaceType, isObjectType, isUnionType } from 'graphql';
+import { GraphQLObjectType, GraphQLSchema, GraphQLType, defaultFieldResolver , getNamedType, graphql, isEnumType, isInterfaceType, isObjectType, isUnionType } from 'graphql';
 import { GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { flattenDeep, get, isArray, isEmpty, omit } from 'lodash';
@@ -11,8 +11,19 @@ interface RequiredRoles {
 	delete: string[];
 }
 
+const fragmentTypesMap = new Map<string, { name: string }[]>();
+let genie: GraphQLGenie;
 export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
-	return async (genie: GraphQLGenie) => {
+	return async (pluginGenie: GraphQLGenie) => {
+		genie = pluginGenie;
+		let fragmentTypes = await genie.getFragmentTypes();
+		fragmentTypes = get(fragmentTypes, '__schema.types');
+		if (fragmentTypes) {
+			fragmentTypes.forEach(fragmentType => {
+				fragmentTypesMap.set(fragmentType.name, fragmentType.possibleTypes);
+			});
+		}
+
 		const newDefsAsString: string[] = [];
 		newDefsAsString.push(`
 			directive @auth(
@@ -49,38 +60,20 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 				if (!context.authenticate) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
-				let schemaType = <GraphQLObjectType> getNamedType(field.type);
+				let schemaType = <GraphQLObjectType>getNamedType(field.type);
 				if (schemaType.name.endsWith('Connection')) {
-					schemaType = <GraphQLObjectType> schema.getType(schemaType.name.replace('Connection', ''));
+					schemaType = <GraphQLObjectType>schema.getType(schemaType.name.replace('Connection', ''));
 				}
 
 				const resolveResult = await resolve.apply(this, [record, args, context, info]);
 				// check args
 				if (!isEmpty(args)) {
-					const argPromises: Promise<any>[] = [];
-
-					let fragmentTypes = await genie.getFragmentTypes();
-					fragmentTypes = get(fragmentTypes, '__schema.types');
-					const fragmentTypesMap = new Map<string, {name: string}[]>();
-					if (fragmentTypes) {
-						fragmentTypes.forEach(fragmentType => {
-							fragmentTypesMap.set(fragmentType.name, fragmentType.possibleTypes);
-						});
-					}
-					if (!isEmpty(args.where)) {
-						argPromises.push(checkArgs(schemaType, args.where, fragmentTypesMap, schema, context.authenticate, resolveResult ));
-					}
-					const identifyingRootFields = omit(args, ['first', 'where', 'orderBy', 'local', 'last', 'skip', 'before', 'after']);
-					if (!isEmpty(identifyingRootFields)) {
-						argPromises.push(checkArgs(schemaType, identifyingRootFields, fragmentTypesMap, schema, context.authenticate, resolveResult ));
-					}
-
-					const argResults = flattenDeep(await Promise.all(argPromises));
-					argResults.forEach(allowed => {
+					if (!isEmpty(args)) {
+						const allowed = await checkArgsFromResolver(schemaType, args, schema, context.authenticate, resolveResult);
 						if (!allowed) {
 							throw new Error('Not Authorized');
 						}
-					});
+					}
 				}
 
 				const topLevelFields = Object.keys(graphqlFields(info));
@@ -223,25 +216,71 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 	};
 };
 
-const authenticate = async (authFN, method: string, requiredRoles, record, updates, typeName: string, fieldName?: string) => {
+const authenticate = async (authFN, method: string, requiredRoles, records, updates, typeName: string, fieldName?: string, isFromFilter = false) => {
 	if (requiredRoles) {
-		return await authFN.call(this, method, requiredRoles, record, updates, typeName, fieldName);
+		let filterRecords;
+		if (!isEmpty(records)) {
+			records = isArray(records) ? records : [records];
+			filterRecords = [];
+			records = records.filter(record => !!record).map(record => {
+				if (record) {
+					const cache: Map<string, object> = record.cache;
+					if (cache) {
+						cache.forEach(entry => {
+							filterRecords.push(entry);
+						});
+					}
+					return getRecordFromResolverReturn(record);
+				}
+			});
+		}
+		return await authFN.call(this, method, requiredRoles, records, filterRecords, updates, typeName, fieldName, isFromFilter);
 	} else {
 		return true;
 	}
 };
 
-const checkArgs = async(type: GraphQLObjectType, whereArgs, fragmentTypes: Map<string, {name: string}[]>, schema: GraphQLSchema, authFn, record) => {
+const checkArgsFromResolver = async (type: GraphQLType, args, schema: GraphQLSchema, authFn, record) => {
+
+	const argPromises: Promise<any>[] = [];
+
+	if (isInterfaceType(type) || isUnionType(type)) {
+		if (fragmentTypesMap && fragmentTypesMap.size > 0) {
+			const possibleTypes = fragmentTypesMap.get(type.name) || [];
+			possibleTypes.forEach(possibleType => {
+				argPromises.push(checkArgsFromResolver(schema.getType(possibleType.name), args, schema, authFn, record));
+			});
+		}
+	} else if (isObjectType(type)) {
+		if (!isEmpty(args.where)) {
+			argPromises.push(checkArgs(type, args.where, schema, authFn, record));
+		}
+		const identifyingRootFields = omit(args, ['first', 'where', 'orderBy', 'local', 'last', 'skip', 'before', 'after']);
+		if (!isEmpty(identifyingRootFields)) {
+			argPromises.push(checkArgs(type, identifyingRootFields, schema, authFn, record));
+		}
+	}
+
+	const argResults = flattenDeep(await Promise.all(argPromises));
+	argResults.forEach(allowed => {
+		if (!allowed) {
+			return false;
+		}
+	});
+	return true;
+};
+
+const checkArgs = async (type: GraphQLObjectType, whereArgs, schema: GraphQLSchema, authFn, record) => {
 
 	const promises: Promise<any>[] = [];
 	const typeRequiredRoles = type['_requiredAuth'];
 
 	if (!isEmpty(whereArgs)) {
 		if (whereArgs.or) {
-			promises.push(checkArgs(type, whereArgs.or, fragmentTypes, schema, authFn, record));
+			promises.push(checkArgs(type, whereArgs.or, schema, authFn, record));
 		}
 		if (whereArgs.and) {
-			promises.push(checkArgs(type, whereArgs.and, fragmentTypes, schema, authFn, record));
+			promises.push(checkArgs(type, whereArgs.and, schema, authFn, record));
 		}
 		const nestedArgs = omit(whereArgs, ['not', 'or', 'and', 'range', 'match', 'exists']);
 		const nestedFieldNames = Object.keys(nestedArgs);
@@ -250,18 +289,21 @@ const checkArgs = async(type: GraphQLObjectType, whereArgs, fragmentTypes: Map<s
 		if (!isEmpty(nestedArgs)) {
 			nestedFieldNames.forEach(fieldName => {
 				const field = fieldMap[fieldName];
-				const fieldRequiredRoles = field['_requiredAuth'];
-				const requiredRoles = fieldRequiredRoles || typeRequiredRoles;
-				const argReturnType = getNamedType(field.type);
-
-				promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName));
-				if (isObjectType(argReturnType)) {
-					promises.push(checkArgs(argReturnType, nestedArgs[fieldName], fragmentTypes, schema, authFn, record));
-				} else if (isInterfaceType(argReturnType) || isUnionType(argReturnType)) {
-					const possibleTypes = fragmentTypes.get(argReturnType.name);
-					possibleTypes.forEach(possibleType => {
-						promises.push(checkArgs(<GraphQLObjectType>schema.getType(possibleType.name), nestedArgs[fieldName], fragmentTypes, schema, authFn, record));
-					});
+				if (field) {
+					const fieldRequiredRoles = field['_requiredAuth'];
+					const requiredRoles = fieldRequiredRoles || typeRequiredRoles;
+					const argReturnType = getNamedType(field.type);
+					promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName, true));
+					if (isObjectType(argReturnType)) {
+						promises.push(checkArgs(argReturnType, nestedArgs[fieldName], schema, authFn, record));
+					} else if (isInterfaceType(argReturnType) || isUnionType(argReturnType)) {
+						if (fragmentTypesMap && fragmentTypesMap.size > 0) {
+							const possibleTypes = fragmentTypesMap.get(argReturnType.name) || [];
+							possibleTypes.forEach(possibleType => {
+								promises.push(checkArgs(<GraphQLObjectType>schema.getType(possibleType.name), nestedArgs[fieldName], schema, authFn, record));
+							});
+						}
+					}
 				}
 			});
 		}
@@ -271,7 +313,7 @@ const checkArgs = async(type: GraphQLObjectType, whereArgs, fragmentTypes: Map<s
 				const field = fieldMap[fieldName];
 				const fieldRequiredRoles = field['_requiredAuth'];
 				const requiredRoles = fieldRequiredRoles || typeRequiredRoles;
-				promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName));
+				promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName, true));
 			});
 		}
 
@@ -280,7 +322,7 @@ const checkArgs = async(type: GraphQLObjectType, whereArgs, fragmentTypes: Map<s
 				const field = fieldMap[fieldName];
 				const fieldRequiredRoles = field['_requiredAuth'];
 				const requiredRoles = fieldRequiredRoles || typeRequiredRoles;
-				promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName));
+				promises.push(authenticate(authFn, 'read', requiredRoles, record, null, type.name, fieldName, true));
 			});
 		}
 
@@ -313,10 +355,10 @@ class AuthDirective extends SchemaDirectiveVisitor {
 		};
 	}
 
-	ensureFieldsWrapped(objectType) {
+	ensureFieldsWrapped(objectType: GraphQLObjectType) {
 		// Mark the GraphQLObjectType object to avoid re-wrapping:
-		if (objectType._authFieldsWrapped) return;
-		objectType._authFieldsWrapped = true;
+		if (objectType['_authFieldsWrapped']) return;
+		objectType['_authFieldsWrapped'] = true;
 
 		const fields = objectType.getFields();
 
@@ -330,14 +372,18 @@ class AuthDirective extends SchemaDirectiveVisitor {
 				}
 				// Get the required Role from the field first, falling back
 				// to the objectType if no Role is required by the field:
-				const requiredRoles: RequiredRoles = field._requiredAuth || objectType._requiredAuth;
+				const requiredRoles: RequiredRoles = field['_requiredAuth'] || objectType['_requiredAuth'];
 				if (!requiredRoles) {
 					return resolve.apply(this, [record, args, context, info]);
 				}
-				const allowed = await authenticate(context.authenticate, 'read', requiredRoles, record, null, objectType.name, fieldName);
+				let allowed = await authenticate(context.authenticate, 'read', requiredRoles, record, null, objectType.name, fieldName);
+				if (!isEmpty(args) && allowed) {
+					allowed = await checkArgsFromResolver(getNamedType(field.type), args, genie.getSchema(), context.authenticate, record);
+				}
 				if (!allowed) {
 					throw new Error('Not Authorized');
 				}
+
 				return resolve.apply(this, [record, args, context, info]);
 			};
 		});

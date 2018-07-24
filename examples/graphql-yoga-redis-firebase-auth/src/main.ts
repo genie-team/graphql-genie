@@ -136,14 +136,13 @@ const startServer = async (genie: GraphQLGenie) => {
 		// set the context with authenticate function
 		return {
 			...req,
-			authenticate: async (method, requiredRoles, record, _updates, typeName, fieldName) => {
+			authenticate: async (method, requiredRoles, records, _filterRecords, _updates, typeName, fieldName) => {
 				if (error) {
 					throw new Error('You probably need to login again to get a new JWT. ' + error.message);
 				}
-				if (isArray(record) && record.length === 1) {
-					record = record[0];
+				if (isArray(records) && records.length === 1) {
+					records = records[0];
 				}
-				record = getRecordFromResolverReturn(record);
 
 				const requiredRolesForMethod: any[] = requiredRoles[method];
 				if (currRoles.includes('ADMIN')) {
@@ -154,7 +153,7 @@ const startServer = async (genie: GraphQLGenie) => {
 
 				// users shouldn't be able to set posts author other than to themselves
 				if (currUser && ['create', 'update'].includes(method) && typeName === 'Post') {
-					if (!record.author || record.author !== currUser.id) {
+					if (!records.author || records.author !== currUser.id) {
 						throw new Error('Author field must be set to logged in USER');
 					}
 				}
@@ -163,8 +162,8 @@ const startServer = async (genie: GraphQLGenie) => {
 					return true;
 				}
 
-				if (requiredRolesForMethod.includes('OWNER') && currUser && record) {
-					if (record.author === currUser.id || record.id === currUser.id) {
+				if (requiredRolesForMethod.includes('OWNER') && currUser && records) {
+					if (records.author === currUser.id || records.id === currUser.id) {
 						return true;
 					}
 				}
