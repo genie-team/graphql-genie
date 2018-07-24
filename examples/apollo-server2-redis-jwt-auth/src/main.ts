@@ -1,7 +1,7 @@
 import { FortuneOptions, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import subscriptionPlugin from 'graphql-genie-subscriptions';
 import { PubSub } from 'graphql-subscriptions';
-import { ApolloServer } from 'apollo-server';
+import { ApolloServer, AuthenticationError, ForbiddenError} from 'apollo-server';
 import redisAdapter from 'fortune-redis';
 import RedisMock from 'ioredis-mock';
 import authPlugin from 'graphql-genie-authentication';
@@ -201,7 +201,7 @@ const startServer = async (genie: GraphQLGenie) => {
 	const server = new ApolloServer({
 		schema,
 		context: request => {
-			const bearer = parseAuthorizationBearer(request.req);
+			const bearer = parseAuthorizationBearer(request.req || request.connection);
 			let currUser: CurrentUser = {};
 			if (bearer) {
 				currUser = jwt.verify(bearer, jwtSecret);
@@ -228,19 +228,19 @@ const startServer = async (genie: GraphQLGenie) => {
 								if (record[fieldName]) {
 									if (isArray(record[fieldName])) {
 										if (record[fieldName].length > 1 || record[fieldName][0] !== allowedValue) {
-											throw new Error(`${fieldName} must be [${allowedValue}]`);
+											throw new ForbiddenError(`${fieldName} must be [${allowedValue}]`);
 										}
 									} else if (record[fieldName] !== allowedValue) {
-										throw new Error(`${fieldName} must be ${allowedValue}`);
+										throw new ForbiddenError(`${fieldName} must be ${allowedValue}`);
 									}
 								}
 							} else if (rule === 'SELF') {
 								// users shouldn't be able to set posts author other than to themselves
 								if (['create', 'update'].includes(method)) {
 									if (isEmpty(currUser)) {
-										throw new Error(`Must be logged in to set ${fieldName}`);
+										throw new ForbiddenError(`Must be logged in to set ${fieldName}`);
 									} else if (record[fieldName] && record[fieldName] !== currUser['id']) {
-										throw new Error(`${fieldName} field must be set to logged in USER`);
+										throw new ForbiddenError(`${fieldName} field must be set to logged in USER`);
 									}
 								}
 							}
@@ -266,9 +266,9 @@ const startServer = async (genie: GraphQLGenie) => {
 					});
 					if (!hasNecessaryRole) {
 						if (fieldName) {
-							throw new Error(`Not authorized to ${method} ${fieldName} on type ${typeName}`);
+							throw new AuthenticationError(`Not authorized to ${method} ${fieldName} on type ${typeName}`);
 						} else {
-							throw new Error(`Not authorized to ${method} ${typeName}`);
+							throw new AuthenticationError(`Not authorized to ${method} ${typeName}`);
 						}
 					}
 					return true;
@@ -378,9 +378,9 @@ const getSchemaWithAuth = (genie: GraphQLGenie): GraphQLSchema => {
 								jwtOptions
 							);
 						}
-						throw new Error('Incorrect password.');
+						throw new AuthenticationError('Incorrect password.');
 					}
-					throw new Error('No Such User exists.');
+					throw new AuthenticationError('No Such User exists.');
 				},
 			},
 		}

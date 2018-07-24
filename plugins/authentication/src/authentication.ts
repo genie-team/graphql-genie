@@ -1,5 +1,5 @@
 import { GraphQLObjectType, GraphQLSchema, GraphQLType, defaultFieldResolver , getNamedType, graphql, isEnumType, isInterfaceType, isObjectType, isUnionType } from 'graphql';
-import { GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
+import { FindByUniqueError, GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { flattenDeep, get, isArray, isEmpty, omit } from 'lodash';
 import graphqlFields from 'graphql-fields';
@@ -132,6 +132,37 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 			};
 		});
 
+		// wrap mutations just so we can check when they error
+
+		const mutationFields = schema.getMutationType().getFields();
+		Object.keys(mutationFields).forEach(fieldName => {
+			const field = mutationFields[fieldName];
+			const { resolve = defaultFieldResolver } = field;
+			field.resolve = async function (record, args, context, info) {
+				if (!context.authenticate) {
+					throw new Error('Context must have an authenticate function if using authentication plugin');
+				}
+				let schemaType = <GraphQLObjectType>getNamedType(field.type);
+				if (schemaType.name.endsWith('Connection')) {
+					schemaType = <GraphQLObjectType>schema.getType(schemaType.name.replace('Connection', ''));
+				}
+				let resolveResult;
+				try {
+					resolveResult = await resolve.apply(this, [record, args, context, info]);
+				} catch (e) {
+					if (e instanceof FindByUniqueError) {
+						const allowed = await checkArgsFromResolver(schema.getType(e.typename), e.arg, schema, context.authenticate, resolveResult);
+						if (!allowed) {
+							throw new Error('Not Authorized');
+						}
+					}
+					throw e;
+				}
+
+				return resolveResult;
+			};
+		});
+
 		// hooks for create, update, delete
 		const typeMap = schema.getTypeMap();
 		const nodesResult = await graphql(schema, `{
@@ -257,7 +288,7 @@ const checkArgsFromResolver = async (type: GraphQLType, args, schema: GraphQLSch
 		}
 		const identifyingRootFields = omit(args, ['first', 'where', 'orderBy', 'local', 'last', 'skip', 'before', 'after']);
 		if (!isEmpty(identifyingRootFields)) {
-			argPromises.push(checkArgs(type, identifyingRootFields, schema, authFn, record));
+			argPromises.push(checkArgs(type, {match: identifyingRootFields}, schema, authFn, record));
 		}
 	}
 

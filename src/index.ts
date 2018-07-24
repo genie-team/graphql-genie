@@ -14,7 +14,8 @@ export {
 } from './GraphQLGenieInterfaces';
 export {
 	typeIsList,
-	getReturnType
+	getReturnType,
+	FindByUniqueError
 } from './GraphQLUtils';
 export {
 	filterNested,

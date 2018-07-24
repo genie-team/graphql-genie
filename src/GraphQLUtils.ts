@@ -1,4 +1,4 @@
-import { isListType, isNonNullType } from 'graphql';
+import { GraphQLError, isListType, isNonNullType } from 'graphql';
 
 export const typeIsList = (type) => {
 	let isList = false;
@@ -22,3 +22,41 @@ export const getReturnType = (type): string => {
 		return type.name;
 	}
 };
+
+export class FindByUniqueError extends Error implements GraphQLError {
+	public extensions: Record<string, any>;
+	readonly name;
+	readonly locations;
+	readonly path;
+	readonly source;
+	readonly positions;
+	readonly nodes;
+	readonly arg;
+	readonly typename;
+	public originalError;
+
+	[key: string]: any;
+
+	constructor(
+		message: string,
+		code?: string,
+		properties?: Record<string, any>,
+	) {
+		super(message);
+
+		if (properties) {
+			Object.keys(properties).forEach(key => {
+				this[key] = properties[key];
+			});
+		}
+
+		// if no name provided, use the default. defineProperty ensures that it stays non-enumerable
+		if (!this.name) {
+			Object.defineProperty(this, 'name', { value: 'ApolloError' });
+		}
+
+		// extensions are flattened to be included in the root of GraphQLError's, so
+		// don't add properties to extensions
+		this.extensions = { code };
+	}
+}

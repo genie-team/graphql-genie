@@ -1,8 +1,8 @@
-import { GraphQLArgument, GraphQLError, GraphQLInputObjectType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
+import { GraphQLArgument, GraphQLInputObjectType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, find, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
 import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
-import { getReturnType, typeIsList } from './GraphQLUtils';
+import { FindByUniqueError, getReturnType, typeIsList } from './GraphQLUtils';
 export class Relation {
 	public type0: string;
 	public field0: string;
@@ -317,7 +317,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					const returnTypeName = getReturnType(returnType);
 					currRecord = await dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info});
 					if (!currRecord || isEmpty(currRecord)) {
-						throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+						throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'update', {arg: whereArgs, typename: returnTypeName});
 					}
 				}
 
@@ -441,7 +441,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					if (data && data['id']) {
 						resolve({ index, key, id: data['id'], data });
 					} else {
-						reject(new Error('tried to connect using unique value that does not exist ' + JSON.stringify(connectArg)));
+						reject(new FindByUniqueError(`connect: ${returnTypeName} does not exist with where args ${JSON.stringify(connectArg)}`, 'disconnect', {arg: connectArg, typename: returnTypeName}));
 					}
 				}).catch(reason => {
 					reject(reason);
@@ -466,7 +466,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
-							reject();
+							reject(new FindByUniqueError(`disconnect: ${returnTypeName} does not exist with where args ${JSON.stringify(disconnectArg)}`, 'disconnect', {arg: disconnectArg, typename: returnTypeName}));
 						}
 					}).catch(reason => {
 						reject(reason);
@@ -503,7 +503,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info}).then(whereData => {
 						currRecord = whereData;
 						if (!currRecord || isEmpty(currRecord)) {
-							throw new GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+							throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'delete', {arg: whereArgs, typename: returnTypeName});
 						}
 						dataResolver.delete(currRecord.__typename, [currRecord.id], {context: _context, info: _info}).then(() => {
 							resolve({ index, key, id: null, currRecord });
@@ -516,11 +516,12 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				}));
 			} else {
 				deletePromises.push(new Promise((resolve, reject) => {
-					dataResolver.getValueByUnique(dataResolver.getLink(currRecord.__typename, key), deleteArg, {context: _context, info: _info}).then(data => {
+					const deleteTypeName = dataResolver.getLink(currRecord.__typename, key);
+					dataResolver.getValueByUnique(deleteTypeName, deleteArg, {context: _context, info: _info}).then(data => {
 						if (data && data['id']) {
 							resolve(data['id']);
 						} else {
-							reject();
+							reject(new FindByUniqueError(`${deleteTypeName} does not exist with where args ${JSON.stringify(deleteArg)}`, 'delete', {arg: deleteArg, typename: deleteTypeName}));
 						}
 					}).catch(reason => {
 						reject(reason);
