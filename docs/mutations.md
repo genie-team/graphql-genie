@@ -129,7 +129,7 @@ will return
   "data": {
     "createCity": {
       "data": {
-        "id": "TkEwTHc1QjJJaVdySzFCOkNpdHk=",
+        "id": "ID1",
         "name": "NY",
         "neighborhoods": [
           "queens",
@@ -196,4 +196,31 @@ mutation {
     clientMutationId
   }
 }
+```
+
+Which will return
+
+```graphql
+{
+  "data": {
+    "updateCity": {
+      "data": {
+        "id": "ID1",
+        "name": "New York",
+        "neighborhoods": [
+          "queens",
+          "manhattan",
+          "east side"
+        ],
+        "user": [
+          {
+            "displayname": "steve"
+          }
+        ]
+      },
+      "clientMutationId": "updateNY"
+    }
+  }
+}
+
 ```
