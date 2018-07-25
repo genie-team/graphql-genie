@@ -84,7 +84,20 @@ const fortuneOptions: FortuneOptions = {
     settings: { enforceLinks: true }
 };
 // Instantiate Genie with your type defintions as a string
-const typeDefs = `[TYPEDEFS]`
+const typeDefs = `type City {
+	id: ID! @unique
+	name: String!
+	neighborhoods: [String] @unique
+	residents: [User] @relation(name: "city")
+	founded: Date
+	population: Int
+}
+type User {
+	id: ID! @unique
+	displayname: String @unique
+	email: String! @unique
+	location: City @relation(name: "city")
+}`;
 const genie = new GraphQLGenie({ 
     typeDefs: typeDefs, 
     fortuneOptions: fortuneOptions
