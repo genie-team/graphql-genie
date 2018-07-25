@@ -17,14 +17,14 @@
 - [Demo](#demo)
 - [Getting started](#getting-started)
 - [Documentation and Features](#documentation-and-features)
-	- [Data Store Options](#data-store-options)
-	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
-	- [GraphQLGenie API](#graphqlgenie-api)
-	- [Subscriptions](#subscriptions)
-	- [Authentication](#authentication)
+  - [Data Store Options](#data-store-options)
+  - [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
+  - [GraphQLGenie API](#graphqlgenie-api)
+  - [Subscriptions](#subscriptions)
+  - [Authentication](#authentication)
 - [Examples](#examples)
-	- [Client](#client)
-	- [Server](#server)
+  - [Client](#client)
+  - [Server](#server)
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
 
 ## Overview
@@ -83,19 +83,20 @@ const fortuneOptions: FortuneOptions = {
     ]
 };
 // Instantiate Genie with your type defintions as a string
-const typeDefs = `type City {
-	id: ID! @unique
-	name: String!
-	neighborhoods: [String] @unique
-	residents: [User] @relation(name: "city")
-	founded: Date
-	population: Int
+const typeDefs = `
+type City {
+  id: ID! @unique
+  name: String!
+  neighborhoods: [String] @unique
+  residents: [User] @relation(name: "city")
+  founded: Date
+  population: Int
 }
 type User {
-	id: ID! @unique
-	displayname: String @unique
-	email: String! @unique
-	location: City @relation(name: "city")
+  id: ID! @unique
+  displayname: String @unique
+  email: String! @unique
+  location: City @relation(name: "city")
 }`;
 const genie = new GraphQLGenie({ 
     typeDefs: typeDefs, 
@@ -120,7 +121,7 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
  * [Connection Queries](https://github.com/genie-team/graphql-genie/blob/master/docs/connections.md)
  * [Mutations](https://github.com/genie-team/graphql-genie/blob/master/docs/mutations.md)
  * Also see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions)
-	
+  
 
 ### GraphQLGenie API 
 
