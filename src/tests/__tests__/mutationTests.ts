@@ -795,6 +795,37 @@ describe('mutationTests', () => {
 		expect(peteResult.data['users'][0].age).toBe(12);
 	});
 
+test('update - update many users, try to set unique field', async () => {
+
+		const updateManyUsers = gql`
+				mutation {
+					updateManyUsers(input: {
+						where: {
+							exists: {
+								age: true
+							}
+						}
+						data: {
+							email: "this update should fail"
+						}
+					}) {
+						count
+					}
+				}
+			`;
+
+		expect.assertions(2);
+		try {
+			const result = await client.mutate({
+				mutation: updateManyUsers
+			});
+		} catch (e) {
+			expect(e).not.toBeNull();
+			expect(e['message']).toContain('multiple');
+		}
+
+	});
+
 	test('create - unique field check', async () => {
 
 		const createPost = gql`
@@ -821,6 +852,7 @@ describe('mutationTests', () => {
 					}
 				}
 			`;
+		expect.assertions(2);
 		try {
 			const result = await client.mutate({
 				mutation: createPost

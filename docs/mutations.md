@@ -482,14 +482,14 @@ type BatchPayload {
 
 ```graphql
 mutation {
-  updateManyUsers(input: {
+  updateManyCities(input: {
     where: {
       exists: {
-        displayname: true
+        name: true
       }
     },
     data: {
-      displayname: "joe"
+      name: "Everywhere is Earth"
     }
   }) {
     count
@@ -502,8 +502,8 @@ will return
 ```graphql
 {
   "data": {
-    "updateManyUsers": {
-      "count": 1
+    "updateManyCities": {
+      "count": 2
     }
   }
 }

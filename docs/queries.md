@@ -1,12 +1,12 @@
 - [Queries](#queries)
-			- [Query docs](#query-docs)
-			- [where argument](#where-argument)
-			- [orderBy argument](#orderby-argument)
-		- [Examples](#examples)
-			- [get all the cities](#get-all-the-cities)
-			- [get a single city matching an id](#get-a-single-city-matching-an-id)
-			- [get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
-			- [Get cities and filter the output](#get-cities-and-filter-the-output)
+      - [Query docs](#query-docs)
+      - [where argument](#where-argument)
+      - [orderBy argument](#orderby-argument)
+    - [Examples](#examples)
+      - [get all the cities](#get-all-the-cities)
+      - [get a single city matching an id](#get-a-single-city-matching-an-id)
+      - [get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+      - [Get cities and filter the output](#get-cities-and-filter-the-output)
 
 # Queries
 
@@ -21,25 +21,25 @@ For the following typedefs `users` and `cities` queries will be created.
 ```typescript 
 const typeDefs = `
 type City {
-	id: ID! @unique
-	name: String!
-	neighborhoods: [String]
-	user: User
-	founded: Date
-	population: Int
+  id: ID! @unique
+  name: String!
+  neighborhoods: [String]
+  user: User
+  founded: Date
+  population: Int
 }
 type User {
-	id: ID! @unique
-	displayname: String @unique
-	email: String! @unique
-	address: City
+  id: ID! @unique
+  displayname: String @unique
+  email: String! @unique
+  address: City
 }
 `
 const genie = new GraphQLGenie({ 
-	typeDefs, 
-	generatorOptions: {
-		generateGetAll: true,
-	}
+  typeDefs, 
+  generatorOptions: {
+    generateGetAll: true,
+  }
 });
 ```
 
@@ -50,30 +50,30 @@ Let's take a close look at what a generated query looks like
 
 ```graphql
 cities(
-	# Filter the results
-	where: CityWhereInput
-	# Sort the results
-	orderBy: CityOrderByInput
-	# Slice result from the start of the cursor
-	first: Int
-	# Slice result from the start of the cursor
-	last: Int
-	# Skip results from the start of the data
-	skip: Int
-	# Before this cursor (ID) in the data, see connection queries documentation for more info
-	before: String
-	# After this cursor (ID) in the data, see connection queries documentation for more info
-	after: String
-	# id matches at least one of argument
-	id: [ID!]
-	# name matches at least one of argument
-	name: [String!]
-	# neighborhoods matches at least one of argument
-	neighborhoods: [String!]
-	# founded matches at least one of argument
-	founded: [Date!]
-	# population matches at least one of argument
-	population: [Int!]
+  # Filter the results
+  where: CityWhereInput
+  # Sort the results
+  orderBy: CityOrderByInput
+  # Slice result from the start of the cursor
+  first: Int
+  # Slice result from the start of the cursor
+  last: Int
+  # Skip results from the start of the data
+  skip: Int
+  # Before this cursor (ID) in the data, see connection queries documentation for more info
+  before: String
+  # After this cursor (ID) in the data, see connection queries documentation for more info
+  after: String
+  # id matches at least one of argument
+  id: [ID!]
+  # name matches at least one of argument
+  name: [String!]
+  # neighborhoods matches at least one of argument
+  neighborhoods: [String!]
+  # founded matches at least one of argument
+  founded: [Date!]
+  # population matches at least one of argument
+  population: [Int!]
 )
 ```
 
@@ -83,25 +83,25 @@ The where argument will filter the returned results.
 
 ```graphql
 input CityWhereInput {
-	# nested where, only find cities where the user matches this
-	user: UserWhereInput
-	# Filter on whether or not a field exists. 
-	# input CityExistsInput {id: Boolean, name: Boolean, neighborhoods: Boolean, user: Boolean}
-	exists: CityExistsInput
-	# Filter on whether or not a field value matches. Can only check scalar and enum fields
-	# name: 'New York' // exact match
-	# name:  ['New York', 'LA'] // match any one of these values
-	# neighborhoods: 'chinatown' //if neighborhoods contains 'chinatown' as neighborhoods is a list type
-	match: CityMatchInput
-	# Filter between lower and upper bounds, takes precedence over match
-	# name: [ 'a', 'd' ], // Starting with letters A through C.
-	# founded: [ null, "2016-01-01" ] // Dates until 2016.
-	# population: [ 100000, null ], // From 100000 and above.
-	range: CityRangeInput
-	# and/or/not will be present if your fortune adapter supports those operations
-	and: [CityWhereInput!]
-	or: [CityWhereInput!]
-	not: CityWhereInput
+  # nested where, only find cities where the user matches this
+  user: UserWhereInput
+  # Filter on whether or not a field exists. 
+  # input CityExistsInput {id: Boolean, name: Boolean, neighborhoods: Boolean, user: Boolean}
+  exists: CityExistsInput
+  # Filter on whether or not a field value matches. Can only check scalar and enum fields
+  # name: 'New York' // exact match
+  # name:  ['New York', 'LA'] // match any one of these values
+  # neighborhoods: 'chinatown' //if neighborhoods contains 'chinatown' as neighborhoods is a list type
+  match: CityMatchInput
+  # Filter between lower and upper bounds, takes precedence over match
+  # name: [ 'a', 'd' ], // Starting with letters A through C.
+  # founded: [ null, "2016-01-01" ] // Dates until 2016.
+  # population: [ 100000, null ], // From 100000 and above.
+  range: CityRangeInput
+  # and/or/not will be present if your fortune adapter supports those operations
+  and: [CityWhereInput!]
+  or: [CityWhereInput!]
+  not: CityWhereInput
 }
 ```
 
@@ -124,12 +124,12 @@ You can also sort related types.
 
 ```graphql
 input CityOrderByInput{
-	id: ORDER_BY_OPTIONS
-	name: ORDER_BY_OPTIONS
-	neighborhoods: ORDER_BY_OPTIONS
-	user: UserOrderByInput
-	founded: ORDER_BY_OPTIONS
-	population: ORDER_BY_OPTIONS
+  id: ORDER_BY_OPTIONS
+  name: ORDER_BY_OPTIONS
+  neighborhoods: ORDER_BY_OPTIONS
+  user: UserOrderByInput
+  founded: ORDER_BY_OPTIONS
+  population: ORDER_BY_OPTIONS
 }
 
 ```
@@ -143,10 +143,10 @@ See the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src
 
 ```graphql
 query allCities {
-	cities {
-		id
-		name
-	}
+  cities {
+    id
+    name
+  }
 }
 ```
 
@@ -154,10 +154,10 @@ query allCities {
 
 ```graphql
 query singleCity {
-	cities (id: "ID") {
-		id
-		name
-	}
+  cities (id: "ID") {
+    id
+    name
+  }
 }
 ```
 
@@ -165,15 +165,15 @@ query singleCity {
 
 ```graphql
 query filteredCities {
-	cities(
-		where: {range: {founded: [null, "1990-01-01"]}}
-		orderBy: {founded: ASCENDING}
-		skip: 5
-	) {
-		name
-		population
-		founded
-	}
+  cities(
+    where: {range: {founded: [null, "1990-01-01"]}}
+    orderBy: {founded: ASCENDING}
+    skip: 5
+  ) {
+    name
+    population
+    founded
+  }
 }
 
 ```
@@ -183,13 +183,13 @@ When requesting objects you can filter as part of the query, this is different t
 
 ```graphql
 query allCities {
-	cities {
-		name
-		population
-		user(where: {exists:{email: true}}) {
-			email
-		}
-	}
+  cities {
+    name
+    population
+    user(where: {exists:{email: true}}) {
+      email
+    }
+  }
 }
 ```
 

@@ -7,9 +7,9 @@
 		- [Installation](#installation)
 		- [Getting started](#getting-started)
 		- [Data Store](#data-store)
-		- [Subscriptions](#subscriptions)
 		- [GraphQL Genie Schema API](#graphql-genie-schema-api)
 		- [GraphQLGenie API](#graphqlgenie-api)
+		- [Subscriptions](#subscriptions)
 		- [Authentication](#authentication)
 		- [How do I do/add [thing]](#how-do-i-doadd-thing)
 	- [Features/Advantages/Differences](#featuresadvantagesdifferences)
@@ -84,19 +84,21 @@ const schema: GraphQLSchema = genie.getSchema();
 
 GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any [fortune adapter](http://fortune.js.org/plugins/) will work, plugins currently exist for memory ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/memory)), [IndexedDB](https://github.com/fortunejs/fortune-indexeddb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb)), [MongoDB](https://github.com/fortunejs/fortune-mongodb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb)), [Postgres](https://github.com/fortunejs/fortune-postgres) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)), [Redis](https://github.com/thibremy/fortune-redis), [Google Cloud Datastore](https://github.com/patrinhani-ciandt/fortune-datastore), [NeDB](https://github.com/fortunejs/fortune-nedb) and [File System](https://github.com/fortunejs/fortune-fs). Or you could write your own.
 
+### GraphQL Genie Schema API
+ * [Type Queries](https://github.com/genie-team/graphql-genie/blob/master/docs/queries.md)
+ * [Connection Queries](https://github.com/genie-team/graphql-genie/blob/master/docs/connections.md)
+ * [Mutations](https://github.com/genie-team/graphql-genie/blob/master/docs/mutations.md)
+ * Also see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions)
+	
+
+### GraphQLGenie API
+
+The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md) can be found in the docs folder 
+
 ### Subscriptions
 
 [GraphQL Genie](https://github.com/genie-team/graphql-genie) also supports subscriptions with the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions). 
 
-### GraphQL Genie Schema API
- * **Queries**
- 	* [Type Queries](https://github.com/genie-team/graphql-genie/blob/master/docs/queries.md)
-	
-WIP
- 	
-### GraphQLGenie API
-
-The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md) can be found in the docs folder 
 
 ### Authentication
 

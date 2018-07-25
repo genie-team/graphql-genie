@@ -1,10 +1,10 @@
 
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLOutputType, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
+import { GraphQLError, GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLOutputType, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
 import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
 import { Relations, getPayloadTypeDef, getPayloadTypeName, parseFilter, updateResolver } from './TypeGeneratorUtilities';
-
+import { find, get } from 'lodash';
 export class GenerateUpdate implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
@@ -99,9 +99,20 @@ export class GenerateUpdate implements TypeGenerator {
 				const updateArgs = _args.input && _args.input.data ? _args.input.data : '';
 				if (filter && updateArgs) {
 					const options = parseFilter(filter, schemaType);
-					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options, {context: _context, info: _info});
+					let fortuneReturn: Array<any> = await this.dataResolver.find(type.name, null, options, { context: _context, info: _info });
 					fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 					count = fortuneReturn.length;
+					if (count > 1) {
+						Object.keys(updateArgs).forEach(fieldName => {
+							const fields = get(this.schemaInfo, [type.name, 'fields']);
+							if (fields) {
+								const field = find(fields, { name: fieldName });
+								if (get(field, ['metadata', 'unique']) === true) {
+									throw new GraphQLError('Can\'t update multiple values on unique field ' + fieldName);
+								}
+							}
+						});
+					}
 					await Promise.all(fortuneReturn.map(async (fortuneRecord) => {
 						return await updateResolver(this.dataResolver)(fortuneRecord, { update: updateArgs, where: true }, _context, _info, null, null, <GraphQLOutputType>schemaType);
 					}));
