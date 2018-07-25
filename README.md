@@ -3,6 +3,7 @@
 </h1>
 
 
+
 # GraphQL Genie <!-- omit in toc --> 
 
 [![npm version](https://img.shields.io/npm/v/graphql-genie.svg)](https://www.npmjs.com/package/graphql-genie)
@@ -11,7 +12,22 @@
 [![npm](https://img.shields.io/npm/l/graphql-genie.svg)](https://github.com/genie-team/graphql-genie/blob/master/LICENSE)
 
 
-## Overview <!-- omit in toc -->
+- [Overview](#overview)
+- [Installation](#installation)
+- [Demo](#demo)
+- [Getting started](#getting-started)
+- [Documentation and Features](#documentation-and-features)
+	- [Data Store Options](#data-store-options)
+	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
+	- [GraphQLGenie API](#graphqlgenie-api)
+	- [Subscriptions](#subscriptions)
+	- [Authentication](#authentication)
+- [Examples](#examples)
+	- [Client](#client)
+	- [Server](#server)
+- [Features/Advantages/Differences](#featuresadvantagesdifferences)
+
+## Overview
 
 Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) automatically generates a fully featured GraphQL API with referential integrity and inverse updates that can be used client side or server side. 
 
@@ -26,8 +42,8 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 In short GraphQL Genie handles creating the root Query, Mutation and Subscription types and resolvers for a variety of [data stores](#data-store). If that doesn't mean anything to you it may be good to read up on some [graphql basics](https://www.okgrow.com/posts/graphql-basics) or learn by experimenting with the [demo]((https://genie-team.github.io/graphql-genie-client/)
 
 
-<!-- omit in toc --> 
-## Installation <!-- omit in toc --> 
+
+## Installation 
 
 `npm install graphql-genie fortune graphql graphql-tools lodash`
 
@@ -35,15 +51,15 @@ or
 
 `yarn add graphql-genie fortune graphql graphql-tools lodash`
 
-<!-- omit in toc --> 
-## Demo <!-- omit in toc --> 
+
+## Demo 
 
 [See the fully featured demo](https://genie-team.github.io/graphql-genie-client/). Create a schema (or use the default provided) and a fully featured api is created. Click the search icon to use GraphiQL to view docs and create or mock data. See [graphql genie client](https://github.com/genie-team/graphql-genie-client) on github for more info on the demo.
 
 Or for a server demo see the [server examples](#server).
 
-<!-- omit in toc --> 
-## Getting started <!-- omit in toc --> 
+
+## Getting started 
 
 1. [Create your type definitions.](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md) These are GraphQL Type definitions, GraphQL Genie does have some additional directives which may be useful (unique, relations, timestamps, default values). [Documentation in docs/sdl.md](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md)
 2. Setup fortune options with your adapter and other settings. See example below or [fortune docs](http://fortune.js.org/api/#fortune-constructor) and documentation for your adapter
@@ -83,27 +99,6 @@ const schema: GraphQLSchema = genie.getSchema();
 
 ## Documentation and Features
 
-- [Documentation and Features](#documentation-and-features)
-	- [Data Store Options](#data-store-options)
-	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
-	- [GraphQLGenie API](#graphqlgenie-api)
-	- [Subscriptions](#subscriptions)
-	- [Authentication](#authentication)
-	- [How do I do/add [thing]](#how-do-i-doadd-thing)
-- [Examples](#examples)
-	- [Client](#client)
-		- [Memory](#memory)
-		- [IndexedDB](#indexeddb)
-	- [Server](#server)
-		- [Apollo Server 2 Redis with JWT Authentication](#apollo-server-2-redis-with-jwt-authentication)
-		- [GrapqhQL Yoga Redis with Session Authentication](#grapqhql-yoga-redis-with-session-authentication)
-		- [GrapqhQL Yoga Redis with Firebase Authentication](#grapqhql-yoga-redis-with-firebase-authentication)
-		- [GraphQL Yoga PostgreSQL](#graphql-yoga-postgresql)
-	- [Other](#other)
-		- [MongoDB](#mongodb)
-- [Features/Advantages/Differences](#featuresadvantagesdifferences)
-- [Thanks/Credit](#thankscredit)
-
 ### Data Store Options
 
 GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data store. This means any [fortune adapter](http://fortune.js.org/plugins/) will work, plugins currently exist for memory ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/memory)), [IndexedDB](https://github.com/fortunejs/fortune-indexeddb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb)), [MongoDB](https://github.com/fortunejs/fortune-mongodb) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb)), [Postgres](https://github.com/fortunejs/fortune-postgres) ([example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)), [Redis](https://github.com/thibremy/fortune-redis) ([examples](#server)), [Google Cloud Datastore](https://github.com/patrinhani-ciandt/fortune-datastore), [NeDB](https://github.com/fortunejs/fortune-nedb) and [File System](https://github.com/fortunejs/fortune-fs). Or you could [write your own adapter](http://fortune.js.org/api/#adapter).
@@ -115,7 +110,7 @@ GraphQLGenie uses [FortuneJS](http://fortune.js.org) for accessing the data stor
  * Also see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions)
 	
 
-### GraphQLGenie API
+### GraphQLGenie API 
 
 The [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md) can be found in the docs folder 
 
@@ -140,7 +135,7 @@ Of course Genie creates a normal schema so you can add authentication in any oth
 * At the resolver level by wrapping the resolver functions that GraphQL Genie created in the schema, or use a tool like [graphql-resolvers](https://github.com/lucasconstantino/graphql-resolvers) to combine resolver, with authentication logic.
 * At the data level create an input hook and add it to the DataResolver (returned by getDataResolver, see the [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md)) and throw an error if not authorized.
 
-### How do I do/add [thing]
+### How do I do/add [thing] <!-- omit in toc --> 
 
 You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilder()) to add types and resolvers to the generated schema. Or since it is just a normal schema you can use any tool you want (such as [graphql-tools](https://www.apollographql.com/docs/graphql-tools)) to alter the schema in any way. Including adding resolvers, mocking, stitching, transforming, etc.
 
@@ -150,35 +145,35 @@ If you want guidance feel free to open an issue and label it as a question.
 
 ### Client
 
-#### [Memory](https://github.com/genie-team/graphql-genie/tree/master/examples/memory)
+#### [Memory](https://github.com/genie-team/graphql-genie/tree/master/examples/memory) <!-- omit in toc --> 
 
 Sets up an API that stores data in browser memory
 
-#### [IndexedDB](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb)
+#### [IndexedDB](https://github.com/genie-team/graphql-genie/tree/master/examples/indexeddb) <!-- omit in toc --> 
 
 Sets up an API that stores data in browser Indexed DB
 
 ### Server
 
-#### [Apollo Server 2 Redis with JWT Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth)
+#### [Apollo Server 2 Redis with JWT Authentication] (https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) <!-- omit in toc --> 
 
 Sets up a server using [Apollo Server 2](https://github.com/apollographql/apollo-server) and an api that stores to a mock Redis with json web token based signup and login. Uses the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) for role based access control.
 
-#### [GrapqhQL Yoga Redis with Session Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication)
+#### [GrapqhQL Yoga Redis with Session Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-authentication) <!-- omit in toc --> 
 
 Sets up a server using [GrapqhQL Yoga](https://github.com/prismagraphql/graphql-yoga) and an api that stores to a mock Redis with session based signup and login. Uses the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) for role based access control.
 
-#### [GrapqhQL Yoga Redis with Firebase Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth)
+#### [GrapqhQL Yoga Redis with Firebase Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) <!-- omit in toc --> 
 
 Sets up a server using [GrapqhQL Yoga](https://github.com/prismagraphql/graphql-yoga) and an api that stores to a mock Redis. Serves static html for [firebase](https://firebase.google.com/docs/auth/) signup and login. Uses the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) for role based access control.
 
-#### [GraphQL Yoga PostgreSQL](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql)
+#### [GraphQL Yoga PostgreSQL](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-postgresql) <!-- omit in toc --> 
 
 Sets up a server using [GrapqhQL Yoga](https://github.com/prismagraphql/graphql-yoga) and an API that stores to PostgreSQL.
 
-### Other
+### Other <!-- omit in toc --> 
 
-#### [MongoDB](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb)
+#### [MongoDB](https://github.com/genie-team/graphql-genie/tree/master/examples/mongodb) <!-- omit in toc --> 
 
 Creates a simple node script that uses the GraphQL Genie api to store in a MongoDB database
 
@@ -195,7 +190,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
 * You can make your api logic completely serverless
 
-## Thanks/Credit
+## Thanks/Credit <!-- omit in toc --> 
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
 
