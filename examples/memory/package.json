@@ -33,7 +33,7 @@
     "apollo-link-schema": "^1.1.0",
     "fortune": "^5.4.2",
     "graphql": "^0.13.2",
-    "graphql-genie": ">=0.2.0",
+    "graphql-genie": ">=0.3.0",
     "graphql-genie-subscriptions": "^1.0.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",

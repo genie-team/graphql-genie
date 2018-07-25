@@ -6,7 +6,7 @@ import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { assign, forOwn, get, isArray, isEmpty, isObject } from 'lodash';
+import { assign, forOwn, get, isArray, isEmpty, isPlainObject } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
@@ -37,7 +37,7 @@ export class GraphQLGenie {
 	public ready: boolean;
 	constructor(options: GraphQLGenieOptions) {
 		this.ready = false;
-		this.fortuneOptions  = options.fortuneOptions ? options.fortuneOptions : {};
+		this.fortuneOptions = options.fortuneOptions ? options.fortuneOptions : {};
 		this.fortuneOptions.settings = this.fortuneOptions.settings ? this.fortuneOptions.settings : {};
 		if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
 			this.fortuneOptions.settings.enforceLinks = true;
@@ -225,6 +225,25 @@ export class GraphQLGenie {
 		return this.schemaBuilder.printSchemaWithDirectives();
 	}
 
+	private mapIdsToCreatedIds = (currIDs, objectsMap: Map<String, Object>) => {
+		if (currIDs) {
+			// tslint:disable-next-line:prefer-conditional-expression
+			if (isArray(currIDs)) {
+				if (isPlainObject(currIDs[0])) {
+					currIDs = currIDs.map(element => element && element.id ? element.id : element);
+				}
+				currIDs = currIDs.map(currID => objectsMap.has(currID) && objectsMap.get(currID)['id'] ? objectsMap.get(currID)['id'] : currID);
+			} else {
+				// handle in case it's the full object not just id
+				if (isPlainObject(currIDs) && currIDs.id) {
+					currIDs = currIDs.id;
+				}
+				currIDs = objectsMap.has(currIDs) && objectsMap.get(currIDs)['id'] ? objectsMap.get(currIDs)['id'] : currIDs;
+			}
+		}
+		return currIDs;
+	}
+
 	public importRawData = async (data: any[], merge = false, defaultTypename?: string) => {
 		let index = 0;
 		const createPromises = [];
@@ -301,7 +320,6 @@ export class GraphQLGenie {
 			const fieldMap = schemaType.getFields();
 			const objectFields = Object.keys(object);
 			let update = {};
-			const pull = {};
 			objectFields.forEach(fieldName => {
 				const schemaField = fieldMap[fieldName];
 				if (schemaField) {
@@ -311,42 +329,53 @@ export class GraphQLGenie {
 						if (!isEmpty(currValue)) {
 							if (!isScalarType(schemaFieldType)) {
 								if (isArray(currValue)) {
-									if (isObject(currValue[0])) {
-										currValue = currValue.map(element => element.id);
-									}
-									const fieldPush = [];
-									const fieldPull = [];
-									const existingObj = objectsMap.get(object['id']);
-									const existingObjField = existingObj ? existingObj[fieldName] : [];
-									currValue.forEach(element => {
-										if (!existingObjField.includes(element)) {
-											fieldPush.push(element);
-										}
-									});
-									existingObjField.forEach(element => {
-										if (!currValue.includes(element)) {
-											fieldPull.push(element);
-										}
-									});
-									if (!isEmpty(fieldPush)) {
-										update[fieldName] = fieldPush;
-									}
-									if (!isEmpty(fieldPull)) {
-										pull[fieldName] = fieldPull;
-									}
+									// if it's an array then set
+
+									// use new ids if found
+									currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+
+									update[fieldName] = { set: currValue };
 								} else {
-									if (isObject(currValue)) {
+									// if not an array we need to handle scalars vs objects with push/pull/set
+
+									// handle in case it's the full object not just id
+									if (isPlainObject(currValue) && currValue.id) {
 										currValue = currValue.id;
 									}
-									const existingObj = objectsMap.get(currValue);
+									// if it's not an object than it's just an id so we should set it
 									// tslint:disable-next-line:prefer-conditional-expression
-									if (existingObj && currValue !== existingObj['id']) {
-										update[fieldName] = existingObj['id'];
+									if (!isPlainObject(currValue)) {
+										// use the new object id
+										update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
 									} else {
+										// it's an object so it is push/pull/set
+										if (currValue.push) {
+											currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+										}
+										if (currValue.pull) {
+											currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+										}
+										if (currValue.set) {
+											currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+										}
 										update[fieldName] = currValue;
 									}
 								}
+							} else if (!isPlainObject(currValue)) {
+								currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+								// not an object and a scalar but lets check if it's an array
+								update[fieldName] = isArray(currValue) ? { set: currValue } : currValue;
 							} else {
+								// it's an object so it is push/pull/set
+								if (currValue.push) {
+									currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+								}
+								if (currValue.pull) {
+									currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+								}
+								if (currValue.set) {
+									currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+								}
 								update[fieldName] = currValue;
 							}
 
@@ -357,9 +386,6 @@ export class GraphQLGenie {
 			if (!isEmpty(update)) {
 				update['id'] = objectsMap.get(object.id)['id'];
 				update = this.graphQLFortune.generateUpdates(update);
-				if (!isEmpty(pull)) {
-					update['pull'] = pull;
-				}
 				// console.log(typeName, update);
 				updatePromies.push(this.graphQLFortune.update(typeName, update, undefined, { fortuneFormatted: true }));
 			}

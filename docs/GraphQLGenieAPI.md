@@ -1,22 +1,19 @@
 - [GraphQLGenie API](#graphqlgenie-api)
-	- [**constructor**](#constructor)
-	- [**use**](#use)
-	- [**getSchema**](#getschema)
-	- [**printSchema**](#printschema)
-	- [**getFragmentTypes**](#getfragmenttypes)
-	- [**getRawData**](#getrawdata)
-	- [**importRawData**](#importrawdata)
-	- [**data**](#data)
-	- [**merge**](#merge)
-	- [**defaultTypename**](#defaulttypename)
-	- [**getDataResolver**](#getdataresolver)
-	- [**getSchemaBuilder**](#getschemabuilder)
+  - [**constructor**](#constructor)
+  - [**use**](#use)
+  - [**getSchema**](#getschema)
+  - [**printSchema**](#printschema)
+  - [**getFragmentTypes**](#getfragmenttypes)
+  - [**getRawData**](#getrawdata)
+  - [**importRawData**](#importrawdata)
+  - [**getDataResolver**](#getdataresolver)
+  - [**getSchemaBuilder**](#getschemabuilder)
 - [GraphQLSchemaBuilder API](#graphqlschemabuilder-api)
-	- [**printSchemaWithDirectives**](#printschemawithdirectives)
-	- [**addTypeDefsToSchema**](#addtypedefstoschema)
-	- [**setResolvers**](#setresolvers)
-	- [**setIResolvers**](#setiresolvers)
-	- [**isUserType**](#isusertype)
+  - [**printSchemaWithDirectives**](#printschemawithdirectives)
+  - [**addTypeDefsToSchema**](#addtypedefstoschema)
+  - [**setResolvers**](#setresolvers)
+  - [**setIResolvers**](#setiresolvers)
+  - [**isUserType**](#isusertype)
 
 ### GraphQLGenie API
 
@@ -150,19 +147,30 @@ importRawData(data: any[], merge = false, defaultTypename?: string): Promise
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
 
-#### **data**
+**data**
 
-an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query  and __typename fields are not added the defaultTypename must be provided
+an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query and __typename fields are not added the defaultTypename must be provided
 
 
-
-#### **merge**
+**merge**
 
 If false every object will create a new object, the id won't be preserved from the current data but relationships will still be built as they were in the provided data.
 
 If true data will be merged based on ID, with new entries only being created if the given id does not exist already. Provided id will be used for creating data as well.
 
-#### **defaultTypename**
+Note when merging list fields by default the array in the provided data will replace the existing data array. If you don't want to do that instead of providing an array you can provide an object with fields for push and pull or set. 
+
+```json
+ {
+  "id":"VkhoRzNWNWJkNHlUVDBuOkNvbW1lbnQ=",
+  "submissions": {
+    "push": "VkhoRzNWNWJkNHlUVDBuOkNvbW1lbnQ=",
+    "pull": "UldLemkxNnVld1N0Q1pOOkFkZHJlc3M="
+   }
+ }
+```
+
+**defaultTypename**
 
 Must be provided if every object in data does not have a `__typename` property
 

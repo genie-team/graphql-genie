@@ -13,7 +13,7 @@ const typeDefs = `
 
 type City {
 	id: ID! @unique
-	name: String!
+	name: String! @unique
 	neighborhoods: [String]
 	user: [User]
 	founded: Date
@@ -60,6 +60,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
+	window['genie'] = genie;
 	window['fortune'] = genie.getDataResolver();
 	window['store'] = window['fortune'].getStore();
 	window['schema'] = schema;
@@ -67,17 +68,17 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
 
-	const rawData = await genie.getRawData();
-	console.log(rawData);
+	let rawData = await genie.getRawData();
+	console.log('rawData :', rawData);
 	rawData.forEach(element => {
 		if (element.name && element.name !== 'test') {
-			element.name = 'Update5';
+			element.name = 'NY';
 		}
-	});
-	console.log(rawData);
+	});	
 	await genie.importRawData(rawData, true);
-	console.log('imported');
-	console.log(await genie.getRawData());
+	console.log('merged');
+	rawData = await genie.getRawData();
+	console.log('rawData :', rawData);
 	// await genie.importRawData([{
 	// 	'id': '2d',
 	// 	'name': 'test2',
