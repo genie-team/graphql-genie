@@ -16,10 +16,10 @@
 Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) automatically generates a fully featured GraphQL API with referential integrity and inverse updates that can be used client side or server side. 
 
 - **Full GraphQL Support** You can use all the features of the type schema, including interfaces and unions. 
-- **Feature Rich API** including nested operations, filtered queries, pagination. Also transactional if your adapter supports it.
+- **Feature Rich API** including nested operations, filtered queries, pagination. Transactional if your adapter supports it.
 - **Easy to extend with plugins** Ones already exist to [add subscriptions](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) and [setup role based access control](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication).    
 - **Works with other GraphQL libraries** like [Relay](https://facebook.github.io/relay/)(react) and [Apollo Client](https://github.com/apollographql/apollo-client)(vanilla js or any framework)
-- **Portable data** with a variety of [data stores](#data-store-options) supported and import/export functions. 
+- **Portable data** with a variety of [data stores](#data-store-options) including client and server side supported and import/export/merge functions. 
 - **FortuneJS Storage** allows many storage options and the ability to easily create your own. See [data store options](#data-store-options)
  
 
