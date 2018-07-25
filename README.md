@@ -168,7 +168,7 @@ Sets up an API that stores data in browser Indexed DB
 
 ### Server
 
-#### [Apollo Server 2 Redis with JWT Authentication] (https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) <!-- omit in toc --> 
+#### [Apollo Server 2 Redis with JWT Authentication](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) <!-- omit in toc --> 
 
 Sets up a server using [Apollo Server 2](https://github.com/apollographql/apollo-server) and an api that stores to a mock Redis with json web token based signup and login. Uses the [authentication plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication) for role based access control.
 
