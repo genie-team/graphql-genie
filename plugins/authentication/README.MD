@@ -4,12 +4,15 @@
 
 
 - [GraphQL Genie Authentication](#graphql-genie-authentication)
-		- [Installation](#installation)
-		- [Enable plugin](#enable-plugin)
-			- [Arguments](#arguments)
-		- [Authentication Requirements](#authentication-requirements)
-		- [Examples](#examples)
-		- [Thanks/Credit](#thankscredit)
+	- [Installation](#installation)
+	- [Enable plugin](#enable-plugin)
+		- [Arguments](#arguments)
+	- [Authentication Requirements](#authentication-requirements)
+		- [Role enum](#role-enum)
+		- [@auth directive](#auth-directive)
+		- [authenticate function](#authenticate-function)
+	- [Examples](#examples)
+	- [Thanks/Credit](#thankscredit)
 
 
 # GraphQL Genie Authentication
@@ -19,7 +22,7 @@
 
 Helps add authentication to your graphql-genie schema. Creates a `@auth` directive that allows role based authentication down to individual fields
 
-### Installation
+## Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
 
 `npm install graphql-genie-authentication` 
@@ -28,7 +31,7 @@ or
 
 `yarn add graphql-genie-authentication`
 
-### Enable plugin
+## Enable plugin
 
 ```js
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
@@ -62,14 +65,17 @@ directive @auth(
 ) on OBJECT | FIELD_DEFINITION
 ```
 
-#### Arguments
+### Arguments
 
 `(defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin`
 
 You can pass in the default required of each operation which will be used in you don't pass in the required role when using the directive. If you don't provide an argument 'ADMIN' will be the default, so make sure that is one of the roles.
 
 
-### Authentication Requirements 
+## Authentication Requirements 
+
+
+### Role enum
 
 Your schema must have an enum named "Role". These will then be used to define necessary roles on CRUD operations. An example of roles you may want to setup.
 
@@ -84,6 +90,8 @@ enum Role {
 	ADMIN
 }
 ```
+
+### @auth directive
 
 How the @auth directive may be used with those roles.  
 
@@ -117,6 +125,7 @@ type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 
 ```
 
+### authenticate function
 
 All graphql requests must have a context with a property named `authenticate`. `authenticate` must be a function which returns (or resolves to) true if the operation is allowed. If the operation is not allowed either return/resolve to false or throw an error. 
 
@@ -178,7 +187,7 @@ The authenticate function recieves the following.
 
 The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves
 		
-### Examples
+## Examples
 
 See the [apollo server 2 redis jwt example](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) for JWT authentication with users stored in the database. Uses Apollo Server 2.
 
@@ -187,7 +196,7 @@ See the [yoga redis example](https://github.com/genie-team/graphql-genie/tree/ma
 See the [yoga redis firebase example](https://github.com/genie-team/graphql-genie/tree/master/examples/graphql-yoga-redis-firebase-auth) for using firebase authentication to login and control access from an external JWT provider. Uses GraphQL Yoga.
 
 
-### Thanks/Credit
+## Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
 

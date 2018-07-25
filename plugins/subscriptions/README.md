@@ -3,11 +3,11 @@
 </h1>
 
 - [GraphQL Genie Subscriptions](#graphql-genie-subscriptions)
-		- [Installation](#installation)
-		- [Enable plugin](#enable-plugin)
-		- [Subscription API](#subscription-api)
-		- [Examples](#examples)
-		- [Thanks/Credit](#thankscredit)
+	- [Installation](#installation)
+	- [Enable plugin](#enable-plugin)
+	- [Subscription API](#subscription-api)
+	- [Examples](#examples)
+	- [Thanks/Credit](#thankscredit)
 
 # GraphQL Genie Subscriptions
 
@@ -18,7 +18,7 @@
 
 Pass in a pubsub object from [graphql-subscriptions](https://github.com/apollographql/graphql-subscriptions) and the necessary types and resolvers will be added to your schema
 
-### Installation
+## Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
 
 `npm install graphql-genie-subscriptions graphql-subscriptions` 
@@ -28,7 +28,7 @@ or
 `yarn add graphql-genie-subscriptions graphql-subscriptions`
 
 
-### Enable plugin
+## Enable plugin
 
 ```js
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
@@ -45,7 +45,7 @@ await genie.use(subscriptionPlugin(new PubSub()));
 const schema = genie.getSchema();
 ```
 
-### Subscription API
+## Subscription API
 
 Given you passed the following schema to Graphql Genie
 
@@ -121,12 +121,12 @@ type UserPreviousValues {
 }
 ```
 		
-### Examples
+## Examples
 
 All the graphql-yoga [code examples](https://github.com/genie-team/graphql-genie/blob/master/examples) use the subscriptions plugin.
 
 The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.ts) are a good place to see example subscription queries.
 
-### Thanks/Credit
+## Thanks/Credit
 
 Logo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)

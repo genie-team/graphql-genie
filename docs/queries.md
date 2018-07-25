@@ -4,9 +4,9 @@
     - [where argument](#where-argument)
     - [orderBy argument](#orderby-argument)
   - [Examples](#examples)
-    - [get all the cities](#get-all-the-cities)
-    - [get a single city matching an id](#get-a-single-city-matching-an-id)
-    - [get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+    - [Get all the cities](#get-all-the-cities)
+    - [Get a single city matching an id](#get-a-single-city-matching-an-id)
+    - [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
     - [Get cities and filter the output](#get-cities-and-filter-the-output)
 
 # Queries
@@ -140,7 +140,7 @@ input CityOrderByInput{
 **Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests).**
 See the [setupTests](https://github.com/genie-team/graphql-genie/blob/master/src/tests/setupTests.ts) file to see the schema and then see the files in the [__tests__](https://github.com/genie-team/graphql-genie/tree/master/src/tests/__tests__) folder for many different examples.
 
-### get all the cities
+### Get all the cities
 
 ```graphql
 query allCities {
@@ -151,7 +151,7 @@ query allCities {
 }
 ```
 
-### get a single city matching an id
+### Get a single city matching an id
 
 ```graphql
 query singleCity {
@@ -162,7 +162,7 @@ query singleCity {
 }
 ```
 
-### get cities using a filter and skip
+### Get cities using a filter and skip
 
 ```graphql
 query filteredCities {

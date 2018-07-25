@@ -1,6 +1,6 @@
 - [Connections](#connections)
-		- [Connection output type](#connection-output-type)
-		- [Examples](#examples)
+	- [Connection output type](#connection-output-type)
+	- [Examples](#examples)
 
 # Connections
 
@@ -45,7 +45,7 @@ const genie = new GraphQLGenie({
 
  The Connection type follows the [Relay Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm). Reading this will give comprehensive documentation on how it works.
 
-### Connection output type
+## Connection output type
 
  Lets look at a the CityConnection returned by `citiesConnection` query
 
@@ -102,7 +102,7 @@ type CityAggregate {
 
 
 
- ### Examples
+ ## Examples
 
 
 **Note: You can see a lot of examples by looking at the [tests](https://github.com/genie-team/graphql-genie/tree/master/src/tests).**
