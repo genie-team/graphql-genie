@@ -20,7 +20,7 @@
 [![npm version](https://img.shields.io/npm/v/graphql-genie-authentication.svg)](https://www.npmjs.com/package/graphql-genie-authentication)
 [![npm](https://img.shields.io/npm/l/graphql-genie-authentication.svg)](https://github.com/genie-team/graphql-genie/blob/master/LICENSE)
 
-Helps add authentication to your graphql-genie schema. Creates a `@auth` directive that allows role based authentication down to individual fields
+Helps add authentication to your graphql-genie schema. Creates a `@auth` directive that allows role based access control down to individual fields
 
 ## Installation
 Assuming you already have [GraphQL Genie](https://github.com/genie-team/graphql-genie) installed.
