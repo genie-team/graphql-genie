@@ -137,7 +137,7 @@ const server = new GraphQLServer({
 	schema,
 	context: req => ({
 		...req,
-		authenticate: (method, allowedRoles, record, updates, typeName, fieldName) => {
+		authenticate: (method, allowedRoles, record, filterRecords, updates, typeName, fieldName) => {
 			return true;
 		}
 	})
