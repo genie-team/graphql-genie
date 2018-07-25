@@ -19,11 +19,11 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 - **Feature Rich API** including nested operations, filtered queries, pagination. Also transactional if your data store plugin supports it.
 - **Easy to extend with plugins** Ones already exist to [add subscriptions](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) and [setup role based access control](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication).    
 - **Works with other GraphQL libraries** like [Relay](https://facebook.github.io/relay/)(react) and [Apollo Client](https://github.com/apollographql/apollo-client)(vanilla js or any framework)
-- **Portable data** with a variety of [data stores](#data-store-options) supported and import/export functionality 
+- **Portable data** with a variety of [data stores](#data-store-options) supported and import/export functions. 
 - **FortuneJS Storage** allows many storage options and the ability to easily create your own. See [data store options](#data-store-options)
  
 
-In short GraphQL Genie handles creating the root Query, Mutation and Subscription types and resolvers for a variety of [data stores](#data-store). If that doesn't mean anything to you it may be good to read up on some [graphql basics](https://www.okgrow.com/posts/graphql-basics) or learn by experimenting with the [demo]((https://genie-team.github.io/graphql-genie-client/))
+In short GraphQL Genie handles creating the root Query, Mutation and Subscription types and resolvers for a variety of [data stores](#data-store). If that doesn't mean anything to you it may be good to read up on some [graphql basics](https://www.okgrow.com/posts/graphql-basics) or learn by experimenting with the [demo]((https://genie-team.github.io/graphql-genie-client/)
 
 
 <!-- omit in toc --> 
