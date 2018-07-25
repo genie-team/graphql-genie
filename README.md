@@ -81,6 +81,8 @@ await genie.init();
 const schema: GraphQLSchema = genie.getSchema();
 ```
 
+## Documentation and Features
+
 - [Documentation and Features](#documentation-and-features)
 	- [Data Store Options](#data-store-options)
 	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
@@ -101,8 +103,6 @@ const schema: GraphQLSchema = genie.getSchema();
 		- [MongoDB](#mongodb)
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
 - [Thanks/Credit](#thankscredit)
-
-## Documentation and Features
 
 ### Data Store Options
 
