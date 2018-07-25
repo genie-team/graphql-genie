@@ -80,8 +80,7 @@ const fortuneOptions: FortuneOptions = {
             // options object, URL is mandatory.
             url: config.mongodbURL
         }
-    ],
-    settings: { enforceLinks: true }
+    ]
 };
 // Instantiate Genie with your type defintions as a string
 const typeDefs = `type City {
