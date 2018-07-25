@@ -74,13 +74,14 @@ import mongodbAdapter from 'fortune-mongodb';
 
 //adapter: configuration array for the data store. The default type is the memory adapter. See below for other adapter options
 const fortuneOptions: FortuneOptions = {
-    adapter: [
-        mongodbAdapter,
-        {
-            // options object, URL is mandatory.
-            url: config.mongodbURL
-        }
-    ]
+  // see the documentation for your specific adapter
+  adapter: [    
+    mongodbAdapter,
+    {
+      // options object, URL is mandatory.
+      url: config.mongodbURL
+    }
+  ]
 };
 // Instantiate Genie with your type defintions as a string
 const typeDefs = `
