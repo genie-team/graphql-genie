@@ -4,6 +4,7 @@ import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
 import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
+import {camelCase} from 'lodash';
 
 export class GenerateGetAll implements TypeGenerator {
 	private objectName: string;
@@ -11,7 +12,7 @@ export class GenerateGetAll implements TypeGenerator {
 	private schema: GraphQLSchema;
 	private dataResolver: DataResolver;
 	private fields: object;
-	private resolvers: Map<string, GraphQLFieldResolver<any, any>>;
+	public resolvers: Map<string, GraphQLFieldResolver<any, any>>;
 	private currInputObjectTypes: Map<string, GraphQLInputType>;
 	private schemaInfo: IntrospectionType[];
 	private relations: Relations;
@@ -44,7 +45,7 @@ export class GenerateGetAll implements TypeGenerator {
 				queryArgs,
 				getRootMatchFields((<GraphQLInputObjectType>this.currInputObjectTypes.get(`${type.name}MatchInput`))));
 
-			const fieldName = `${pluralize(type.name.toLowerCase())}`;
+			const fieldName = `${camelCase(pluralize(type.name))}`;
 
 			this.fields[fieldName] = {
 				type: `[${type.name}]`,

@@ -110,6 +110,26 @@ describe('genie', () => {
 		expect(result.data['users'][0].writtenSubmissions[0].id).toBe(testData.posts[0].id);
 	});
 
+	test('find singular - make sure user also has post', async () => {
+		const user = gql`
+			query user($id: ID){
+				user(id: $id) {
+					id
+					writtenSubmissions {
+						id
+					}
+				}
+			}
+			`;
+
+		const result = await client.query({
+			query: user,
+			variables: { id: testData.users[0].id }
+		});
+		expect(result.data['user'].id).toBe(testData.users[0].id);
+		expect(result.data['user'].writtenSubmissions[0].id).toBe(testData.posts[0].id);
+	});
+
 	test('create - post with new user', async () => {
 		const $title = 'Genie is more than great';
 		const $authorName = 'Totally Real Person';

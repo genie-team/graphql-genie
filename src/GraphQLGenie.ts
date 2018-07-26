@@ -13,10 +13,12 @@ import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtilities';
+import { GenerateGetOne } from './GenerateGetOne';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
 	private config: GenerateConfig = {
+		generateGetOne: true,
 		generateGetAll: true,
 		generateCreate: true,
 		generateUpdate: true,
@@ -132,9 +134,13 @@ export class GraphQLGenie {
 		});
 		const currInputObjectTypes = new Map<string, GraphQLInputObjectType>();
 		const currOutputObjectTypeDefs = new Set<string>();
-
+		let getAll;
 		if (this.config.generateGetAll) {
-			this.generators.push(new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema, currInputObjectTypes, this.schemaInfo, this.relations));
+			getAll = new GenerateGetAll(this.graphQLFortune, 'Query', nodeTypes, this.schema, currInputObjectTypes, this.schemaInfo, this.relations);
+			this.generators.push(getAll);
+		}
+		if (this.config.generateGetOne) {
+			this.generators.push(new GenerateGetOne(this.graphQLFortune, 'Query', nodeTypes, this.schema, currInputObjectTypes, this.schemaInfo, this.relations, getAll));
 		}
 		if (this.config.generateConnections) {
 			this.generators.push(new GenerateConnections(this.graphQLFortune, 'Query', nodeTypes, this.schema, currOutputObjectTypeDefs, currInputObjectTypes, this.schemaInfo, this.relations));
@@ -152,6 +158,8 @@ export class GraphQLGenie {
 		if (this.config.generateDelete) {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
+
+
 
 		let newTypes = '';
 		currInputObjectTypes.forEach(inputObjectType => {

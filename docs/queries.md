@@ -1,23 +1,34 @@
 
 - [Queries](#queries)
-  - [Query docs](#query-docs)
-    - [where argument](#where-argument)
-    - [orderBy argument](#orderby-argument)
-  - [Examples](#examples)
-    - [Get all the cities](#get-all-the-cities)
-    - [Get a single city matching an id](#get-a-single-city-matching-an-id)
-    - [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
-    - [Get cities and filter the output](#get-cities-and-filter-the-output)
+	- [Get One](#get-one)
+	- [Get All](#get-all)
+	- [Query docs](#query-docs)
+		- [Get One](#get-one-1)
+		- [Get All](#get-all-1)
+		- [where argument](#where-argument)
+		- [orderBy argument](#orderby-argument)
+	- [Examples](#examples)
+		- [Get all the cities](#get-all-the-cities)
+		- [Get a single city matching an id](#get-a-single-city-matching-an-id)
+		- [Get a single user matching a unique field](#get-a-single-user-matching-a-unique-field)
+		- [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+		- [Get cities and filter the output](#get-cities-and-filter-the-output)
 
 # Queries
 
 If you would rather learn by playing with a demo checkout the [client demo](https://genie-team.github.io/graphql-genie-client/). Note you can set the Data Mode to Mock in settings to have queries return demo data
 
+## Get One
+
+If `generateGetOne` is true in the generatorOptions (defaults to true) queries will be created for every type in the model. The name of the query will be the camel case of the type name. Arguments are any unique fields and will return a single object from the data store
+
+## Get All
+
 If `generateGetAll` is true in the generatorOptions (defaults to true) queries will be created for every type in the model. The name of the query will be the plural version of the type name. 
 
 Every query will have optional arguments `where`, `first`, `last`, `skip`, `before`, `after`. As well as identifying root fields for scalar types. These root fields are the same as doing {where: match:{}}. They are a convenience and allow some more advanced caching with [Relay](https://facebook.github.io/relay/). 
 
-For the following typedefs `users` and `cities` queries will be created.
+For the following typedefs `user`, `users`, `city` and `cities` queries will be created.
 
 ```typescript 
 const typeDefs = `
@@ -46,7 +57,20 @@ const genie = new GraphQLGenie({
 
 ## Query docs
 
+### Get One
 
+The generated query will look like this, you can either use the where object or the root arguments
+
+```graphql
+user(
+	where: UserWhereUniqueInput
+	id: ID
+	displayname: String
+	email: String
+): User
+```
+
+### Get All
 Let's take a close look at what a generated query looks like
 
 ```graphql
@@ -75,7 +99,7 @@ cities(
   founded: [Date!]
   # population matches at least one of argument
   population: [Int!]
-)
+) : [City]
 ```
 
 ### where argument
@@ -155,7 +179,18 @@ query allCities {
 
 ```graphql
 query singleCity {
-  cities (id: "ID") {
+  city (id: "ID") {
+    id
+    name
+  }
+}
+```
+
+### Get a single user matching a unique field
+
+```graphql
+query singleUser {
+  user (displayname: "aCoreyJ") {
     id
     name
   }

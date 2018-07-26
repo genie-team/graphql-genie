@@ -2,7 +2,7 @@ import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType }
 import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
-import { get, isEmpty } from 'lodash';
+import { camelCase, get, isEmpty } from 'lodash';
 import { isObject } from 'util';
 
 export default (pubsub: PubSub): GeniePlugin => {
@@ -35,16 +35,19 @@ export default (pubsub: PubSub): GeniePlugin => {
 			newDefsAsString.push(getInputString(inputName, node.name));
 			newDefsAsString.push(getPayloadString(payloadName, node.name, schemaType));
 
-			subscriptionQueries += `${node.name.toLowerCase()}(where: ${inputName}): ${payloadName}\n`;
 
-			subscriptionResolvers = Object.assign(subscriptionResolvers, getResolver(node.name.toLowerCase(), pubsub, schemaType, dataResolver));
+			const fieldName = camelCase(node.name);
+
+			subscriptionQueries += `${fieldName}(where: ${inputName}): ${payloadName}\n`;
+
+			subscriptionResolvers = Object.assign(subscriptionResolvers, getResolver(fieldName, pubsub, schemaType, dataResolver));
 
 			dataResolver.addOutputHook(node.name, (context, record) => {
 				switch (context.request.method) {
 					case 'create':
 					case 'update':
 					case 'delete':
-						pubsub.publish(node.name.toLowerCase(), { context, record });
+						pubsub.publish(fieldName, { context, record });
 				}
 			});
 		});

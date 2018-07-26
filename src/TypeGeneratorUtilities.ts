@@ -905,10 +905,6 @@ export const capFirst = (val: string) => {
 	return val ? val.charAt(0).toUpperCase() + val.slice(1) : '';
 };
 
-export const lowerFirst = (val: string) => {
-	return val ? val.charAt(0).toLowerCase() + val.slice(1) : '';
-};
-
 export const isConnectionType = (type: GraphQLType): boolean => {
 	let isConnection = false;
 	if (isObjectType(type) && type.name.endsWith('Connection')) {

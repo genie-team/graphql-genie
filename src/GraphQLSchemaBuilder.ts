@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema,
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
 import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
-import { find, has, isEmpty, set, values } from 'lodash';
+import { find, has, isEmpty, set, values, camelCase } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
@@ -191,9 +191,9 @@ export class GraphQLSchemaBuilder {
 								}
 							}
 						} else { // if an object type grab from existing query type
-							let queryFieldName = `${pluralize(returnType.name.toLowerCase())}`;
+							let queryFieldName = `${camelCase(pluralize(returnType.name))}`;
 							if (returnType.name.endsWith('Connection')) {
-								queryFieldName = `${pluralize(returnType.name.replace('Connection', '').toLowerCase())}Connection`;
+								queryFieldName = `${camelCase(pluralize(returnType.name.replace('Connection', '')))}Connection`;
 							}
 							const queryField = queryTypeFields[queryFieldName];
 							const fullArgs = queryField ? queryField.args : [];

@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import { DataResolver, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
 import { Relations, getAllResolver, getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
-
+import {camelCase} from 'lodash';
 export class GenerateConnections implements TypeGenerator {
 	private objectName: string;
 	private types: IntrospectionObjectType[];
@@ -86,7 +86,7 @@ export class GenerateConnections implements TypeGenerator {
 		});
 
 		this.types.forEach(type => {
-			const fieldName = `${pluralize(type.name.toLowerCase())}Connection`;
+			const fieldName = `${camelCase(pluralize(type.name))}Connection`;
 
 			this.createNewTypes(type.name);
 

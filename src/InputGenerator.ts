@@ -1,10 +1,10 @@
 
 import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLScalarType, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isEnumType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
-import { each, get, isEmpty, merge } from 'lodash';
+import { camelCase, each, get, isEmpty, merge } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
-import { Mutation, Relations, capFirst, fortuneFilters, lowerFirst } from './TypeGeneratorUtilities';
+import { Mutation, Relations, capFirst, fortuneFilters } from './TypeGeneratorUtilities';
 export class InputGenerator {
 
 	private type: GraphQLNamedType;
@@ -104,7 +104,7 @@ export class InputGenerator {
 					const possibleTypes = this.schemaInfo[fieldTypeName]['possibleTypes'];
 					possibleTypes.forEach(typeInfo => {
 						const typeName = isArray ? pluralize(typeInfo.name) : typeInfo.name;
-						const fieldName = lowerFirst(typeName);
+						const fieldName = camelCase(typeName);
 						const fieldInputTypeName = typeInfo.name + fieldSuffix + capFirst(relationFieldName) + 'Input';
 						merge(fields, this.generateFieldForInput(
 							fieldName,
@@ -156,7 +156,7 @@ export class InputGenerator {
 		return field;
 	}
 
-	generateWhereUniqueInput(fieldType: GraphQLNamedType = this.type): GraphQLInputType {
+	generateWhereUniqueInput(fieldType: GraphQLNamedType = this.type): GraphQLInputObjectType {
 		const name = fieldType.name + 'WhereUniqueInput';
 		if (!this.currInputObjectTypes.has(name)) {
 			const fields = {};
@@ -187,7 +187,7 @@ export class InputGenerator {
 				fields
 			}));
 		}
-		return this.currInputObjectTypes.get(name);
+		return <GraphQLInputObjectType>this.currInputObjectTypes.get(name);
 	}
 
 	private getWhereInput(typeName: string, fields: GraphQLInputFieldConfigMap, existsFields: GraphQLInputFieldConfigMap, matchFields: GraphQLInputFieldConfigMap, rangeFields: GraphQLInputFieldConfigMap, addLogicalOperators: boolean): GraphQLInputType {

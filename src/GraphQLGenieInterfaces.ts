@@ -60,6 +60,7 @@ export interface DataResolver {
 }
 
 export interface GenerateConfig {
+	generateGetOne?: boolean;
 	generateGetAll?: boolean;
 	generateCreate?: boolean;
 	generateUpdate?: boolean;
