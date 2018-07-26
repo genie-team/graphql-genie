@@ -1,19 +1,20 @@
 - [GraphQLGenie API](#graphqlgenie-api)
-  - [**constructor**](#constructor)
-  - [**use**](#use)
-  - [**getSchema**](#getschema)
-  - [**printSchema**](#printschema)
-  - [**getFragmentTypes**](#getfragmenttypes)
-  - [**getRawData**](#getrawdata)
-  - [**importRawData**](#importrawdata)
-  - [**getDataResolver**](#getdataresolver)
-  - [**getSchemaBuilder**](#getschemabuilder)
+	- [**constructor**](#constructor)
+	- [**use**](#use)
+	- [**getSchema**](#getschema)
+	- [**printSchema**](#printschema)
+	- [**getFragmentTypes**](#getfragmenttypes)
+	- [**getRawData**](#getrawdata)
+	- [**importRawData**](#importrawdata)
+	- [**getDataResolver**](#getdataresolver)
+		- [Hooks](#hooks)
+	- [**getSchemaBuilder**](#getschemabuilder)
 - [GraphQLSchemaBuilder API](#graphqlschemabuilder-api)
-  - [**printSchemaWithDirectives**](#printschemawithdirectives)
-  - [**addTypeDefsToSchema**](#addtypedefstoschema)
-  - [**setResolvers**](#setresolvers)
-  - [**setIResolvers**](#setiresolvers)
-  - [**isUserType**](#isusertype)
+	- [**printSchemaWithDirectives**](#printschemawithdirectives)
+	- [**addTypeDefsToSchema**](#addtypedefstoschema)
+	- [**setResolvers**](#setresolvers)
+	- [**setIResolvers**](#setiresolvers)
+	- [**isUserType**](#isusertype)
 
 ### GraphQLGenie API
 
@@ -182,11 +183,37 @@ Must be provided if every object in data does not have a `__typename` property
 getDataResolver(): DataResolver
 ```
 
-DataResolver handles all the operations with your actual data. Such as CRUD and hooks. 
+DataResolver handles all the operations with your actual data. Such as CRUD and hooks. It has the following functions 
+
+```typescript
+export interface DataResolver {
+	create(graphQLTypeName: string, records, meta?): Promise<any>;
+	find(graphQLTypeName: string, ids?: string[], options?, meta?): Promise<any>;
+	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
+	delete(graphQLTypeName: string, ids?: string[], meta?): Promise<any>;	
+	addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook);
+	addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
+	getValueByUnique(returnTypeName: string, args, meta): Promise<Object>;
+	canAdd(graphQLTypeName: string, records: Object, meta): Promise<boolean>;
+	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
+	getFeatures(): Features;
+	applyOptions(graphQLTypeName: string, records, options, meta?);
+	getStore(): any;
+	beginTransaction(): Promise<void>;
+	endTransaction(): Promise<void>;
+	computeId(graphType: string, id?: string): string;
+	getTypeFromId(inputId: string): string;
+	getOriginalIdFromObjectId(inputId: string): string;
+	getLink(graphQLTypeName: string, field: string): string;
+}
+```
+
+##### Hooks
 
 Most likely use of this is to add hooks into the CRUD operations against your database. The DataResolver has 2 functions to add hooks. For more info on the context, record and update objects see the [fortune documentation](http://fortune.js.org/#input-and-output-hooks).
 
 Note that when using fortune hooks the resolvers context and info arguments can be had at context.request.meta.context and context.request.meta.info
+
 
 ```typescript
  interface DataResolverInputHook {
@@ -195,8 +222,6 @@ Note that when using fortune hooks the resolvers context and info arguments can 
  interface DataResolverOutputHook {
     (context?, record?): any;
 }
-    addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook);
-    addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
 ```
 
 > See info about the DataResolver interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
