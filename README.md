@@ -35,7 +35,7 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 - **Feature Rich API** including nested operations, filtered queries, pagination. Transactional if your adapter supports it.
 - **Easy to extend with plugins** Ones already exist to [add subscriptions](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) and [setup role based access control](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication).    
 - **Works with other GraphQL libraries** like [Relay](https://facebook.github.io/relay/)(react) and [Apollo Client](https://github.com/apollographql/apollo-client)(vanilla js or any framework)
-- **Portable data** with a variety of [data stores](#data-store-options) including client and server side supported and import/export/merge functions. 
+- **Portable data** with a variety of [data stores](#data-store-options) including client and server side supported and [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) functions. 
 - **FortuneJS Storage** allows many storage options and the ability to easily create your own. See [data store options](#data-store-options)
  
 
