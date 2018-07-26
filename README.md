@@ -196,13 +196,18 @@ Creates a simple node script that uses the GraphQL Genie api to store in a Mongo
 GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/prisma) and the resulting API has a lot of similarities but they have different goals. Because GraphQL Genie gives you a fully functioning graphql api but is not opinionated about anything else you have the flexibility to use that schema wherever you want and integrate it with any existing services you use. 
 
 * Bi-directional relationships in any database with a GraphQL API
-* Portable storage options, use anywhere for any purpose which is essential for some applications.
-* Export/Import/Merge data between data sources
+* Portable storage options, great for Progressive Web Apps. Use anywhere for any purpose.
+* [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) data between data sources
 * Share GraphQL data model on server and client
 * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/), [GraphQL Bindings](https://github.com/graphql-binding/graphql-binding) or any of the many other tools in the growing GraphQL ecosystem. 
 * You can use your existing [authentication](#authentication) methods or one provided by an outside service.
 * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
 * You can make your api logic completely serverless
+
+## Roadmap
+* Singular queries
+* Import/Export mutations
+* Progressive Web App example
 
 ## Thanks/Credit <!-- omit in toc --> 
 
