@@ -102,11 +102,13 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 ```
 getRawData(types?: string[], context?): Promise<any[]>
 ```
+Returns data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. Also if you use interfaces and unions there may be null fields you weren't expecting on that type.
 
 **types** - Optional. List of the GraphQL Object Types you want data for. If null or blank all data will be returned
+
 **context** - Optional. Context object that will be sent to input/output hooks, may be needed if using the authentication plugin
 
-Returns data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. Also if you use interfaces and unions there may be null fields you weren't expecting on that type. It will look something like:
+ It will look something like:
 
 ```json
 [
