@@ -28,6 +28,8 @@ If `generateGetAll` is true in the generatorOptions (defaults to true) queries w
 
 Every query will have optional arguments `where`, `first`, `last`, `skip`, `before`, `after`. As well as identifying root fields for scalar types. These root fields are the same as doing {where: match:{}}. They are a convenience and allow some more advanced caching with [Relay](https://facebook.github.io/relay/). 
 
+## Query docs
+
 For the following typedefs `user`, `users`, `city` and `cities` queries will be created.
 
 ```typescript 
@@ -54,8 +56,6 @@ const genie = new GraphQLGenie({
   }
 });
 ```
-
-## Query docs
 
 ### Get One
 
@@ -148,7 +148,7 @@ You can also sort related types.
 **Note:** Sorting on user here will sort the user type if it is part of the query, not change the sorting of the cities
 
 ```graphql
-input CityOrderByInput{
+input CityOrderByInput {
   id: ORDER_BY_OPTIONS
   name: ORDER_BY_OPTIONS
   neighborhoods: ORDER_BY_OPTIONS
