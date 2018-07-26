@@ -3,7 +3,7 @@ import { GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema,
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
 import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
-import { find, has, isEmpty, set, values, camelCase } from 'lodash';
+import { camelCase, find, has, isEmpty, set, values } from 'lodash';
 import pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';

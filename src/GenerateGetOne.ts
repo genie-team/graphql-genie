@@ -32,7 +32,7 @@ export class GenerateGetOne implements TypeGenerator {
 		this.relations = $relations;
 		this.fields = {};
 		this.resolvers = new Map<string, GraphQLFieldResolver<any, any>>();
-		this.getAllResolvers = $getAll && $getAll.resolvers ? $getAll.resolvers: new Map<string, GraphQLFieldResolver<any, any>>();
+		this.getAllResolvers = $getAll && $getAll.resolvers ? $getAll.resolvers : new Map<string, GraphQLFieldResolver<any, any>>();
 
 		this.generate();
 	}

@@ -159,8 +159,6 @@ export class GraphQLGenie {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 		}
 
-
-
 		let newTypes = '';
 		currInputObjectTypes.forEach(inputObjectType => {
 			// console.log(printType(inputObjectType));
