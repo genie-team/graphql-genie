@@ -199,6 +199,8 @@ query singleUser {
 
 ### Get cities using a filter and skip
 
+Get all cities founded before 1990-0-01 and order by ascending. Also skip the first 5 results
+
 ```graphql
 query filteredCities {
   cities(
