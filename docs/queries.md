@@ -5,8 +5,8 @@
   - [Query docs](#query-docs)
     - [Get One](#get-one-1)
     - [Get All](#get-all-1)
-    - [where argument](#where-argument)
-    - [orderBy argument](#orderby-argument)
+      - [where argument](#where-argument)
+      - [orderBy argument](#orderby-argument)
   - [Examples](#examples)
     - [Get all the cities](#get-all-the-cities)
     - [Get a single city matching an id](#get-a-single-city-matching-an-id)
@@ -102,7 +102,7 @@ cities(
 ) : [City]
 ```
 
-### where argument
+#### where argument
 
 The where argument will filter the returned results. 
 
@@ -110,7 +110,7 @@ The where argument will filter the returned results.
 input CityWhereInput {
   # nested where, only find cities where the user matches this
   user: UserWhereInput
-  # Filter on whether or not a field exists. 
+  # Filter on whether or not a field exists (or is not empty for an array)
   # input CityExistsInput {id: Boolean, name: Boolean, neighborhoods: Boolean, user: Boolean}
   exists: CityExistsInput
   # Filter on whether or not a field value matches. Can only check scalar and enum fields
@@ -130,7 +130,7 @@ input CityWhereInput {
 }
 ```
 
-### orderBy argument
+#### orderBy argument
 
 The orderBy argument will sort the results. Scalar fields will simply take the ORDER_BY_OPTIONS enum which looks like.
 
