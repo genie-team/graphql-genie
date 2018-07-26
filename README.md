@@ -209,8 +209,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * [FortuneJS](http://fortune.js.org) allows easy creation of new adapters
 
 ## Roadmap
-* Singular queries
-* Import/Export mutations
+* Import/Export mutations (currently exist as function on GraphQLGenie object [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata))
 * Progressive Web App example
 
 ## Thanks/Credit <!-- omit in toc --> 
