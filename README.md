@@ -17,15 +17,16 @@
 - [Demo](#demo)
 - [Getting started](#getting-started)
 - [Documentation and Features](#documentation-and-features)
-  - [Data Store Options](#data-store-options)
-  - [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
-  - [GraphQLGenie API](#graphqlgenie-api)
-  - [Subscriptions](#subscriptions)
-  - [Authentication](#authentication)
+	- [Data Store Options](#data-store-options)
+	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
+	- [GraphQLGenie API](#graphqlgenie-api)
+	- [Subscriptions](#subscriptions)
+	- [Authentication](#authentication)
 - [Examples](#examples)
-  - [Client](#client)
-  - [Server](#server)
+	- [Client](#client)
+	- [Server](#server)
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
+- [Roadmap](#roadmap)
 
 ## Overview
 
@@ -147,7 +148,7 @@ Of course Genie creates a normal schema so you can add authentication in any oth
 
 * At the schema level using the context function or [addSchemaLevelResolveFunction](https://www.apollographql.com/docs/graphql-tools/resolvers.html#addSchemaLevelResolveFunction) from graphql-tools
 * At the resolver level by wrapping the resolver functions that GraphQL Genie created in the schema, or use a tool like [graphql-resolvers](https://github.com/lucasconstantino/graphql-resolvers) to combine resolver, with authentication logic.
-* At the data level create an input hook and add it to the DataResolver (returned by getDataResolver, see the [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md)) and throw an error if not authorized.
+* At the data level create an [input hook](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getdataresolver) and add it to the DataResolver (returned by getDataResolver, see the [api documentation](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md)) and throw an error if not authorized.
 
 ### How do I do/add [thing] <!-- omit in toc --> 
 
@@ -204,6 +205,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
 * You can make your api logic completely serverless
 * You can use all the features of the type schema, including interfaces and unions.
+* [Input and Output hooks](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getdataresolver) against the actual data resolver add more possibilities for advanced functionality
 * [FortuneJS](http://fortune.js.org) allows easy creation of new adapters
 
 ## Roadmap
