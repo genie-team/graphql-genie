@@ -244,7 +244,8 @@ export class GraphQLGenie {
 		return currIDs;
 	}
 
-	public importRawData = async (data: any[], merge = false, defaultTypename?: string) => {
+	public importRawData = async (data: any[], merge = false, defaultTypename?: string, context?) => {
+		const meta = context ? {context} : undefined;
 		let index = 0;
 		const createPromises = [];
 		let createData = data;
@@ -301,7 +302,7 @@ export class GraphQLGenie {
 			});
 			createPromises.push(
 				new Promise((resolve, reject) => {
-					this.graphQLFortune.create(typeName, record).then(createdObj => {
+					this.graphQLFortune.create(typeName, record, meta).then(createdObj => {
 						objectsMap.set(object['id'], createdObj);
 						resolve(createdObj);
 					}).catch(reason => {
@@ -387,31 +388,34 @@ export class GraphQLGenie {
 				update['id'] = objectsMap.get(object.id)['id'];
 				update = this.graphQLFortune.generateUpdates(update);
 				// console.log(typeName, update);
-				updatePromies.push(this.graphQLFortune.update(typeName, update, undefined, { fortuneFormatted: true }));
+				updatePromies.push(this.graphQLFortune.update(typeName, update, meta, { fortuneFormatted: true }));
 			}
 			index++;
 		});
 		await Promise.all(updatePromies);
 	}
 
-	public getRawData = async (): Promise<any> => {
+	public getRawData = async (types = [], context?): Promise<any[]> => {
+		const meta = context ? {context} : undefined;
 		let nodes = [];
-		const result = await graphql(this.schema, `{
-			__schema {
-				types {
-					name
-					kind
+		if (isEmpty(types)) {
+			const result = await graphql(this.schema, `{
+				__schema {
+					types {
+						name
+						kind
+					}
 				}
-			}
-		}`);
-		const types = get(result, 'data.__schema.types');
-		if (types) {
-			const userObjects = result.data.__schema.types.filter(
+			}`);
+			types = get(result, 'data.__schema.types');
+			types = types.filter(
 				type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
-			);
+			).map(type => type.name);
+		}
+		if (types) {
 			const promises = [];
-			userObjects.forEach(object => {
-				promises.push(this.graphQLFortune.find(object.name));
+			types.forEach(typeName => {
+				promises.push(this.graphQLFortune.find(typeName, undefined, undefined, meta));
 			});
 			const allData = await Promise.all(promises);
 			nodes = [].concat.apply([], allData); // flatten

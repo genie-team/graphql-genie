@@ -39,24 +39,24 @@ export interface Features {
 	logicalOperators: boolean;
 }
 export interface DataResolver {
-	getLink(graphQLTypeName: string, field: string): string;
-	delete(graphQLTypeName: string, ids?: string[], meta?): Promise<any>;
-	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
-	find(graphQLTypeName: string, ids?: string[], options?, meta?): Promise<any>;
 	create(graphQLTypeName: string, records, meta?): Promise<any>;
+	find(graphQLTypeName: string, ids?: string[], options?, meta?): Promise<any>;
+	update(graphQLTypeName: string, updates: object, meta?, options?: object): Promise<any>;
+	delete(graphQLTypeName: string, ids?: string[], meta?): Promise<any>;
+	addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook);
+	addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
 	getValueByUnique(returnTypeName: string, args, meta): Promise<Object>;
 	canAdd(graphQLTypeName: string, records: Object, meta): Promise<boolean>;
 	getConnection(allEdges: any[], before: string, after: string, first: number, last: number): Connection;
 	getFeatures(): Features;
 	applyOptions(graphQLTypeName: string, records, options, meta?);
 	getStore(): any;
-	addOutputHook(graphQLTypeName: string, hook: DataResolverOutputHook);
-	addInputHook(graphQLTypeName: string, hook: DataResolverInputHook);
 	beginTransaction(): Promise<void>;
 	endTransaction(): Promise<void>;
 	computeId(graphType: string, id?: string): string;
 	getTypeFromId(inputId: string): string;
 	getOriginalIdFromObjectId(inputId: string): string;
+	getLink(graphQLTypeName: string, field: string): string;
 }
 
 export interface GenerateConfig {

@@ -1,6 +1,6 @@
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
-import { getClient } from '../setupTests';
+import { genie, getClient } from '../setupTests';
 let client: ApolloClient<any>;
 beforeAll(async () => {
 	client = await getClient();
@@ -885,5 +885,23 @@ describe('genie', () => {
 			query: nodeQuery
 		});
 		expect(result.data['node']['id']).toBe(testData.posts[0].id);
+	});
+
+	test('genie - getRawData', async () => {
+		const nodes = await genie.getRawData();
+		expect(nodes).not.toBeNull();
+		expect(nodes.length).toBeGreaterThan(0);
+	});
+
+	test('genie - getRawData Address only, then import', async () => {
+		let nodes = await genie.getRawData(['Address']);
+		expect(nodes).not.toBeNull();
+		expect(nodes.length).toBe(1);
+		nodes[0].city = 'Olympus';
+		await genie.importRawData(nodes, true);
+		nodes = await genie.getRawData(['Address']);
+		expect(nodes).not.toBeNull();
+		expect(nodes.length).toBe(1);
+		expect(nodes[0].city).toBe('Olympus');
 	});
 });

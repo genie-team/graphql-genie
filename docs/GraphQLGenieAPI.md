@@ -100,10 +100,13 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 #### **getRawData**
 
 ```
-getRawData(): Promise<any[]>
+getRawData(types?: string[], context?): Promise<any[]>
 ```
 
-Returns all of the data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. It will look something like:
+**types** - Optional. List of the GraphQL Object Types you want data for. If null or blank all data will be returned
+**context** - Optional. Context object that will be sent to input/output hooks, may be needed if using the authentication plugin
+
+Returns data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. Also if you use interfaces and unions there may be null fields you weren't expecting on that type. It will look something like:
 
 ```json
 [
@@ -143,17 +146,17 @@ Returns all of the data in the database, this will look a little different than 
 #### **importRawData**
 
 ```
-importRawData(data: any[], merge = false, defaultTypename?: string): Promise
+importRawData(data: any[], merge = false, defaultTypename?: string, context?): Promise
 ```
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
 
-**data**
+**data** 
 
 an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query and __typename fields are not added the defaultTypename must be provided
 
 
-**merge**
+**merge** - Default = false
 
 If false every object will create a new object, the id won't be preserved from the current data but relationships will still be built as they were in the provided data.
 
@@ -171,9 +174,14 @@ Note when merging list fields by default the array in the provided data will rep
  }
 ```
 
-**defaultTypename**
+**defaultTypename** - Optional.
 
 Must be provided if every object in data does not have a `__typename` property
+
+**context** - Optional. 
+
+Context object that will be sent to input/output hooks, may be needed if using the authentication plugin
+
 
 ---
 
