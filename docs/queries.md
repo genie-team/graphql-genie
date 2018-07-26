@@ -1,18 +1,18 @@
 
 - [Queries](#queries)
-	- [Get One](#get-one)
-	- [Get All](#get-all)
-	- [Query docs](#query-docs)
-		- [Get One](#get-one-1)
-		- [Get All](#get-all-1)
-		- [where argument](#where-argument)
-		- [orderBy argument](#orderby-argument)
-	- [Examples](#examples)
-		- [Get all the cities](#get-all-the-cities)
-		- [Get a single city matching an id](#get-a-single-city-matching-an-id)
-		- [Get a single user matching a unique field](#get-a-single-user-matching-a-unique-field)
-		- [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
-		- [Get cities and filter the output](#get-cities-and-filter-the-output)
+  - [Get One](#get-one)
+  - [Get All](#get-all)
+  - [Query docs](#query-docs)
+    - [Get One](#get-one-1)
+    - [Get All](#get-all-1)
+    - [where argument](#where-argument)
+    - [orderBy argument](#orderby-argument)
+  - [Examples](#examples)
+    - [Get all the cities](#get-all-the-cities)
+    - [Get a single city matching an id](#get-a-single-city-matching-an-id)
+    - [Get a single user matching a unique field](#get-a-single-user-matching-a-unique-field)
+    - [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+    - [Get cities and filter the output](#get-cities-and-filter-the-output)
 
 # Queries
 
@@ -63,10 +63,10 @@ The generated query will look like this, you can either use the where object or 
 
 ```graphql
 user(
-	where: UserWhereUniqueInput
-	id: ID
-	displayname: String
-	email: String
+  where: UserWhereUniqueInput
+  id: ID
+  displayname: String
+  email: String
 ): User
 ```
 
