@@ -32,6 +32,24 @@ mutation createUser($input: CreateUserMutationInput!) {
 }
 `;
 
+const updateUser = gql`
+mutation updateUser($input: UpdateUserMutationInput!) {
+	updateUser(input: $input	) {
+		data {
+			id
+			name
+			address {
+				id
+				city
+				user {
+					name
+				}
+			}
+		}
+	}
+}
+`;
+
 const createPost = gql`
 mutation createUser($input: CreatePostMutationInput!) {
 	createPost(input: $input) {
@@ -183,23 +201,7 @@ describe('genie', () => {
 	});
 
 	test('set - set user address', async () => {
-		const updateUser = gql`
-			mutation updateUser($input: UpdateUserMutationInput!) {
-				updateUser(input: $input	) {
-					data {
-						id
-						name
-						address {
-							id
-							city
-							user {
-								name
-							}
-						}
-					}
-				}
-			}
-			`;
+
 		const result = await client.mutate({
 			mutation: updateUser,
 			variables: {
@@ -923,5 +925,121 @@ describe('genie', () => {
 		expect(nodes).not.toBeNull();
 		expect(nodes.length).toBe(1);
 		expect(nodes[0].city).toBe('Olympus');
+	});
+
+	test('genie - export query', async () => {
+		const exportData = gql`
+			{
+				exportData
+			}
+		`;
+
+		const result = await client.query({
+			query: exportData
+		});
+
+		expect(result.data['exportData']).not.toBeNull();
+		expect(result.data['exportData'].length).toBeGreaterThan(0);
+	});
+
+	test('genie - export query and import mutation', async () => {
+		const exportData = gql`
+			{
+				exportData(types: ["Address"])
+			}
+		`;
+		let result: any = await client.query({
+			query: exportData
+		});
+		expect(result.data['exportData']).not.toBeNull();
+		expect(result.data['exportData'].length).toBe(1);
+
+		const dataCopy = JSON.parse(JSON.stringify(result.data['exportData']));
+		dataCopy[0]['city'] = 'Eau Claire';
+		const dataString = JSON.stringify(dataCopy).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
+		const importData = gql`
+			mutation {
+				importData(data: ${dataString}, merge: true)
+			}
+		`;
+		result = await client.mutate({
+			mutation: importData
+		});
+
+		expect(result.data['importData']).toBe(true);
+
+		client.cache['data'].data = {};
+
+		result = await client.query({
+			query: exportData
+		});
+		expect(result.data['exportData']).not.toBeNull();
+		expect(result.data['exportData'].length).toBe(1);
+		expect(result.data['exportData'][0]['city']).toBe('Eau Claire');
+	});
+
+	test('genie - address query and import mutation', async () => {
+
+		// set a user on an address
+		await client.mutate({
+			mutation: updateUser,
+			variables: {
+				input: {
+					where: { id: testData.users[0].id },
+					data: { address: { connect: { id: testData.addresses[0].id } } }
+				}
+			}
+		});
+
+		// create a new user
+		let hades = await client.mutate({
+			mutation: createUser,
+			variables: { input: { data: { name: 'Hades', email: 'hades@example.com' } } }
+		});
+
+		hades = hades.data.createUser.data;
+
+		const addressQuery = gql`
+			{
+				addresses {
+					id
+					city
+					user {
+						id
+						name
+					}
+				}
+			}
+		`;
+		let result: any = await client.query({
+			query: addressQuery
+		});
+		expect(result.data['addresses']).not.toBeNull();
+		expect(result.data['addresses'].length).toBe(1);
+
+		const dataCopy = JSON.parse(JSON.stringify(result.data['addresses']));
+		dataCopy[0]['city'] = 'Underworld';
+		dataCopy[0]['user']['id'] = hades['id'];
+		const dataString = JSON.stringify(dataCopy).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
+		const importData = gql`
+			mutation {
+				importData(data: ${dataString}, merge: true, defaultTypeName: "Address")
+			}
+		`;
+		result = await client.mutate({
+			mutation: importData
+		});
+
+		expect(result.data['importData']).toBe(true);
+
+		client.cache['data'].data = {};
+
+		result = await client.query({
+			query: addressQuery
+		});
+		expect(result.data['addresses']).not.toBeNull();
+		expect(result.data['addresses'].length).toBe(1);
+		expect(result.data['addresses'][0].city).toBe('Underworld');
+		expect(result.data['addresses'][0].user.name).toBe('Hades');
 	});
 });

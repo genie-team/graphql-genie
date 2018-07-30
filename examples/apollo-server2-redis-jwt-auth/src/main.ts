@@ -41,27 +41,12 @@ type User @model @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 	posts: [Post] @relation(name: "posts")
 	# Only admins can alter roles, will need additional logic in authenticate function so users can only set themself to USER role
 	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN, rules: "only:USER")
-	fooBar: FooBar
-}
-
-interface FooBar {
-	id: ID! @unique
-	text: String
-}
-
-type Foo implements FooBar @model {
-	id: ID! @unique
-	text: String
-}
-
-type Bar implements FooBar @model {
-	id: ID! @unique
-	text: String
 }
 
 # Notice this isn't part of the model, so queries/mutations won't be created for it.
+# We will still add @auth to it though as the importData resolver could alter it otherwise
 # Exists so we can store identifiers in all lowercase, but we will use the backend data resolver instead of graphql
-type UserIdentifiers {
+type UserIdentifiers @auth {
 	id: ID!
 	userID: ID
 	password: String
@@ -167,6 +152,12 @@ const startServer = async (genie: GraphQLGenie) => {
 			identifiers.push(email);
 		}
 
+		const meta = {
+			context: {
+				authenticate: () => true
+			}
+		};
+
 		switch (method) {
 			case 'update':
 			case 'create':
@@ -178,15 +169,10 @@ const startServer = async (genie: GraphQLGenie) => {
 					password: record.password,
 					roles: record.roles
 				};
-				const meta = {
-					context: {
-						authenticate: () => true
-					}
-				};
 				await dataResolver[method]('UserIdentifiers', idRecord, meta);
 				return record;
 			case 'delete':
-				await dataResolver.delete('UserIdentifiers', [id]);
+				await dataResolver.delete('UserIdentifiers', [id], meta);
 				return record;
 		}
 	});

@@ -4,7 +4,7 @@ import { PubSub } from 'graphql-subscriptions';
 import { GraphQLServer } from 'graphql-yoga';
 import redisAdapter from 'fortune-redis';
 import RedisMock from 'ioredis-mock';
-import { FortuneOptions, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
+import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
 import { graphql } from 'graphql';
 import config from './config.json';
 import admin, { ServiceAccount } from 'firebase-admin';

@@ -14,6 +14,7 @@ import { getReturnType } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtilities';
 import { GenerateGetOne } from './GenerateGetOne';
+import { GenerateMigrations } from './GenerateMigrations';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
@@ -24,7 +25,8 @@ export class GraphQLGenie {
 		generateUpdate: true,
 		generateDelete: true,
 		generateUpsert: true,
-		generateConnections: true
+		generateConnections: true,
+		generateMigrations: true
 	};
 	private generators: Array<TypeGenerator>;
 
@@ -157,6 +159,10 @@ export class GraphQLGenie {
 
 		if (this.config.generateDelete) {
 			this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
+		}
+
+		if (this.config.generateMigrations) {
+			this.generators.push(new GenerateMigrations(this));
 		}
 
 		let newTypes = '';
@@ -399,24 +405,31 @@ export class GraphQLGenie {
 			index++;
 		});
 		await Promise.all(updatePromies);
+		return true;
+	}
+
+	public getUserTypes = async (): Promise<string[]> => {
+		let types = [];
+		const result = await graphql(this.schema, `{
+			__schema {
+				types {
+					name
+					kind
+				}
+			}
+		}`);
+		types = get(result, 'data.__schema.types');
+		types = types.filter(
+			type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
+		).map(type => type.name);
+		return types;
 	}
 
 	public getRawData = async (types = [], context?): Promise<any[]> => {
 		const meta = context ? {context} : undefined;
 		let nodes = [];
 		if (isEmpty(types)) {
-			const result = await graphql(this.schema, `{
-				__schema {
-					types {
-						name
-						kind
-					}
-				}
-			}`);
-			types = get(result, 'data.__schema.types');
-			types = types.filter(
-				type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
-			).map(type => type.name);
+			types = await this.getUserTypes();
 		}
 		if (types) {
 			const promises = [];

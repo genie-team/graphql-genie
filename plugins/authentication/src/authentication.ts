@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLSchema, GraphQLType, defaultFieldResolver , getNamedType, graphql, isEnumType, isInterfaceType, isObjectType, isUnionType } from 'graphql';
+import { GraphQLObjectType, GraphQLSchema, GraphQLType, defaultFieldResolver , getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { FindByUniqueError, GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { flattenDeep, get, isArray, isEmpty, omit } from 'lodash';
@@ -60,28 +60,28 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 				if (!context.authenticate) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
-				let schemaType = <GraphQLObjectType>getNamedType(field.type);
-				if (schemaType.name.endsWith('Connection')) {
-					schemaType = <GraphQLObjectType>schema.getType(schemaType.name.replace('Connection', ''));
+				let queryFieldSchemaType = <GraphQLObjectType>getNamedType(field.type);
+				if (queryFieldSchemaType.name.endsWith('Connection')) {
+					queryFieldSchemaType = <GraphQLObjectType>schema.getType(queryFieldSchemaType.name.replace('Connection', ''));
 				}
 
 				const resolveResult = await resolve.apply(this, [record, args, context, info]);
 				// check args
 				if (!isEmpty(args)) {
 					if (!isEmpty(args)) {
-						const allowed = await checkArgsFromResolver(schemaType, args, schema, context.authenticate, resolveResult);
+						const allowed = await checkArgsFromResolver(queryFieldSchemaType, args, schema, context.authenticate, resolveResult);
 						if (!allowed) {
 							throw new Error('Not Authorized');
 						}
 					}
 				}
 
-				const topLevelFields = Object.keys(graphqlFields(info));
+				let topLevelFields = Object.keys(graphqlFields(info));
 				// if it's blank we still want to check the type auth so as to not leak that it's just empty
 				if (!resolveResult) {
-					const requiredRoles = schemaType['_requiredAuth'];
+					const requiredRoles = queryFieldSchemaType['_requiredAuth'];
 					if (requiredRoles) {
-						const allowed = await authenticate(context.authenticate, 'read', requiredRoles, resolveResult, null, schemaType.name);
+						const allowed = await authenticate(context.authenticate, 'read', requiredRoles, resolveResult, null, queryFieldSchemaType.name);
 						if (!allowed) {
 							throw new Error('Not Authorized');
 						}
@@ -109,6 +109,9 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 							// check the results at the field level
 							if (isObjectType(schemaType)) {
 								const currFields = schemaType.getFields();
+								if (isScalarType(queryFieldSchemaType)) {
+									topLevelFields = Object.keys(currFields);
+								}
 								topLevelFields.forEach(fieldName => {
 									const currField = currFields[fieldName];
 									if (currField) {
@@ -165,17 +168,10 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 
 		// hooks for create, update, delete
 		const typeMap = schema.getTypeMap();
-		const nodesResult = await graphql(schema, `{
-			__type(name: "Node") {
-				possibleTypes {
-					name
-				}
-			}
-		}`);
-		const nodes = nodesResult.data.__type.possibleTypes;
-		nodes.forEach(node => {
-			const schemaType = <GraphQLObjectType>typeMap[node.name];
-			dataResolver.addInputHook(node.name, (context, record, update) => {
+		const types: string[] =  await genie.getUserTypes();
+		types.forEach(typeName => {
+			const schemaType = <GraphQLObjectType>typeMap[typeName];
+			dataResolver.addInputHook(typeName, (context, record, update) => {
 				const authFN = context.request.meta.context && context.request.meta.context.authenticate;
 				if (!authFN) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');

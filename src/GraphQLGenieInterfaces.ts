@@ -67,6 +67,7 @@ export interface GenerateConfig {
 	generateDelete?: boolean;
 	generateUpsert?: boolean;
 	generateConnections?: boolean;
+	generateMigrations?: boolean;
 }
 
 export interface GraphQLGenieOptions {
