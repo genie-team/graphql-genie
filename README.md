@@ -36,7 +36,7 @@ Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Ge
 - **Feature Rich API** including nested operations, filtered queries, pagination. Transactional if your adapter supports it.
 - **Easy to extend with plugins** Ones already exist to [add subscriptions](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) and [setup role based access control](https://github.com/genie-team/graphql-genie/tree/master/plugins/authentication).    
 - **Works with other GraphQL libraries** like [Relay](https://facebook.github.io/relay/)(react) and [Apollo Client](https://github.com/apollographql/apollo-client)(vanilla js or any framework)
-- **Portable data** with a variety of [data stores](#data-store-options) including client and server side support and [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) functions. 
+- **Portable data** with a variety of [data stores](#data-store-options) including client and server side support and [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) query/mutation fields and functions. 
 - **FortuneJS Storage** allows many storage options and the ability to easily create your own. See [data store options](#data-store-options)
  
 
@@ -199,7 +199,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * Bi-directional relationships in any database with a GraphQL API
 * Portable storage options, great for Progressive Web Apps. Use anywhere for any purpose.
 * [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) data between data sources
-* Share GraphQL data model on server and client
+* Share GraphQL data model on server and client. If `generateMigrations` is configured to true import/export mutation/query fields will also be created.
 * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/), [GraphQL Bindings](https://github.com/graphql-binding/graphql-binding) or any of the many other tools in the growing GraphQL ecosystem. 
 * You can use your existing [authentication](#authentication) methods or one provided by an outside service.
 * The api stays the same regardless of data source, so you are never locked into one database or even server/client side 
@@ -209,7 +209,6 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * [FortuneJS](http://fortune.js.org) allows easy creation of new adapters
 
 ## Roadmap
-* Import/Export mutations (currently exist as function on GraphQLGenie object [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata))
 * Progressive Web App example
 
 ## Thanks/Credit <!-- omit in toc --> 

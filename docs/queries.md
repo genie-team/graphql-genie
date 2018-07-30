@@ -1,18 +1,19 @@
 
 - [Queries](#queries)
-  - [Get One](#get-one)
-  - [Get All](#get-all)
-  - [Query docs](#query-docs)
-    - [Get One](#get-one-1)
-    - [Get All](#get-all-1)
-      - [where argument](#where-argument)
-      - [orderBy argument](#orderby-argument)
-  - [Examples](#examples)
-    - [Get all the cities](#get-all-the-cities)
-    - [Get a single city matching an id](#get-a-single-city-matching-an-id)
-    - [Get a single user matching a unique field](#get-a-single-user-matching-a-unique-field)
-    - [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
-    - [Get cities and filter the output](#get-cities-and-filter-the-output)
+	- [Get One](#get-one)
+	- [Get All](#get-all)
+	- [Export Data](#export-data)
+	- [Query docs](#query-docs)
+		- [Get One](#get-one-1)
+		- [Get All](#get-all-1)
+			- [where argument](#where-argument)
+			- [orderBy argument](#orderby-argument)
+	- [Examples](#examples)
+		- [Get all the cities](#get-all-the-cities)
+		- [Get a single city matching an id](#get-a-single-city-matching-an-id)
+		- [Get a single user matching a unique field](#get-a-single-user-matching-a-unique-field)
+		- [Get cities using a filter and skip](#get-cities-using-a-filter-and-skip)
+		- [Get cities and filter the output](#get-cities-and-filter-the-output)
 
 # Queries
 
@@ -26,7 +27,11 @@ If `generateGetOne` is true in the generatorOptions (defaults to true) queries w
 
 If `generateGetAll` is true in the generatorOptions (defaults to true) queries will be created for every type in the model. The name of the query will be the plural version of the type name. 
 
-Every query will have optional arguments `where`, `first`, `last`, `skip`, `before`, `after`. As well as identifying root fields for scalar types. These root fields are the same as doing {where: match:{}}. They are a convenience and allow some more advanced caching with [Relay](https://facebook.github.io/relay/). 
+Every query will have optional arguments `where`, `first`, `last`, `skip`, `before`, `after`. As well as identifying root fields for scalar types. These root fields are the same as doing {where: match:{}}. They are a convenience and allow some more advanced caching with [Relay](https://facebook.github.io/relay/).
+
+## Export Data
+
+If `generateMigrations` is true in the generatorOptions (defaults to true) a query will be created called `exportData`. This exports all of the data (or the specified types) in the data base. See the [getRawData function](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata) of GraphQL Genie for more details as this query calls that function
 
 ## Query docs
 

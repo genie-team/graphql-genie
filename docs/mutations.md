@@ -1,20 +1,21 @@
 - [Mutations](#mutations)
-  - [Create](#create)
-    - [Example](#example)
-  - [Update](#update)
-    - [Examples](#examples)
-      - [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
-      - [Update the user connected to the city](#update-the-user-connected-to-the-city)
-  - [Upsert](#upsert)
-    - [Examples](#examples-1)
-      - [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
-      - [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
-  - [Delete](#delete)
-    - [Examples](#examples-2)
-      - [Delete a user](#delete-a-user)
-  - [UpdateMany and DeleteMany](#updatemany-and-deletemany)
-    - [Examples](#examples-3)
-      - [UpdateManyUsers](#updatemanyusers)
+	- [Create](#create)
+		- [Example](#example)
+	- [Update](#update)
+	- [Import Data](#import-data)
+		- [Examples](#examples)
+			- [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
+			- [Update the user connected to the city](#update-the-user-connected-to-the-city)
+	- [Upsert](#upsert)
+		- [Examples](#examples-1)
+			- [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
+			- [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
+	- [Delete](#delete)
+		- [Examples](#examples-2)
+			- [Delete a user](#delete-a-user)
+	- [UpdateMany and DeleteMany](#updatemany-and-deletemany)
+		- [Examples](#examples-3)
+			- [UpdateManyUsers](#updatemanyusers)
 
 # Mutations
 
@@ -210,6 +211,10 @@ type UserUpdateManyWithoutAddressInput {
   upsert: [UserUpsertWithWhereUniqueWithoutAddressInput!]
 }
 ```
+
+## Import Data
+
+If `generateMigrations` is true in the generatorOptions (defaults to true) a mutation will be created called `importData`. This is used to import/merge data into the database. See the [importRawData function](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) function of GraphQL Genie for more details as this mutation calls that function
 
 ### Examples
 

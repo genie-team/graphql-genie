@@ -117,6 +117,8 @@ getRawData(types?: string[], context?): Promise<any[]>
 ```
 Returns data in the database, this will look a little different than what is returned by graphql. Every object will have a __typename field and relations will just be ids or an array of ids rather than objects. Also if you use interfaces and unions there may be null fields you weren't expecting on that type.
 
+If `generateMigrations` is configured to true a `exportData` query will be created in your API that calls this function.
+
 **types** - Optional. List of the GraphQL Object Types you want data for. If null or blank all data will be returned
 
 **context** - Optional. Context object that will be sent to input/output hooks, may be needed if using the authentication plugin
@@ -165,6 +167,8 @@ importRawData(data: any[], merge = false, defaultTypename?: string, context?): P
 ```
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
+
+If `generateMigrations` is configured to true a `importData` mutation will be created in your API that calls this function.
 
 **data** 
 
