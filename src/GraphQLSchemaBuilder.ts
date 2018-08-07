@@ -75,9 +75,9 @@ export class GraphQLSchemaBuilder {
 			}, str + `${this.schema.astNode ? print(this.schema.astNode) : ''}\n`);
 	}
 
-	public addTypeDefsToSchema = ($typeDefs = ''): GraphQLSchema => {
+	public addTypeDefsToSchema = ($typeDefs: string | DocumentNode = ''): GraphQLSchema => {
 		if ($typeDefs) {
-			this.typeDefs += $typeDefs;
+			this.typeDefs += (typeof $typeDefs === 'string' ? $typeDefs : print($typeDefs));
 		}
 		if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
 			this.typeDefs = '\ndirective @model on OBJECT' + this.typeDefs;

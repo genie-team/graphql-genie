@@ -5,35 +5,42 @@ import { GraphQLServer } from 'graphql-yoga';
 import redisAdapter from 'fortune-redis';
 import RedisMock from 'ioredis-mock';
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
-import { graphql } from 'graphql';
 import config from './config.json';
 import admin, { ServiceAccount } from 'firebase-admin';
 import express from 'express';
-import { get, isArray } from 'lodash';
+import { isArray, isEmpty } from 'lodash';
 import path from 'path';
 const typeDefs = `
-# ANY is open to all requests, USER means they must be logged in, OWNER the user must have created or be the type
 enum Role {
+	# Open to all requests
 	ANY
+	# Must be logged in
 	USER
+	# User must have created/be the type
 	OWNER
 	ADMIN
 }
 
-type Post @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
+# Only users can create Todos, anybody can read todos, only the person who created the post can update/delete it
+type Todo @model @auth(create: USER, read: ANY, update: OWNER, delete: OWNER) {
   id: ID! @unique
-	title: String!
+	title: String
 	text: String
-  author: User @relation(name: "posts")
+	author: User @relation(name: "todos") @auth(create: USER, read: ANY, update: OWNER, delete: OWNER)
 }
 
-type User @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
+# Anyone can create users (aka signup), be able to see user info by default, can only update yourself, and only admins can delete
+type User @model @auth(create: ANY, read: ANY, update: OWNER, delete: ADMIN) {
 	id: ID! @unique
-	displayname: String @unique
+	username: String! @unique
+	# don't let anyone read email
 	email: String! @unique @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
-  name : String @auth(create: ANY, read: OWNER, update: OWNER, delete: ADMIN)
-	posts: [Post] @relation(name: "posts")
-	roles: [Role] @default(value: "USER") @auth(create: ADMIN, read: ADMIN, update: ADMIN, delete: ADMIN)
+	# only admins can read password
+	password: String! @auth(create: ANY, read: ADMIN, update: OWNER, delete: ADMIN)
+  name : String
+	todos: [Post] @relation(name: "todos")
+	# Only admins can alter roles, will need additional logic in authenticate function so users can only set themself to USER role
+	roles: [Role] @default(value: "USER") @auth(create: ANY, read: ADMIN, update: ADMIN, delete: ADMIN)
 }
 `;
 
@@ -57,6 +64,14 @@ const genie = new GraphQLGenie({
 	}
 });
 
+const allowAllMeta = {
+	context: {
+		authenticate: () => true
+	}
+};
+
+let hasUser = false;
+
 const startServer = async (genie: GraphQLGenie) => {
 	const serviceAccount = <ServiceAccount>config.firebase;
 	admin.initializeApp({
@@ -66,13 +81,17 @@ const startServer = async (genie: GraphQLGenie) => {
 
 	await genie.init();
 
-	// load all the users so that we don't have to constantly do db calls to check roles, etc
-	const users = new Map<String, object>();
-	loadUsers(genie, users);
-
 	// now setup the plugins
 	await genie.use(subscriptionPlugin(new PubSub()));
 	await genie.use(authPlugin());
+	const dataResolver = genie.getDataResolver();
+
+	// this will always be empty as we are mocking a db but for example sake
+	let allUsers = await dataResolver.find('User');
+	if (!allUsers || isEmpty(allUsers)) {
+		hasUser = true;
+	}
+	allUsers = null; // could be large and no longer needed this should help garbage collection
 
 	// options for graphql yoga
 	const opts = {
@@ -101,13 +120,12 @@ const startServer = async (genie: GraphQLGenie) => {
 			try {
 				decodedToken = await admin.auth().verifyIdToken(bearer);
 				uid = decodedToken.uid;
-				const dataResolver = genie.getDataResolver();
 				const id = dataResolver.computeId('User', uid);
-
-				if (!users.has(id)) {
+				currUser = await dataResolver.getValueByUnique('User', {id}, allowAllMeta);
+				if (!currUser || isEmpty(currUser)) {
 					// if this is the first user ever created, give them ADMIN
 					let roles = ['USER'];
-					if (users.size === 0) {
+					if (!hasUser) {
 						roles = ['ADMIN'];
 					}
 
@@ -117,15 +135,8 @@ const startServer = async (genie: GraphQLGenie) => {
 						name: decodedToken.name,
 						email: decodedToken.email,
 						roles
-					}, {
-							context: {
-								authenticate: () => true
-							}
-						});
-				} else {
-					currUser = users.get(id);
+					}, allowAllMeta);
 				}
-
 				currRoles = currUser.roles;
 			} catch (e) {
 				console.error(e);
@@ -200,36 +211,6 @@ const startServer = async (genie: GraphQLGenie) => {
 
 };
 
-const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
-	const dataResolver = genie.getDataResolver();
-	const dbUsers = await graphql(genie.getSchema(), `{
-		users {
-			id
-			username
-			email
-			password
-			roles
-		}
-	}`);
-
-	const usersResult = get(dbUsers, 'data.users') || [];
-	usersResult.forEach(user => {
-		users.set(user.id, user);
-	});
-	// add a hook so the users stay up to date
-	dataResolver.addOutputHook('User', (context, record) => {
-		switch (context.request.method) {
-			case 'create':
-			case 'update':
-				users.set(record.id, record);
-				return record;
-			case 'delete':
-				users.delete(record.id);
-				return record;
-		}
-	});
-};
-
 const parseAuthorizationBearer = params => {
 	let authorization = params.headers && params.headers.authorization;
 	authorization = authorization ? authorization : params.context && params.context.authorization;
@@ -237,5 +218,7 @@ const parseAuthorizationBearer = params => {
 	const headerParts = authorization.split(' ');
 	if (headerParts[0].toLowerCase() === 'bearer') return headerParts[1];
 };
+
+
 
 startServer(genie);

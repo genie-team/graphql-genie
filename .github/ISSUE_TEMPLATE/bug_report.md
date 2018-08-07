@@ -12,7 +12,7 @@ Steps to reproduce the behavior, including your type definition:
 
 - IDL
 - Genie Version [e.g. 0.1.12]
-- Fortune Adapter
+- Fortune Adapter [e.g MongoDB]
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.

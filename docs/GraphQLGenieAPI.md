@@ -281,7 +281,7 @@ Returns a string of the full schema with directives
 #### **addTypeDefsToSchema**
 
 ```typescript
-addTypeDefsToSchema($typeDefs = ''): GraphQLSchema
+addTypeDefsToSchema($typeDefs: string | DocumentNode = ''): GraphQLSchema
 ```
 
 Completely rebuilds the schema with the new typeDefs. You need to use this if we want any of the custom directives to work on your new typeDefs. Otherwise you can use the schema stitching tools from 
