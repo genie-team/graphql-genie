@@ -29,11 +29,14 @@ constructor(options: GraphQLGenieOptions)
 
 Create a new GraphQLGenie. GraphQLGenieOptions look like:
 
+typeDefs can be a string or a graphql DocumentNode, such as created by Grapqh-tag
+
+
 ```typescript
 // Most likely pass in typeDefs, schemaBuilder is for advanced use cases 
 interface GraphQLGenieOptions {
     schemaBuilder?: GraphQLSchemaBuilder;
-    typeDefs?: string;
+    typeDefs?: string | DocumentNode;
     generatorOptions?: GenerateConfig;
     fortuneOptions?: FortuneOptions;
 }
