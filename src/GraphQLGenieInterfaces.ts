@@ -1,4 +1,4 @@
-import { GraphQLFieldResolver } from 'graphql';
+import { DocumentNode, GraphQLFieldResolver } from 'graphql';
 import { GraphQLGenie } from '.';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 export interface TypeGenerator {
@@ -72,7 +72,7 @@ export interface GenerateConfig {
 
 export interface GraphQLGenieOptions {
 	schemaBuilder?: GraphQLSchemaBuilder;
-	typeDefs?: string;
+	typeDefs?: string | DocumentNode;
 	generatorOptions?: GenerateConfig;
 	fortuneOptions?: FortuneOptions;
 }

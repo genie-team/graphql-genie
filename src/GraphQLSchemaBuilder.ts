@@ -1,5 +1,5 @@
 
-import { GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
+import { DocumentNode, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print  } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
 import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
@@ -15,7 +15,7 @@ export class GraphQLSchemaBuilder {
 	private typeDefs: string;
 	private config: GenerateConfig;
 	private resolveFunctions: IResolvers<any, any>;
-	constructor(typeDefs = '', $config: GenerateConfig) {
+	constructor(typeDefs: string | DocumentNode = '', $config: GenerateConfig) {
 		this.typeDefs = `
 		scalar JSON
 		scalar Date
@@ -45,7 +45,7 @@ export class GraphQLSchemaBuilder {
 			"""
 			id: ID! @unique
 		}
-		` + typeDefs;
+		` + (typeof typeDefs === 'string' ? typeDefs : print(typeDefs));
 		this.resolveFunctions = {
 			JSON: GraphQLJSON,
 			Date: GraphQLDate,
