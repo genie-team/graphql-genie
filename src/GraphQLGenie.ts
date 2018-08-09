@@ -1,6 +1,6 @@
 
 import { GenerateUpdate } from './GenerateUpdate';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, getNamedType, graphql, isObjectType, isScalarType, printType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, getNamedType, graphql, introspectionFromSchema, isObjectType, isScalarType, printType } from 'graphql';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
@@ -83,11 +83,11 @@ export class GraphQLGenie {
 	public init = async (): Promise<GraphQLGenie> => {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
-		this.schemaInfo = await this.schemaInfoBuilder.getSchemaInfo();
+		this.schemaInfo = this.schemaInfoBuilder.getSchemaInfo();
 		this.relations = computeRelations(this.schemaInfo);
 		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
-		await this.buildQueries();
-		await this.buildResolvers();
+		this.buildQueries();
+		this.buildResolvers();
 
 		await Promise.all(this.plugins.map(async (plugin) => {
 			const pluginResult = plugin(this);
@@ -102,7 +102,7 @@ export class GraphQLGenie {
 		return this;
 	}
 
-	private buildResolvers = async () => {
+	private buildResolvers = () => {
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			const fieldResolvers = new Map<string, GraphQLFieldResolver<any, any>>();
 			const schemaType = this.schema.getType(type.name);
@@ -119,17 +119,9 @@ export class GraphQLGenie {
 		});
 	}
 
-	private buildQueries = async () => {
+	private buildQueries = () => {
 
-		const nodesResult = await graphql(this.schema, `{
-			__type(name: "Node") {
-				possibleTypes {
-					name
-				}
-			}
-		}`);
-
-		const nodeNames = nodesResult.data.__type.possibleTypes;
+		const nodeNames = introspectionFromSchema(this.schema, { descriptions: false }).__schema.types.find(t => t.name === 'Node')['possibleTypes'];
 		const nodeTypes = [];
 		nodeNames.forEach(result => {
 			nodeTypes.push(<IntrospectionObjectType>this.schemaInfo[result.name]);
