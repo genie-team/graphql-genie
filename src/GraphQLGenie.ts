@@ -419,10 +419,10 @@ export class GraphQLGenie {
 			}
 		}`);
 		types = get(result, 'data.__schema.types');
-		types = types.filter(
+		const typeNames: string[] = types.filter(
 			type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
 		).map(type => type.name);
-		return types;
+		return typeNames;
 	}
 
 	public getRawData = async (types = [], context?): Promise<any[]> => {

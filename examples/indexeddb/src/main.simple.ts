@@ -14,8 +14,8 @@ const typeDefs = `
 type City {
 	id: ID! @unique
 	name: String! @unique
-	neighborhoods: [String]
-	user: [User]
+	neighborhoods: [String]!
+	user: [User]!
 	founded: Date
 	population: Int
 }

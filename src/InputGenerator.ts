@@ -363,7 +363,7 @@ export class InputGenerator {
 			infoType.fields.forEach(field => {
 				if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 					let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
-					if (field.type.kind === 'NON_NULL') {
+					if (field.type.kind === 'NON_NULL' && field.type.ofType.kind !== 'LIST') {
 						inputType = new GraphQLNonNull(inputType);
 					}
 
@@ -447,10 +447,11 @@ export class InputGenerator {
 			each(this.type.getFields(), field => {
 				if (field.name !== 'id') {
 					let inputType;
+					const fieldNullableType = getNullableType(field.type);
 					if (isInputType(field.type)) {
 						const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
 						if (!this.isAutomaticField(infoTypeField)) {
-							inputType = field.type;
+							inputType = isListType(fieldNullableType) ? fieldNullableType : field.type;
 						}
 					} else if (isObjectType(field.type)) {
 						inputType = this.generateInputTypeForField(field, this.generateCreateManyWithoutInput,
@@ -462,7 +463,7 @@ export class InputGenerator {
 							infoTypeFields.find(currField => currField.name === field.name),
 						 	Mutation.Create);
 					}
-					if (inputType && isNonNullType(field.type) && !isNonNullType(inputType)) {
+					if (inputType && !isListType(fieldNullableType) && isNonNullType(field.type) && !isNonNullType(inputType)) {
 						inputType = new GraphQLNonNull(inputType);
 					}
 					if (inputType) {

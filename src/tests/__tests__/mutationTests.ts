@@ -684,7 +684,7 @@ describe('mutationTests', () => {
 			variables: { where: { match: { id: testData.addresses[0].id } } }
 		});
 
-		expect(result.data['addresses']).toBeNull();
+		expect(result.data['addresses']).toHaveLength(0);
 	});
 
 	test('update - delete post on user', async () => {
@@ -736,7 +736,7 @@ describe('mutationTests', () => {
 			query: posts,
 			variables: { where: { match: { id: testData.posts[1].id } } }
 		});
-		expect(result.data['posts']).toBeNull();
+		expect(result.data['posts']).toHaveLength(0);
 	});
 
 	test('update - update many users', async () => {

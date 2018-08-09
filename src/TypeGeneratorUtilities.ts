@@ -690,7 +690,7 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 				};
 			});
 
-			result = result.length === 0 ? null : returnArray ? result : result[0];
+			result = !returnArray && result.length === 0 ? null : returnArray ? result : result[0];
 			if (returnConnection) {
 				result = {
 					edges: result,
@@ -737,7 +737,7 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 			set(options, 'offset', _args.skip);
 		}
 		let connection: Connection;
-		let result: any;
+		let result: any = [];
 		let fortuneReturn = await dataResolver.find(type.name, null, options, {context: _context, info: _info});
 		if (fortuneReturn && !isEmpty(fortuneReturn)) {
 			fortuneReturn = isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
