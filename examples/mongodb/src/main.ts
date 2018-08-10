@@ -855,4 +855,4 @@ console.log((await sub.next()).value.data.post);
 
 };
 
-buildClient(genie);
+buildClient(genie).catch();

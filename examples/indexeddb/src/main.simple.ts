@@ -118,4 +118,4 @@ const buildClient = async (genie: GraphQLGenie) => {
 	// });
 };
 
-buildClient(genie);
+buildClient(genie).catch();

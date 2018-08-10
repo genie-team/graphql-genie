@@ -217,6 +217,4 @@ const parseAuthorizationBearer = params => {
 	if (headerParts[0].toLowerCase() === 'bearer') return headerParts[1];
 };
 
-
-
-startServer(genie);
+startServer(genie).catch();

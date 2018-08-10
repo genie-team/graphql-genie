@@ -81,7 +81,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 	genie.use(subscriptionPlugin(new PubSub()));
 	const schema = genie.getSchema();
 	const server = new GraphQLServer({ schema });
-	server.start(() => console.log('Server is running on localhost:4000'));
+	server.start(() => console.log('Server is running on localhost:4000')).catch();
 };
 
-buildClient(genie);
+buildClient(genie).catch();

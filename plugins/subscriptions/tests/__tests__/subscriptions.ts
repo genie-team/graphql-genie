@@ -187,7 +187,7 @@ describe('subscriptionsTest', () => {
 			`
 		);
 
-		const result = await client.mutate({
+		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
 				data: { likedBy: { connect: [{email: testData.users[0].email}]}},
@@ -244,7 +244,7 @@ describe('subscriptionsTest', () => {
 			`
 		);
 
-		let result = await client.mutate({
+		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
 				data: { likedBy: { connect: [{email: testData.users[1].email}]}},
@@ -252,7 +252,7 @@ describe('subscriptionsTest', () => {
 			}}
 		});
 
-		result = await client.mutate({
+		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
 				data: { likedBy: { connect: [{email: testData.users[2].email}, {email: testData.users[3].email}]}},
@@ -260,14 +260,14 @@ describe('subscriptionsTest', () => {
 			}}
 		});
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			sub.next().then(subNext => {
 				expect(subNext.value.data.post.mutation).toBe('UPDATED');
 				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
 				expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
 				resolve();
-			});
+			}).catch();
 		});
 
 	});
@@ -339,9 +339,8 @@ describe('subscriptionsTest', () => {
 		} catch (e) {
 			console.error('error subscribing', e);
 		}
-		let post;
 		try {
-			post = await execute(schema, gql`mutation {
+			await execute(schema, gql`mutation {
 				createPost(input: {data:{title:"bam"}}) {
 					data {
 						id
@@ -354,28 +353,28 @@ describe('subscriptionsTest', () => {
 			console.error('error creating post', e);
 		}
 
-		const result = await client.mutate({
+		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
 				data: { likedBy: { connect: [{email: testData.users[2].email}, {email: testData.users[3].email}]}},
 				where: { id: testData.posts[0].id}
 			}}
 		});
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			expect.assertions(8);
 			sub.next().then(subNext => {
 				expect(subNext.value.data.post.mutation).toBe('CREATED');
 				expect(subNext.value.data.post.node.title).toBe('bam');
 				expect(subNext.value.data.post.node.author).toBeNull();
 				expect(subNext.value.data.post.updatedFields).toBeNull();
-			});
+			}).catch();
 			sub.next().then(subNext => {
 				expect(subNext.value.data.post.mutation).toBe('UPDATED');
 				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
 				expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
 				resolve();
-			});
+			}).catch();
 		});
 	});
 });

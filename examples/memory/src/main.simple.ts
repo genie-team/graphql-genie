@@ -55,4 +55,4 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['subscribe'] = subscribe;
 };
 
-buildClient(genie);
+buildClient(genie).catch();
