@@ -118,7 +118,7 @@ getFragmentTypes(): object
 When using Apollo or another tool you may need to get information on the fragment types, genie provides a helper for this
 
 ```typescript
-import { IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
+import { IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
 // typescript may think the types don't match but they do so cast to <any>
 const introspectionQueryResultData = <any> genie.getFragmentTypes();
 const fragmentMatcher = new IntrospectionFragmentMatcher({

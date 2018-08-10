@@ -6,8 +6,8 @@
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
-    "build": "rollup -c rollup.bundle.js",
-    "start": "rollup -c rollup.bundle.js -w"
+    "build": "tsc -p . && rollup -c rollup.bundle.js",
+		"start": "rollup -c rollup.bundle.js -w"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
