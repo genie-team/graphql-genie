@@ -27,7 +27,7 @@ jobs:
           - v1-dependencies-
 
       - run: yarn install
-      - run: npm install graphql-genie
+      - run: yarn add graphql-genie --force
 
       - save_cache:
           paths:
