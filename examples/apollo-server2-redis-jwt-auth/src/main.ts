@@ -115,8 +115,8 @@ const startServer = async (genie: GraphQLGenie) => {
 		}
 	], true);
 	// now setup the plugins
-	await genie.use(subscriptionPlugin(new PubSub()));
-	await genie.use(authPlugin());
+	genie.use(subscriptionPlugin(new PubSub()));
+	genie.use(authPlugin());
 
 	// now add additional functionality to the schema for login/signup
 	const schema = getSchemaWithAuth(genie);
