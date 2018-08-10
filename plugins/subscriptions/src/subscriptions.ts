@@ -1,4 +1,4 @@
-import { GraphQLObjectType, getNamedType, graphql, isNonNullType, isScalarType } from 'graphql';
+import { GraphQLObjectType, getNamedType, isNonNullType, isScalarType } from 'graphql';
 import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
@@ -6,7 +6,7 @@ import { camelCase, get, isEmpty } from 'lodash';
 import { isObject } from 'util';
 
 export default (pubsub: PubSub): GeniePlugin => {
-	return async (genie: GraphQLGenie) => {
+	return (genie: GraphQLGenie) => {
 		const schema = genie.getSchema();
 		const dataResolver = genie.getDataResolver();
 		const newDefsAsString: string[] = [];
@@ -18,14 +18,8 @@ export default (pubsub: PubSub): GeniePlugin => {
 			}
 		`);
 		const typeMap = schema.getTypeMap();
-		const nodesResult = await graphql(schema, `{
-			__type(name: "Node") {
-				possibleTypes {
-					name
-				}
-			}
-		}`);
-		const nodes = nodesResult.data.__type.possibleTypes;
+		const nodes = genie.getModelTypes();
+
 		let subscriptionQueries = '';
 		let subscriptionResolvers: IResolverObject = {};
 		nodes.forEach(node => {
@@ -34,7 +28,6 @@ export default (pubsub: PubSub): GeniePlugin => {
 			const schemaType = <GraphQLObjectType>typeMap[node.name];
 			newDefsAsString.push(getInputString(inputName, node.name));
 			newDefsAsString.push(getPayloadString(payloadName, node.name, schemaType));
-
 
 			const fieldName = camelCase(node.name);
 
@@ -144,7 +137,7 @@ const subscribeFilter = async (args, context, record, schemaType: GraphQLObjectT
 		let recordWithWhere = dataResolver.applyOptions(schemaType.name, record, nodeWhere);
 		resolve = !isEmpty(recordWithWhere);
 		if (resolve) {
-			const pullIds = await filterNested(nodeWhere, null, schemaType, recordWithWhere, new Map<string, object>(), dataResolver);
+			const pullIds = await filterNested(nodeWhere, null, schemaType, recordWithWhere, new Map<string, object>(), dataResolver, get(context, 'request.meta.context'), get(context, 'request.meta.info'));
 			recordWithWhere = recordWithWhere.filter(entry => !pullIds.has(entry.id));
 			resolve = !isEmpty(recordWithWhere);
 		}

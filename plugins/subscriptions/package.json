@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-subscriptions",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "GraphQL Genie Subscriptions",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -13,7 +13,7 @@
     "build": "tsc -p .",
     "browser": "rollup -c rollup.browser.js",
     "module": "rollup -c rollup.module.js",
-    "prepublishOnly": "npm run build && npm run browser && npm run module",
+    "prepublishOnly": "yarn install && npm run test && npm run build && npm run browser && npm run module",
     "test": "jest"
   },
   "jest": {
@@ -31,10 +31,10 @@
     ]
   },
   "peerDependencies": {
-    "graphql-genie": ">=0.3.0",
+    "graphql-genie": "^0.4.0",
     "graphql-subscriptions": "^0.5.0",
     "graphql-tools": "^3.0.0",
-    "lodash": ">=4.17.5"
+    "lodash": ">=4.0.0"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.3",
@@ -42,7 +42,7 @@
     "@types/lodash": "^4.14.107",
     "@types/node": "^8.9.4",
     "fortune": "^5.4.2",
-    "graphql-genie": ">=0.3.0",
+    "graphql-genie": "^0.4.0",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^3.0.0",
     "jest": "^22.4.0",

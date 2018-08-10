@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "GraphQL Genie",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -25,7 +25,9 @@
     "start": "rollup -c rollup.browser.js -w",
     "test": "jest",
     "testMutation": "jest ./tests/__tests__/mutationTests.ts",
-    "testGenie": "jest ./tests/__tests__/genie.ts",
+		"testGenie": "jest ./tests/__tests__/genie.ts",
+		"testSubscriptions": "jest ./plugins/subscriptions/tests/__tests__/subscriptions.ts",
+		"testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.ts",
     "lint": "tslint -c tslint.json -p tsconfig.json --fix"
   },
   "jest": {

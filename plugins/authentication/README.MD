@@ -74,6 +74,11 @@ You can pass in the default required of each operation which will be used in you
 
 ## Authentication Requirements 
 
+* You can't kill a type
+* You can't bring a type back from the dead
+* You can't make a type fall in love with another type
+* No wishing for additional types
+* :)
 
 ### Role enum
 
@@ -187,6 +192,7 @@ The authenticate function recieves the following.
 
 The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves
 		
+
 ## Examples
 
 See the [apollo server 2 redis jwt example](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) for JWT authentication with users stored in the database. Uses Apollo Server 2.

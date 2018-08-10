@@ -2,14 +2,12 @@ import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { getClient } from '../setupTests';
 let client: ApolloClient<any>;
-beforeAll(async () => {
-	client = await getClient();
+beforeAll(() => {
+	client = getClient();
 });
-
 beforeEach(() => {
 	client.cache['data'].data = {};
 });
-
 const testData = {
 	users: [],
 	posts: [],

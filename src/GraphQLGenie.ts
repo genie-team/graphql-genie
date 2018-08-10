@@ -1,12 +1,12 @@
 
 import { GenerateUpdate } from './GenerateUpdate';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionType, getNamedType, graphql, introspectionFromSchema, isObjectType, isScalarType, printType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, introspectionFromSchema, isObjectType, isScalarType, printType } from 'graphql';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { assign, forOwn, get, isArray, isEmpty, isPlainObject } from 'lodash';
+import { assign, forOwn, isArray, isEmpty, isFunction, isPlainObject, set } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
@@ -38,9 +38,7 @@ export class GraphQLGenie {
 	private graphQLFortune: FortuneGraph;
 	private plugins: GeniePlugin[];
 
-	public ready: boolean;
 	constructor(options: GraphQLGenieOptions) {
-		this.ready = false;
 		this.fortuneOptions = options.fortuneOptions ? options.fortuneOptions : {};
 		this.fortuneOptions.settings = this.fortuneOptions.settings ? this.fortuneOptions.settings : {};
 		if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
@@ -59,9 +57,10 @@ export class GraphQLGenie {
 			throw new Error('Need a schemaBuilder or typeDefs');
 		}
 
-		this.plugins = [];
+		this.plugins = isArray(options.plugins) ? options.plugins : options.plugins ? [options.plugins] : [];
 		this.schema = this.schemaBuilder.getSchema();
 		this.validate();
+		this.init();
 	}
 
 	private validate = () => {
@@ -80,7 +79,7 @@ export class GraphQLGenie {
 		});
 	}
 
-	public init = async (): Promise<GraphQLGenie> => {
+	private init = () => {
 		this.generators = [];
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = this.schemaInfoBuilder.getSchemaInfo();
@@ -89,17 +88,14 @@ export class GraphQLGenie {
 		this.buildQueries();
 		this.buildResolvers();
 
-		await Promise.all(this.plugins.map(async (plugin) => {
+		this.plugins.forEach(plugin => {
 			const pluginResult = plugin(this);
-			if (pluginResult.then) {
-				await pluginResult;
+			if (pluginResult && isFunction(pluginResult.then)) {
+				throw new Error('You must use call .useAsync for plugins that are asynchronous');
 			}
-		}));
+		});
 
-		this.plugins = [];
 		this.schema = this.schemaBuilder.getSchema();
-		this.ready = true;
-		return this;
 	}
 
 	private buildResolvers = () => {
@@ -121,7 +117,7 @@ export class GraphQLGenie {
 
 	private buildQueries = () => {
 
-		const nodeNames = introspectionFromSchema(this.schema, { descriptions: false }).__schema.types.find(t => t.name === 'Node')['possibleTypes'];
+		const nodeNames = this.getModelTypes();
 		const nodeTypes = [];
 		nodeNames.forEach(result => {
 			nodeTypes.push(<IntrospectionObjectType>this.schemaInfo[result.name]);
@@ -201,16 +197,22 @@ export class GraphQLGenie {
 
 	}
 
-	public use = async (plugin: GeniePlugin) => {
-		if (!this.ready) {
-			this.plugins.push(plugin);
-		} else {
-			const pluginResult = plugin(this);
-			if (pluginResult.then) {
-				await pluginResult;
-			}
-			this.schema = this.schemaBuilder.getSchema();
+	public use = (plugin: GeniePlugin) => {
+		const pluginResult = plugin(this);
+		if (pluginResult && isFunction(pluginResult.then)) {
+			throw new Error('You must use call .useAsync for plugins that are asynchronous');
 		}
+		this.schema = this.schemaBuilder.getSchema();
+		return this;
+	}
+
+	public useAsync = async (plugin: GeniePlugin) => {
+		const pluginResult = plugin(this);
+		if (pluginResult && isFunction(pluginResult.then)) {
+			await pluginResult;
+		}
+		this.schema = this.schemaBuilder.getSchema();
+		return this;
 	}
 
 	public getSchema = (): GraphQLSchema => {
@@ -400,28 +402,24 @@ export class GraphQLGenie {
 		return true;
 	}
 
-	public getUserTypes = async (): Promise<string[]> => {
-		let types = [];
-		const result = await graphql(this.schema, `{
-			__schema {
-				types {
-					name
-					kind
-				}
-			}
-		}`);
-		types = get(result, 'data.__schema.types');
+	public getUserTypes = (): string[] => {
+		const introspection = introspectionFromSchema(this.schema, { descriptions: false });
+		const types = introspection.__schema.types;
 		const typeNames: string[] = types.filter(
 			type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)
 		).map(type => type.name);
 		return typeNames;
 	}
 
+	public getModelTypes = (): IntrospectionType[] => {
+		return introspectionFromSchema(this.schema, { descriptions: false }).__schema.types.find(t => t.name === 'Node')['possibleTypes'];
+	}
+
 	public getRawData = async (types = [], context?): Promise<any[]> => {
 		const meta = context ? {context} : undefined;
 		let nodes = [];
 		if (isEmpty(types)) {
-			types = await this.getUserTypes();
+			types = this.getUserTypes();
 		}
 		if (types) {
 			const promises = [];
@@ -435,70 +433,18 @@ export class GraphQLGenie {
 		return nodes;
 	}
 
-	public getFragmentTypes = async (): Promise<any> => {
-		const result = await graphql(this.schema, `{
-			__schema {
-				types {
-					kind
-					name
-					possibleTypes {
-						name
-					}
-				}
-			}
-		}`);
+	public getFragmentTypes = (): IntrospectionQuery => {
+		const introspection = introspectionFromSchema(this.schema, { descriptions: false });
+		const types = introspection.__schema.types;
+
 		// here we're filtering out any type information unrelated to unions or interfaces
-		const types = get(result, 'data.__schema.types');
 		if (types) {
-			const filteredData = result.data.__schema.types.filter(
-				type => type.possibleTypes !== null,
-			);
-			result.data.__schema.types = filteredData;
+			const filteredData = types.filter(type => {
+				return type['possibleTypes'] !== null;
+			});
+			set(introspection, '__schema.types', filteredData);
 
 		}
-		return result.data;
+		return introspection;
 	}
 }
-
-// cache.writeData({ data });
-
-// cache.writeData({
-// 	id: 'ROOT_QUERY.objects.1',
-// 	data: {
-// 		field: 'hi'
-// 	}
-// });
-// window['gql'] = gql;
-// window['cache'] = cache;
-// console.info(cache.readQuery({
-// 	query: gql`
-//   query {
-//     objects {
-//       name
-//     }
-//   }
-// `}));
-// mutation {
-//   createGraphQLField(name: "test new field", type:{list:true, type:""}) {
-//     id
-//     name
-//     description
-//   }
-// }
-
-// {
-//   allGraphQLDirectives {
-//     id
-//     name
-//     description
-//     args {
-//       id
-//       type {
-//         ... on GraphQLScalarType {
-//           id
-//         }
-
-//       }
-//     }
-//   }
-// }
