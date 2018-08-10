@@ -113,7 +113,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 	console.log('current data:');
 	console.log(JSON.stringify(hasData));
 
-	if (hasData.data['users']) {
+	if (hasData.data['users'] && hasData.data['users'].length > 0) {
 		console.log('Deleting existing data');
 		await client.mutate({
 			mutation: gql`

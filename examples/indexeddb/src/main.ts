@@ -94,6 +94,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
+
 	const hasData = await client.query({
 		query: gql`{
 			users{
@@ -101,7 +102,8 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 		}`
 	});
-	if (hasData.data['users']) {
+
+	if (hasData.data['users'] && hasData.data['users'].length > 0) {
 		return;
 	}
 	const zeus = await client.mutate({
