@@ -71,7 +71,7 @@ const getUserIDsOfRequestedData = (records: object[], filterRecords: object[]): 
 const context = (currUser?) => {
 	currUser = currUser || { id: 1, roles: ['ADMIN'] };
 	return {
-		authenticate: (method, requiredRoles, records, filterRecords, updates, typeName, fieldName, _isFromFilter) => {
+		authenticate: (method, requiredRoles, records, filterRecords, _updates, typeName, fieldName, _isFromFilter) => {
 			const requiredRolesForMethod: string[] = requiredRoles[method];
 			const rules: string[] = requiredRoles.rules || [];
 			const currRoles = !isEmpty(currUser) ? currUser['roles'] : [];

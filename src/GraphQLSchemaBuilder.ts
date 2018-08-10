@@ -346,7 +346,7 @@ class DefaultDirective extends SchemaDirectiveVisitor {
 			const currType = type.name;
 			let value = this.args.value;
 			if (currType === 'Int') {
-				value = Number.parseInt(value);
+				value = Number.parseInt(value, 10);
 			} else if (currType === 'Float') {
 				value = Number.parseFloat(value);
 			} else if (currType === 'Boolean') {
