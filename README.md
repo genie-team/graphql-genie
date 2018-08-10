@@ -27,6 +27,7 @@
 	- [Server](#server)
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
 - [Roadmap](#roadmap)
+- [Changelog](#changelog)
 
 ## Overview
 
@@ -206,6 +207,9 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 ## Roadmap
 * Progressive Web App example
+
+## Changelog
+* See [releases](https://github.com/genie-team/graphql-genie/releases)
 
 ## Thanks/Credit <!-- omit in toc --> 
 
