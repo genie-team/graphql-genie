@@ -1,4 +1,4 @@
-import { GraphQLError, GraphQLSchema, IntrospectionType, getIntrospectionQuery, graphql } from 'graphql';
+import { GraphQLSchema, IntrospectionType, introspectionFromSchema } from 'graphql';
 import { concat, each, findIndex, get, includes, keys, mapKeys, omit, omitBy, set, startsWith } from 'lodash';
 
 export default class SchemaInfoBuilder {
@@ -10,9 +10,9 @@ export default class SchemaInfoBuilder {
 		this.schema = schema;
 	}
 
-	public async getSchemaInfo(): Promise<IntrospectionType[]> {
+	public getSchemaInfo(): IntrospectionType[] {
 		if (!this.schemaInfo) {
-			this.schemaInfo = await this.buildSchemaInfo(this.schema);
+			this.schemaInfo = this.buildSchemaInfo(this.schema);
 		}
 		return this.schemaInfo;
 	}
@@ -29,12 +29,8 @@ export default class SchemaInfoBuilder {
 		set(schemaInfo, path, directives);
 	}
 
-	private async buildSchemaInfo(schema): Promise<IntrospectionType[]>  {
-		let originalSchemaInfo = await graphql(schema, getIntrospectionQuery({ descriptions: true }));
-		if (originalSchemaInfo.errors) {
-			throw new GraphQLError(originalSchemaInfo.errors[0].message);
-		}
-		originalSchemaInfo = originalSchemaInfo.data;
+	private buildSchemaInfo(schema): IntrospectionType[]  {
+		const originalSchemaInfo = introspectionFromSchema(schema, {descriptions: true});
 		let schemaInfo = <any>originalSchemaInfo;
 		schemaInfo = omitBy(schemaInfo.__schema.types, (value) => {
 			return startsWith(value.name, '__') || includes(['Boolean', 'String', 'ID', 'Int', 'Float'], value.name);

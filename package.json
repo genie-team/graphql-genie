@@ -29,6 +29,7 @@
     "lint": "tslint -c tslint.json -p tsconfig.json --fix"
   },
   "jest": {
+    "testURL": "http://localhost",
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
