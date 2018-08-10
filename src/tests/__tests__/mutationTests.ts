@@ -816,7 +816,7 @@ test('update - update many users, try to set unique field', async () => {
 
 		expect.assertions(2);
 		try {
-			const result = await client.mutate({
+			await client.mutate({
 				mutation: updateManyUsers
 			});
 		} catch (e) {
@@ -854,7 +854,7 @@ test('update - update many users, try to set unique field', async () => {
 			`;
 		expect.assertions(2);
 		try {
-			const result = await client.mutate({
+			await client.mutate({
 				mutation: createPost
 			});
 		} catch (e) {

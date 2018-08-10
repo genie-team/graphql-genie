@@ -266,7 +266,7 @@ const startServer = async (genie: GraphQLGenie) => {
 
 	server.listen(opts).then(({ url }) => {
 		console.log(`🚀 Server ready at ${url}`);
-	});
+	}).catch();
 };
 
 const getUserIDsOfRequestedData = (records: object[], filterRecords: object[]): Set<string> => {
@@ -379,4 +379,4 @@ const parseAuthorizationBearer = params => {
 	const headerParts = authorization.split(' ');
 	if (headerParts[0].toLowerCase() === 'bearer') return headerParts[1];
 };
-startServer(genie);
+startServer(genie).catch();

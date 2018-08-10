@@ -74,7 +74,7 @@ const buildClient = async (genie: GraphQLGenie) => {
 		if (element.name && element.name !== 'test') {
 			element.name = 'NY';
 		}
-	});	
+	});
 	await genie.importRawData(rawData, true);
 	console.log('merged');
 	rawData = await genie.getRawData();
@@ -123,4 +123,4 @@ const buildClient = async (genie: GraphQLGenie) => {
 	// });
 };
 
-buildClient(genie);
+buildClient(genie).catch();

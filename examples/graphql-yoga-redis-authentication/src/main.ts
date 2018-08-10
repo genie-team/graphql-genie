@@ -81,7 +81,7 @@ const startServer = async (genie: GraphQLGenie) => {
 
 	// load all the users so that we don't have to constantly do db calls to check roles, etc
 	const users = new Map<String, object>();
-	loadUsers(genie, users);
+	await loadUsers(genie, users);
 
 	// now setup the plugins
 	await genie.use(subscriptionPlugin(new PubSub()));
@@ -286,4 +286,4 @@ const getAuthSchema = (genie: GraphQLGenie, users: Map<String, object>): GraphQL
 	});
 };
 
-startServer(genie);
+startServer(genie).catch();

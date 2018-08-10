@@ -35,7 +35,6 @@ export default (pubsub: PubSub): GeniePlugin => {
 			newDefsAsString.push(getInputString(inputName, node.name));
 			newDefsAsString.push(getPayloadString(payloadName, node.name, schemaType));
 
-
 			const fieldName = camelCase(node.name);
 
 			subscriptionQueries += `${fieldName}(where: ${inputName}): ${payloadName}\n`;
