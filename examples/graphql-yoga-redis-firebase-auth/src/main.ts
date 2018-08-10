@@ -79,11 +79,9 @@ const startServer = async (genie: GraphQLGenie) => {
 		databaseURL: 'https://tabletop-companion-5f73c.firebaseio.com'
 	});
 
-	await genie.init();
-
 	// now setup the plugins
-	await genie.use(subscriptionPlugin(new PubSub()));
-	await genie.use(authPlugin());
+	genie.use(subscriptionPlugin(new PubSub()));
+	genie.use(authPlugin());
 	const dataResolver = genie.getDataResolver();
 
 	// this will always be empty as we are mocking a db but for example sake

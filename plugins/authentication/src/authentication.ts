@@ -14,10 +14,9 @@ interface RequiredRoles {
 const fragmentTypesMap = new Map<string, { name: string }[]>();
 let genie: GraphQLGenie;
 export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
-	return async (pluginGenie: GraphQLGenie) => {
+	return (pluginGenie: GraphQLGenie) => {
 		genie = pluginGenie;
-		let fragmentTypes = await genie.getFragmentTypes();
-		fragmentTypes = get(fragmentTypes, '__schema.types');
+		const fragmentTypes = get(genie.getFragmentTypes(), '__schema.types');
 		if (fragmentTypes) {
 			fragmentTypes.forEach(fragmentType => {
 				fragmentTypesMap.set(fragmentType.name, fragmentType.possibleTypes);
@@ -57,7 +56,7 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 			const field = queryFields[fieldName];
 			const { resolve = defaultFieldResolver } = field;
 			field.resolve = async function (record, args, context, info) {
-				if (!context.authenticate) {
+				if (!context || !context.authenticate) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
 				let queryFieldSchemaType = <GraphQLObjectType>getNamedType(field.type);
@@ -142,7 +141,7 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 			const field = mutationFields[fieldName];
 			const { resolve = defaultFieldResolver } = field;
 			field.resolve = async function (record, args, context, info) {
-				if (!context.authenticate) {
+				if (!context || !context.authenticate) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
 				let schemaType = <GraphQLObjectType>getNamedType(field.type);
@@ -168,11 +167,11 @@ export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultU
 
 		// hooks for create, update, delete
 		const typeMap = schema.getTypeMap();
-		const types: string[] =  await genie.getUserTypes();
+		const types: string[] =  genie.getUserTypes();
 		types.forEach(typeName => {
 			const schemaType = <GraphQLObjectType>typeMap[typeName];
 			dataResolver.addInputHook(typeName, (context, record, update) => {
-				const authFN = context.request.meta.context && context.request.meta.context.authenticate;
+				const authFN = get(context, 'request.meta.context.authenticate');
 				if (!authFN) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
@@ -394,7 +393,7 @@ class AuthDirective extends SchemaDirectiveVisitor {
 			const resolve = field.resolve || defaultFieldResolver;
 
 			field.resolve = async function (record, args, context, info) {
-				if (!context.authenticate) {
+				if (!context || !context.authenticate) {
 					throw new Error('Context must have an authenticate function if using authentication plugin');
 				}
 				// Get the required Role from the field first, falling back

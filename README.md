@@ -66,8 +66,7 @@ Or for a server demo see the [server examples](#server).
 2. Setup fortune options with your adapter and other settings. See example below or [fortune docs](http://fortune.js.org/api/#fortune-constructor) and documentation for your adapter
 3. Create the schema using genie.
    1. Create a new GraphQLGenie object
-   2. call genie.init() (returns a promise)
-   3. call genie.getSchema() to get the GraphQLSchema
+   2. call genie.getSchema() to get the GraphQLSchema
 
 ```typescript
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
@@ -104,9 +103,6 @@ const genie = new GraphQLGenie({
     typeDefs: typeDefs, 
     fortuneOptions: fortuneOptions
 });
-
-// init genie, this sets up all the new types and resolvers, init returns a promise so use await or .then()
-await genie.init();
 
 // get the schema and use it with any other tools you want
 const schema: GraphQLSchema = genie.getSchema();

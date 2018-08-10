@@ -60,14 +60,14 @@ export interface DataResolver {
 }
 
 export interface GenerateConfig {
-	generateGetOne?: boolean;
-	generateGetAll?: boolean;
-	generateCreate?: boolean;
-	generateUpdate?: boolean;
-	generateDelete?: boolean;
-	generateUpsert?: boolean;
-	generateConnections?: boolean;
-	generateMigrations?: boolean;
+	generateGetOne?: boolean; // GraphQL API will have a singular queries using unique fields
+	generateGetAll?: boolean; // GraphQL API will have a Query to get all of a type, with filters
+	generateCreate?: boolean; // GraphQL API will have a Mutation to create new data of each type
+	generateUpdate?: boolean; // GraphQL API will have a Mutation to update data of each type
+	generateDelete?: boolean; // GraphQL API will have a Mutation to delete data of each type
+	generateUpsert?: boolean; // GraphQL API will have a Mutation to upsert data of each type
+	generateConnections?: boolean; // GraphQL API will have a Query to get all of a type, with filters, that returns a Connection rather than simple array
+	generateMigrations?: boolean; // a Query exportData and a Mutation importData will be created
 }
 
 export interface GraphQLGenieOptions {
@@ -75,6 +75,7 @@ export interface GraphQLGenieOptions {
 	typeDefs?: string | DocumentNode;
 	generatorOptions?: GenerateConfig;
 	fortuneOptions?: FortuneOptions;
+	plugins?: GeniePlugin[] | GeniePlugin;
 }
 
 export interface FortuneSettings {

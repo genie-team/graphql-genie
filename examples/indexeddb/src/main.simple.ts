@@ -1,11 +1,12 @@
-import { InMemoryCache, IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
+import { InMemoryCache, IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { SchemaLink } from 'apollo-link-schema';
 import indexedDBAdapter from 'fortune-indexeddb';
 import { graphql, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie } from '../../../src/index';
+import gql from 'graphql-tag';
 
-const typeDefs = `
+const typeDefs = gql`
 
 # This is sample IDL schema for GraphQL Genie.
 #
@@ -42,15 +43,9 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateUpsert: true
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	try {
-		await genie.init();
-	} catch (e) {
-		console.error('genie error');
-		console.error(e);
-	}
 
 	const schema = genie.getSchema();
-	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
+	const introspectionQueryResultData = <any> genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
 	});

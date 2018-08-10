@@ -86,7 +86,6 @@ const genie = new GraphQLGenie({
 });
 
 const startServer = async (genie: GraphQLGenie) => {
-	await genie.init();
 	const dataResolver = genie.getDataResolver();
 
 	// setup a basic admin user using genie import data function
@@ -116,8 +115,8 @@ const startServer = async (genie: GraphQLGenie) => {
 		}
 	], true);
 	// now setup the plugins
-	await genie.use(subscriptionPlugin(new PubSub()));
-	await genie.use(authPlugin());
+	genie.use(subscriptionPlugin(new PubSub()));
+	genie.use(authPlugin());
 
 	// now add additional functionality to the schema for login/signup
 	const schema = getSchemaWithAuth(genie);

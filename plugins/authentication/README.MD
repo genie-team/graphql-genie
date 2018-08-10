@@ -41,9 +41,8 @@ import authPlugin from 'graphql-genie-authentication';
 // typedefs must have an enum named Role
 const genie = new GraphQLGenie(...args);
 
-await genie.init();
-// genie.use can be called before or after init
-await genie.use(authPlugin()); 
+// or you could pass in to the constructor as part of the plugins variable
+genie.use(authPlugin()); 
 
 //get the GraphQLSchema and use it with any other tools you need, such as subscriptions-transport-ws
 const schema = genie.getSchema();
@@ -74,6 +73,11 @@ You can pass in the default required of each operation which will be used in you
 
 ## Authentication Requirements 
 
+* You can't kill a type
+* You can't bring a type back from the dead
+* You can't make a type fall in love with another type
+* No wishing for additional types
+* :)
 
 ### Role enum
 
@@ -187,6 +191,7 @@ The authenticate function recieves the following.
 
 The function should also have any other constraint logic necessary, such as users not being able to create roles on themselves, or only set the author field on post to themselves
 		
+
 ## Examples
 
 See the [apollo server 2 redis jwt example](https://github.com/genie-team/graphql-genie/tree/master/examples/apollo-server2-redis-jwt-auth) for JWT authentication with users stored in the database. Uses Apollo Server 2.

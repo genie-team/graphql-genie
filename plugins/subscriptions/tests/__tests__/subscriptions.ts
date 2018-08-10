@@ -7,16 +7,14 @@ import subscriptionPlugin from '../../src/subscriptions';
 
 let client: ApolloClient<any>;
 let schema: GraphQLSchema;
-beforeAll(async () => {
-	await genie.use(subscriptionPlugin(new PubSub()));
-	client = await getClient();
+beforeAll(() => {
+	genie.use(subscriptionPlugin(new PubSub()));
+	client = getClient();
 	schema = genie.getSchema();
 });
-
 beforeEach(() => {
 	client.cache['data'].data = {};
 });
-
 const testData = {users: [],
 posts: [],
 addresses: [],

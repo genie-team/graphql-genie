@@ -4,6 +4,7 @@
 	- [**getSchema**](#getschema)
 	- [**printSchema**](#printschema)
 	- [**getUserTypes**](#getusertypes)
+	- [**getModelTypes**](#getmodeltypes)
 	- [**getFragmentTypes**](#getfragmenttypes)
 	- [**getRawData**](#getrawdata)
 	- [**importRawData**](#importrawdata)
@@ -29,16 +30,17 @@ constructor(options: GraphQLGenieOptions)
 
 Create a new GraphQLGenie. GraphQLGenieOptions look like:
 
-typeDefs can be a string or a graphql DocumentNode, such as created by Grapqh-tag
+typeDefs can be a string or a graphql DocumentNode, such as created by grapqhql-tag
 
 
 ```typescript
 // Most likely pass in typeDefs, schemaBuilder is for advanced use cases 
-interface GraphQLGenieOptions {
-    schemaBuilder?: GraphQLSchemaBuilder;
-    typeDefs?: string | DocumentNode;
-    generatorOptions?: GenerateConfig;
-    fortuneOptions?: FortuneOptions;
+export interface GraphQLGenieOptions {
+	typeDefs?: string | DocumentNode;
+	schemaBuilder?: GraphQLSchemaBuilder;
+	generatorOptions?: GenerateConfig;
+	fortuneOptions?: FortuneOptions;
+	plugins?: GeniePlugin[] | GeniePlugin;
 }
 // All default to true
 interface GenerateConfig {
@@ -49,7 +51,7 @@ interface GenerateConfig {
     generateDelete?: boolean; // GraphQL API will have a Mutation to delete data of each type
     generateUpsert?: boolean; // GraphQL API will have a Mutation to upsert data of each type
     generateConnections?: boolean; // GraphQL API will have a Query to get all of a type, with filters, that returns a Connection rather than simple array
-		generateMigration?: boolean //a Query exportData and a Mutation importData will be created
+		generateMigrations?: boolean //a Query exportData and a Mutation importData will be created
 }
 ```
 
@@ -58,7 +60,9 @@ interface GenerateConfig {
 ####  **use**
 
 ```ts
-use(plugin: GeniePlugin): Promise<Void>
+use(plugin: GeniePlugin): GraphQLGenie
+useAsync(plugin: GeniePlugin): Promise<GraphQLGenie>
+
 ```
 
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
@@ -88,24 +92,35 @@ Return a string of the full schema with directives
 #### **getUserTypes**
 
 ```typescript
-getUserTypes(): Promise<string[]>
+getUserTypes(): string[]
 ```
 
 Returns an array of all the user defined object types in the schema
 
 ---
 
+#### **getModelTypes**
+
+```typescript
+getModelTypes(): IntrospectionType[]
+```
+
+Returns an array of all the object types that are part of the model (@model directive or all user types by default) in the schema
+
+---
+
 #### **getFragmentTypes**
 
 ```typescript
-getFragmentTypes(): Promise<object>
+getFragmentTypes(): object
 ```
 
 When using Apollo or another tool you may need to get information on the fragment types, genie provides a helper for this
 
 ```typescript
 import { IntrospectionFragmentMatcher, IntrospectionResultData } from 'apollo-cache-inmemory';
-const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
+// typescript may think the types don't match but they do so cast to <any>
+const introspectionQueryResultData = <any> genie.getFragmentTypes();
 const fragmentMatcher = new IntrospectionFragmentMatcher({
     introspectionQueryResultData
 });

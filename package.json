@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "GraphQL Genie",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -26,11 +26,12 @@
     "test": "jest",
     "testMutation": "jest ./tests/__tests__/mutationTests.ts",
     "testGenie": "jest ./tests/__tests__/genie.ts",
-    "testSubscriptions": "jest ./plugins/subscriptions/tests/__tests__/subscriptions.ts",
+    "testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.ts",
     "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
     "lint-no-fix": "tslint -c tslint.json -p linttsconfig.json"
   },
   "jest": {
+    "testURL": "http://localhost",
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
@@ -55,10 +56,11 @@
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "fortune": "^5.4.2",
-		"graphql": "^0.13.2",
-		"graphql-genie": "^0.4.0",
+    "graphql": "^0.13.2",
+    "graphql-fields": "^1.1.0",
+    "graphql-genie": "^0.4.0",
     "graphql-subscriptions": "^0.5.8",
-		"graphql-tag": "^2.9.2",		
+    "graphql-tag": "^2.9.2",
     "graphql-tools": "^3.0.0",
     "jest": "^23.1.0",
     "lodash": "^4.17.10",
