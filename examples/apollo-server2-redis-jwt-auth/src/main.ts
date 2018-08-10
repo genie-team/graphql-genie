@@ -86,7 +86,6 @@ const genie = new GraphQLGenie({
 });
 
 const startServer = async (genie: GraphQLGenie) => {
-	await genie.init();
 	const dataResolver = genie.getDataResolver();
 
 	// setup a basic admin user using genie import data function

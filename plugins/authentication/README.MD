@@ -41,9 +41,8 @@ import authPlugin from 'graphql-genie-authentication';
 // typedefs must have an enum named Role
 const genie = new GraphQLGenie(...args);
 
-await genie.init();
-// genie.use can be called before or after init
-await genie.use(authPlugin()); 
+// or you could pass in to the constructor as part of the plugins variable
+genie.use(authPlugin()); 
 
 //get the GraphQLSchema and use it with any other tools you need, such as subscriptions-transport-ws
 const schema = genie.getSchema();

@@ -30,7 +30,7 @@ constructor(options: GraphQLGenieOptions)
 
 Create a new GraphQLGenie. GraphQLGenieOptions look like:
 
-typeDefs can be a string or a graphql DocumentNode, such as created by Grapqh-tag
+typeDefs can be a string or a graphql DocumentNode, such as created by grapqhql-tag
 
 
 ```typescript

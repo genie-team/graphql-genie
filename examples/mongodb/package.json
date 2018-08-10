@@ -26,7 +26,7 @@
     "fortune": "^5.4.2",
     "fortune-mongodb": "^1.2.0",
     "graphql": "^0.13.2",
-    "graphql-genie": ">=0.3.0",
+    "graphql-genie": "^0.4.0",
     "graphql-genie-subscriptions": "^1.0.2",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",

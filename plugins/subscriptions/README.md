@@ -37,9 +37,8 @@ import { PubSub } from 'graphql-subscriptions';
 
 const genie = new GraphQLGenie(...args);
 
-await genie.init();
-// genie.use can be called before or after init
-await genie.use(subscriptionPlugin(new PubSub())); 
+// or you could pass in to the constructor as part of the plugins variable
+genie.use(subscriptionPlugin(new PubSub())); 
 
 //get the GraphQLSchema and use it with any other tools you need, such as subscriptions-transport-ws
 const schema = genie.getSchema();

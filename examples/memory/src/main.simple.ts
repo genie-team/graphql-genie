@@ -36,9 +36,8 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 	generateUpsert: true
 }});
 const buildClient = async (genie: GraphQLGenie) => {
-	await genie.init();
 	const schema = genie.getSchema();
-	const introspectionQueryResultData = <IntrospectionResultData>await genie.getFragmentTypes();
+	const introspectionQueryResultData = <IntrospectionResultData> genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
 	});
