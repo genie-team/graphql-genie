@@ -2,8 +2,7 @@ import { GraphQLObjectType, getNamedType, isNonNullType, isScalarType } from 'gr
 import { DataResolver, GeniePlugin, GraphQLGenie, filterNested, parseFilter, typeIsList } from 'graphql-genie';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { IResolverObject } from 'graphql-tools';
-import { camelCase, get, isEmpty } from 'lodash';
-import { isObject } from 'util';
+import { camelCase, get, isEmpty, isObject } from 'lodash';
 
 export default (pubsub: PubSub): GeniePlugin => {
 	return (genie: GraphQLGenie) => {

@@ -51,7 +51,7 @@ export default [
 			builtins(),
 			globals(),
 			!prod && serve({
-				contentBase: 'lib',
+				contentBase: '',
 				port: '10001'
 			}), 
 			!prod && livereload()

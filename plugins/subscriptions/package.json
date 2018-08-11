@@ -1,19 +1,18 @@
 {
   "name": "graphql-genie-subscriptions",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "GraphQL Genie Subscriptions",
   "browser": "./lib/browser.umd.js",
-  "jsnext:main": "./lib/module.js",
-  "module": "./lib/module.js",
-  "main": "./lib/module.js",
+  "jsnext:main": "./lib/subscriptions.js",
+  "module": "./lib/subscriptions.js",
+  "main": "./lib/subscriptions.js",
   "typings": "./lib/subscriptions.d.ts",
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p .",
     "browser": "rollup -c rollup.browser.js",
-    "module": "rollup -c rollup.module.js",
-    "prepublishOnly": "yarn install && npm run test && npm run build && npm run browser && npm run module",
+    "prepublishOnly": "yarn install && npm run test && npm run build && npm run browser",
     "test": "jest"
   },
   "jest": {

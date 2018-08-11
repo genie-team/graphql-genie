@@ -8,12 +8,11 @@
 		"declarationMap": true,
     "experimentalDecorators": true,
     "lib": [
-      "dom",
 			"es2017",
 			"esnext.asynciterable"
     ],
     "moduleResolution": "node",
-    "module": "es2015",
+    "module": "esnext",
     "target": "es2015",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -23,5 +22,5 @@
     "outDir": "lib"
   },
   "include": ["src/*.ts"],
-  "exclude": ["src/tests/*.ts"]
+  "exclude": ["tests/*.ts"]
 }

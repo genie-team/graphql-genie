@@ -13,7 +13,7 @@ interface RequiredRoles {
 
 const fragmentTypesMap = new Map<string, { name: string }[]>();
 let genie: GraphQLGenie;
-export default (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
+const authPluginFn =  (defaultCreateRole = 'ADMIN', defaultReadRole = 'ADMIN', defaultUpdateRole = 'ADMIN', defaultDeleteRole = 'ADMIN'): GeniePlugin => {
 	return (pluginGenie: GraphQLGenie) => {
 		genie = pluginGenie;
 		const fragmentTypes = get(genie.getFragmentTypes(), '__schema.types');
@@ -415,3 +415,5 @@ class AuthDirective extends SchemaDirectiveVisitor {
 		});
 	}
 }
+
+export default authPluginFn;

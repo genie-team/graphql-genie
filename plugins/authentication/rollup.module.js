@@ -9,9 +9,10 @@ export default [
 	{
 		input: 'src/authentication.ts',
 		output: {
-			name: 'graphql-genie',
+			name: 'graphql-genie-authentication',
 			file: pkg.module,
 			format: 'cjs',
+			exports: 'named',
 			globals: {
 				'graphql': 'graphql_1',
 				'lodash': 'lodash',
@@ -43,7 +44,7 @@ export default [
 			typescript(),
 			json()
 		],
-		external: ['graphql-genie', 'graphql-subscriptions', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+		external: ['graphql-genie', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 	}
 ];
 

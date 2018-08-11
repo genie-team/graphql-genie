@@ -1,7 +1,5 @@
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
-import builtins from 'rollup-plugin-node-builtins';
-import globals from 'rollup-plugin-node-globals';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import typescript from 'rollup-plugin-typescript2';
@@ -12,7 +10,7 @@ export default [
 	{
 		input: 'src/authentication.ts',
 		output: {
-			name: 'graphql-genie',
+			name: 'graphql-genie-authentication',
 			file: pkg.browser,
 			format: 'umd',
 			globals: {
@@ -54,11 +52,9 @@ export default [
 				],
 				'process': true,
 				'process.env.NODE_ENV': '"production"'
-			}),
-			builtins(),
-			globals()
+			})
 		],
-		external: ['graphql-subscriptions', 'graphql-tools', 'graphql-genie', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+		external: ['graphql-tools', 'graphql-genie', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 
 	}
 ];

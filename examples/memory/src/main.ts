@@ -4,6 +4,7 @@ import { SchemaLink } from 'apollo-link-schema';
 import { execute, graphql, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
 import subscriptionPlugin from 'graphql-genie-subscriptions';
+import auth from 'graphql-genie-authentication';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
 
@@ -73,6 +74,7 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 }});
 const buildClient = async (genie: GraphQLGenie) => {
 	genie.use(subscriptionPlugin(new PubSub()));
+	genie.use(auth());
 	const schema = genie.getSchema();
 	const introspectionQueryResultData = <any> genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
@@ -84,12 +86,15 @@ const buildClient = async (genie: GraphQLGenie) => {
 		connectToDevTools: true
 	});
 	client.initQueryManager();
-	window['fortune'] = genie.getDataResolver();
-	window['store'] = window['fortune'].getStore();
-	window['schema'] = schema;
-	window['client'] = client;
-	window['graphql'] = graphql;
-	window['subscribe'] = subscribe;
+	if (typeof window !== 'undefined') {
+		window['fortune'] = genie.getDataResolver();
+		window['store'] = window['fortune'].getStore();
+		window['schema'] = schema;
+		window['client'] = client;
+		window['graphql'] = graphql;
+		window['subscribe'] = subscribe;
+	}
+	
 
 	// create a bunch of data
 

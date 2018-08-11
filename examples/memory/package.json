@@ -6,8 +6,10 @@
   "author": "Genie Team",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p . && rollup -c rollup.bundle.js",
-		"start": "rollup -c rollup.bundle.js -w"
+    "compile": "tsc -p tsconfigCommonJs.json",
+    "node": "node lib/examples/memory/src/main.js",
+    "build": "rollup -c rollup.bundle.js",
+    "start": "rollup -c rollup.bundle.js -w"
   },
   "devDependencies": {
     "@types/graphql": "^0.13.1",
@@ -34,7 +36,8 @@
     "fortune": "^5.4.2",
     "graphql": "^0.13.2",
     "graphql-genie": "^0.4.0",
-    "graphql-genie-subscriptions": "^1.0.8",
+    "graphql-genie-authentication": "^1.1.2",
+    "graphql-genie-subscriptions": "^1.0.9",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tag": "^2.9.2",
     "graphql-tools": "^2.0.0",

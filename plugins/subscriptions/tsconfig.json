@@ -8,12 +8,11 @@
 		"declarationMap": true,
     "experimentalDecorators": true,
     "lib": [
-      "dom",
 			"es2017",
 			"esnext.asynciterable"
     ],
     "moduleResolution": "node",
-    "module": "es2015",
+    "module": "umd",
     "target": "es2015",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
