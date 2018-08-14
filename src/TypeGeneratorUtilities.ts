@@ -27,12 +27,16 @@ export class Relation {
 		if (!this.type1) {
 			return true;
 		} else {
-			return this.isSameRelative(relation);
+			return this.isSameRelation(relation) || this.isCurrentRelation(relation);
 		}
 	}
 
-	isSameRelative(relation: Relation): boolean {
+	isSameRelation(relation: Relation): boolean {
 		return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isList === relation.field0isList;
+	}
+
+	isCurrentRelation(relation: Relation): boolean {
+		return this.type1 === relation.type0 && this.field1 === relation.field0 && this.field1isList === relation.field0isList;
 	}
 
 	getInverse(type: string, field: string): string {
@@ -93,7 +97,7 @@ export class Relations {
 		} else {
 			const relation = this.relations.get(name);
 			if (relation.isValidRelative(newRelation)) {
-				if (!relation.isSameRelative(newRelation)) {
+				if (!relation.isSameRelation(newRelation)) {
 					relation.setRelative(newRelation);
 				}
 			} else {
