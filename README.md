@@ -17,7 +17,7 @@
 - [Demo](#demo)
 - [Getting started](#getting-started)
 - [Documentation and Features](#documentation-and-features)
-	- [Schema Defining and Altering](#schema-definition-and-useful-directives)
+	- [Schema Defining and Altering](#schema-defining-and-altering)
 	- [Data Store Options](#data-store-options)
 	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
 	- [GraphQLGenie API](#graphqlgenie-api)
