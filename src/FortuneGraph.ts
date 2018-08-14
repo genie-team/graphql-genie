@@ -158,6 +158,7 @@ export default class FortuneGraph implements DataResolver {
 		return graphQLTypeName;
 	}
 
+
 	public create = async (graphQLTypeName: string, records, meta?) => {
 		const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 		records['__typename'] = graphQLTypeName;

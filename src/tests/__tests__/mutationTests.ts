@@ -151,6 +151,113 @@ describe('mutationTests', () => {
 
 	});
 
+	test('update - push duplicate onto tags', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								push: ["fortune"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						}
+					}
+				) {
+					data {
+						id
+						tags
+						created
+						updated
+					}
+				}
+			}
+			`
+		});
+		expect(post.data.updatePost.data.created).not.toBeFalsy();
+		expect(post.data.updatePost.data.updated).not.toBeFalsy();
+		testData.posts[3].updated = new Date(post.data.updatePost.data.updated);
+		expect(post.data.updatePost.data.tags).toEqual(['genie', 'graphql', 'database', 'fortune', 'fortune']);
+	});
+
+	test('update - push test conditions passing', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								push: ["apollo"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						},
+						conditions: {
+							range: {created: ["2018-01-01T01:00:00.000Z", null]}
+						}
+					}
+				) {
+					data {
+						id
+						tags
+						created
+						updated
+					}
+				}
+			}
+			`
+		});
+		expect(post.data.updatePost.data.created).not.toBeFalsy();
+		const updated = new Date(post.data.updatePost.data.updated);
+		expect(updated > testData.posts[3].updated).toBe(true);
+		testData.posts[3].updated = updated;
+		expect(post.data.updatePost.data.tags).toEqual(['genie', 'graphql', 'database', 'fortune', 'fortune', 'apollo']);
+	});
+
+	test('update - push test conditions not passing', async () => {
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							tags: {
+								push: ["old"]
+							}
+						}
+						where: {
+							id: "${testData.posts[3].id}"
+						},
+						conditions: {
+							range: {created: [null, "2018-01-01T01:00:00.000Z"]}
+						}
+					}
+				) {
+					data {
+						id
+						tags
+						created
+						updated
+					}
+					unalteredData {
+						id
+						tags
+						created
+						updated
+					}
+				}
+			}
+			`
+		});
+		expect(post.data.updatePost.data).toBe(null);
+		expect(testData.posts[3].updated).toEqual(new Date(post.data.updatePost.unalteredData.updated));
+		expect(post.data.updatePost.unalteredData.tags).not.toContain('old');
+		expect(post.data.updatePost.unalteredData.tags).toEqual(['genie', 'graphql', 'database', 'fortune', 'fortune', 'apollo']);
+
+	});
+
 	test('update - pull from tags', async () => {
 		const post = await client.mutate({
 			mutation: gql`mutation {
@@ -169,14 +276,17 @@ describe('mutationTests', () => {
 					data {
 						id
 						tags
+						updated
 					}
 				}
 			}
 			`
 		});
 
-		post.data.updatePost.data.tags.forEach(x => expect(['genie', 'graphql', 'database']).toContain(x));
-		expect(post.data.updatePost.data.tags).toHaveLength(3);
+		expect(post.data.updatePost.data.tags).toEqual(['genie', 'graphql', 'database', 'apollo']);
+		const updated = new Date(post.data.updatePost.data.updated);
+		expect(updated > testData.posts[3].updated).toBe(true);
+		testData.posts[3].updated = updated;
 
 	});
 

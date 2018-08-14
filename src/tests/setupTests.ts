@@ -9,6 +9,8 @@ interface Submission {
 	id: ID! @unique
 	title: String!
 	text: String
+	created: DateTime @createdTimestamp
+	updated: DateTime @updatedTimestamp
 }
 
 type Post implements Submission {
@@ -20,6 +22,8 @@ type Post implements Submission {
 	likedBy: [User!] @relation(name: "LikedPosts") @connection
 	comments: [Comment] @relation(name: "CommentsOnPost")
 	published: Boolean @default(value: "true")
+	created: DateTime @createdTimestamp
+	updated: DateTime @updatedTimestamp
 }
 
 type Comment implements Submission {
@@ -29,6 +33,8 @@ type Comment implements Submission {
   author: User @relation(name: "WrittenSubmissions")
 	post: Post @relation(name: "CommentsOnPost")
 	approved: Boolean @default(value: "true")
+	created: DateTime @createdTimestamp
+	updated: DateTime @updatedTimestamp
 }
 
 

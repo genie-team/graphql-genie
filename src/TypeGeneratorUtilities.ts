@@ -273,7 +273,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const recursed = returnType ? true : false;
 		if (!returnType) {
 			returnType = (<GraphQLObjectType>_info.returnType).getFields().data.type;
-			returnType = <GraphQLOutputType>getNamedType(returnType);
+			returnType = <GraphQLObjectType>getNamedType(returnType);
 		}
 		const returnTypeName = getReturnType(returnType);
 		const clientMutationId = _args.input && _args.input.clientMutationId ? _args.input.clientMutationId : '';
@@ -297,7 +297,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		disconnectArgs = disconnectArgs && !isArray(disconnectArgs) ? [disconnectArgs] : disconnectArgs;
 
 		const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
-
+		const conditionsArgs = _args.conditions ? _args.conditions : _args.input && _args.input.conditions ? _args.input.conditions : null;
 		// lets make sure we are able to add this (prevent duplicates on unique fields, etc)
 
 		const canAddResults = await Promise.all([dataResolver.canAdd(returnTypeName, createArgs, {context: _context, info: _info}),
@@ -407,14 +407,17 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 
 		// now updates
 		updateArgs.forEach((updateArg) => {
+			// make sure it is prototype correctly to prevent error
 			updateArg = updateArg.hasOwnProperty ? updateArg : Object.assign({}, updateArg);
 			// only do updates on new values
 			for (const updateArgKey in updateArg) {
 				const currArg = updateArg[updateArgKey];
 				const currRecordArg = currRecord[updateArgKey];
+
 				if (eq(currRecordArg, currArg)) {
 					delete currRecord[updateArgKey];
 				} else if (isArray(currArg) && isArray(currRecordArg)) {
+					// for relations we can't have duplicates, only relations will be arrays
 					updateArg[updateArgKey] = difference(currArg, currRecordArg);
 				}
 			}
@@ -422,9 +425,19 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 			if (cleanArg && !isEmpty(cleanArg)) {
 				dataResolverPromises.push(new Promise((resolve, reject) => {
 					cleanArg.id = currRecord.id;
-					dataResolver.update(returnTypeName, cleanArg, {context: _context, info: _info}).then(data => {
-						const id = isArray(data) ? map(data, 'id') : data.id;
-						resolve({ index, key, id, data });
+					const meta = {context: _context, info: _info};
+
+					meetsConditions(conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info).then(meetsConditionsResult => {
+						if (!meetsConditionsResult) {
+							resolve({ index, key, id: [], unalteredData: currRecord});
+						} else {
+							dataResolver.update(returnTypeName, cleanArg, meta).then(data => {
+								const id = isArray(data) ? map(data, 'id') : data.id;
+								resolve({ index, key, id, data });
+							}).catch(reason => {
+								reject(reason);
+							});
+						}
 					}).catch(reason => {
 						reject(reason);
 					});
@@ -506,7 +519,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 							throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'delete', {arg: whereArgs, typename: returnTypeName});
 						}
 						dataResolver.delete(currRecord.__typename, [currRecord.id], {context: _context, info: _info}).then(() => {
-							resolve({ index, key, id: null, currRecord });
+							resolve({ index, key, id: null, data: currRecord });
 						}).catch(reason => {
 							reject(reason);
 						});
@@ -549,16 +562,18 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		} else {
 			await dataResolver.endTransaction();
 			let data = get(dataResult, '[0].data');
-			if (!data && mutation === Mutation.Delete) {
+			const unalteredData = get(dataResult, '[0].unalteredData', null);
+			if (!unalteredData && !data && mutation === Mutation.Delete) {
 				data = currRecord;
-			} else if (!data) {
+			} else if (!unalteredData && !data) {
 				// if everything was already done on the object (updates, deletions and disconnects) it should be the currRecord but with changes
 				data = currRecord;
 			}
 
 			return {
 				data,
-				clientMutationId
+				clientMutationId,
+				unalteredData
 			};
 		}
 	};
@@ -842,6 +857,9 @@ export const parseFilter = (filter: object, type: GraphQLNamedType) => {
 export const filterNested = async (filter: object, orderBy: object, type: GraphQLNamedType, fortuneReturn: any[], cache: Map<string, object>, dataResolver: DataResolver, _context, _info): Promise<Set<string>> => {
 	// if they have nested filters on types we need to get that data now so we can filter at this root query
 	const pullIds = new Set<string>();
+	if (!cache) {
+		cache = new Map<string, object>();
+	}
 	if ((orderBy || filter)  && (isObjectType(type) || isInterfaceType(type))) {
 		await Promise.all(map(type.getFields(), async (field) => {
 			const currFilter = filter && filter[field.name] ? filter[field.name] : filter && filter[`f_${field.name}`] ? filter[`f_${field.name}`] : null;
@@ -896,8 +914,10 @@ export const getPayloadTypeName = (typeName: string): string => {
 export const getPayloadTypeDef = (typeName: string): string => {
 	return `
 		type ${getPayloadTypeName(typeName)} {
-			data: ${typeName}!
+			data: ${typeName}
 			clientMutationId: String
+			#In the case of a update or delete and you had conditions, if the conditions did not match the existing object will be returned here. data will be null
+			unalteredData: ${typeName}
 		}`;
 };
 
@@ -921,4 +941,23 @@ export const getRecordFromResolverReturn = (record)  => {
 	record = record && record.fortuneReturn ? record.fortuneReturn : record;
 	record = record && record.data ? record.data : record;
 	return record;
+};
+
+export const meetsConditions = async (conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info) => {
+	let meetsConditions = true;
+	if (conditionsArgs) {
+		const conditionsOptions = parseFilter(conditionsArgs, <GraphQLNamedType> returnType);
+		let dataAfterConditions = dataResolver.applyOptions(returnTypeName, currRecord, conditionsOptions);
+		if (!isEmpty(dataAfterConditions)) {
+			if (conditionsArgs && (isObjectType(returnType) || isInterfaceType(returnType))) {
+				const pullIds = await filterNested(conditionsArgs, null, returnType, currRecord, null, dataResolver, _context, _info);
+				dataAfterConditions = dataAfterConditions.filter(entry => !pullIds.has(entry.id));
+			}
+		}
+		if (isEmpty(dataAfterConditions)) {
+			meetsConditions = false;
+		}
+	}
+
+	return meetsConditions;
 };

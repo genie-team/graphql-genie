@@ -19,6 +19,7 @@ type City {
 	user: [User]!
 	founded: Date
 	population: Int
+	created: DateTime @createdTimestamp
 }
 type User {
 	id: ID! @unique
