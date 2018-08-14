@@ -7,7 +7,7 @@
 
 ## Type Definitions
 
-**GraphQL Genie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**\
+**GraphQL Genie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**
 
 GraphQL Genie supports interfaces and unions! You may want to look into using the `@storeName` [custom directive](#custom-directives-you-can-use) and see special concerns in [altering your schema](#altering-your-schema) when using them.
 
