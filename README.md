@@ -28,6 +28,7 @@
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
 - [Roadmap](#roadmap)
 - [Changelog](#changelog)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -210,6 +211,17 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 ## Changelog
 * See [releases](https://github.com/genie-team/graphql-genie/releases)
+
+## Contributing
+* Fork
+* Make Changes
+* Run the following and make sure no failures or errors
+	* npm run test
+	* npm run lint
+	* npm run build
+	* npm run browser
+	* npm run module
+* Open pull request
 
 ## Thanks/Credit <!-- omit in toc --> 
 
