@@ -315,6 +315,9 @@ export default class FortuneGraph implements DataResolver {
 		each(keys(this.schemaInfo), (typeName) => {
 			if (typeName !== 'Node' && !this.fortuneTypeNames.has(typeName)) {
 				const type = <IntrospectionInterfaceType>this.schemaInfo[typeName];
+				let storeObj = this.getStoreName(type, null, null);
+				let storeName = storeObj.storeName;
+				let storeTypeName = storeObj.typeName;
 				if (!isEmpty(type.possibleTypes)) {
 					const possibleTypes = [type.name];
 					each(type.possibleTypes, possibleType => {
@@ -322,15 +325,25 @@ export default class FortuneGraph implements DataResolver {
 							possibleTypes.push(possibleType.name);
 						}
 						possibleType = this.schemaInfo[possibleType.name];
+						storeObj = this.getStoreName(possibleType, storeName, storeTypeName);
+						storeName = storeObj.storeName;
+						storeTypeName = storeObj.typeName;
 						each(possibleType['interfaces'], currInterface => {
 							currInterface = this.schemaInfo[currInterface.name];
-							if (currInterface.name !== 'Node' && currInterface.name !== typeName) {
+							if (currInterface.name !== 'Node' && currInterface.name !== storeTypeName) {
+								storeObj = this.getStoreName(currInterface, storeName, storeTypeName);
+								storeName = storeObj.storeName;
+								storeTypeName = storeObj.typeName;
 								if (possibleTypes.indexOf(currInterface.name) < 0) {
 									possibleTypes.push(currInterface.name);
 								}
 								if (!isEmpty(currInterface.possibleTypes)) {
 									each(currInterface.possibleTypes, currInterfacePossibleType => {
 										if (possibleTypes.indexOf(currInterfacePossibleType.name) < 0) {
+											currInterfacePossibleType = this.schemaInfo[currInterfacePossibleType.name];
+											storeObj = this.getStoreName(currInterfacePossibleType, storeName, storeTypeName);
+											storeName = storeObj.storeName;
+											storeTypeName = storeObj.typeName;
 											possibleTypes.push(currInterfacePossibleType.name);
 										}
 									});
@@ -339,13 +352,20 @@ export default class FortuneGraph implements DataResolver {
 						});
 						each(possibleType['unions'], currUnion => {
 							currUnion = this.schemaInfo[currUnion.name];
-							if (currUnion.name !== typeName) {
+							if (currUnion.name !== storeTypeName) {
 								if (possibleTypes.indexOf(currUnion.name) < 0) {
+									storeObj = this.getStoreName(currUnion, storeName, storeTypeName);
+									storeName = storeObj.storeName;
+									storeTypeName = storeObj.typeName;
 									possibleTypes.push(currUnion.name);
 								}
 								if (!isEmpty(currUnion.possibleTypes)) {
 									each(currUnion.possibleTypes, currUnionPossibleType => {
 										if (possibleTypes.indexOf(currUnionPossibleType.name) < 0) {
+											currUnionPossibleType = this.schemaInfo[currUnionPossibleType.name];
+											storeObj = this.getStoreName(currUnionPossibleType, storeName, storeTypeName);
+											storeName = storeObj.storeName;
+											storeTypeName = storeObj.typeName;
 											possibleTypes.push(currUnionPossibleType.name);
 										}
 									});
@@ -353,17 +373,36 @@ export default class FortuneGraph implements DataResolver {
 							}
 						});
 					});
-					possibleTypes.sort();
-					const fortuneTypeName = possibleTypes.join('_');
+					const fortuneTypeName = storeName || (possibleTypes.sort() && possibleTypes.join('_'));
 					each(possibleTypes, currTypeName => {
 						this.fortuneTypeNames.set(currTypeName, fortuneTypeName);
 					});
+				} else if (!isEmpty(storeName)) {
+					this.fortuneTypeNames.set(typeName, storeName);
 				}
 			}
 
 		});
 
 		return this.fortuneTypeNames;
+	}
+
+	private getStoreName = (type, currStoreName: string, currTypeName: string): {storeName: string, typeName: string} => {
+		let storeName = get(type, 'metadata.storeName', null);
+		let typeName = type.name;
+		if (!isEmpty(storeName) && currStoreName && currStoreName !== storeName) {
+			throw new Error(`Conflictiing store names which need to be the same
+			${storeName} on ${typeName}
+			does not match
+			${currStoreName} on ${currTypeName}
+		`);
+		}
+		typeName = !isEmpty(storeName) ? typeName : currTypeName;
+		storeName = !isEmpty(storeName) ? storeName : currStoreName;
+		return {
+			storeName,
+			typeName
+		};
 	}
 
 	public getFortuneTypeName = (name: string): string => {

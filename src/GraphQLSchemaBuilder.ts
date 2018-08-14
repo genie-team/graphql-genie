@@ -30,9 +30,15 @@ export class GraphQLSchemaBuilder {
 			value: String!
 		) on FIELD_DEFINITION
 
+		directive @storeName(
+			value: String!
+		) on OBJECT | INTERFACE | UNION
+
 		directive @unique on FIELD_DEFINITION
 
 		directive @updatedTimestamp on FIELD_DEFINITION
+
+		directive @createdTimestamp on FIELD_DEFINITION
 
 		directive @createdTimestamp on FIELD_DEFINITION
 
@@ -50,7 +56,7 @@ export class GraphQLSchemaBuilder {
 			JSON: GraphQLJSON,
 			Date: GraphQLDate,
 			Time: GraphQLTime,
-			DateTime: GraphQLDateTime
+			DateTime: GraphQLDateTime,
 		};
 
 		this.config = $config;
@@ -123,7 +129,8 @@ export class GraphQLSchemaBuilder {
 				default: DefaultDirective,
 				unique: UniqueDirective,
 				createdTimestamp: CreatedTimestampDirective,
-				updatedTimestamp: UpdatedTimestampDirective
+				updatedTimestamp: UpdatedTimestampDirective,
+				storeName: StoreNameDirective
 			},
 			resolverValidationOptions: {
 				requireResolversForResolveType: false
@@ -369,6 +376,24 @@ class ModelDirective extends SchemaDirectiveVisitor {
 		}
 		object._interfaces.push(this.schema.getTypeMap().Node);
 		has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(object) : set(this.schema, '_implementations.Node', [object]);
+	}
+}
+
+class StoreNameDirective extends SchemaDirectiveVisitor {
+	public visitObject(object) {
+		this.setStoreName(object);
+	}
+
+	public visitUnion(union) {
+		this.setStoreName(union);
+	}
+
+	public visitInterface(iface) {
+		this.setStoreName(iface);
+	}
+
+	private setStoreName(type) {
+		type.storeName = this.args.value;
 	}
 }
 

@@ -113,11 +113,11 @@ export class Relations {
 	}
 
 	private throwError(name: string, type: string, primaryField: string, relatedField: string) {
-		console.error('Bad schema, relation could apply to multiple fields\n',
-			'relation name', name, '\n',
-			'fortune name', type, '\n',
-			'curr field', primaryField, '\n',
-			'other field', relatedField);
+		throw new Error(`Bad schema, relation could apply to multiple fields
+			relation name: ${name}
+			fortune name: ${type}
+			curr field: ${primaryField}
+			other field: ${relatedField}`);
 	}
 
 }

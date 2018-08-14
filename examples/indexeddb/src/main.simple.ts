@@ -6,25 +6,52 @@ import { graphql, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie } from '../../../src/index';
 import gql from 'graphql-tag';
 
+// const typeDefs = gql`
+// type City {
+// 	id: ID! @unique
+// 	name: String! @unique
+// 	neighborhoods: [String]!
+// 	user: [User]!
+// 	founded: Date
+// 	population: Int
+// }
+// type User {
+// 	id: ID! @unique
+// 	displayname: String @unique
+// 	email: String! @unique
+// 	address: City
+// }
+// `;
+
 const typeDefs = gql`
-
-# This is sample IDL schema for GraphQL Genie.
-#
-
-
-type City {
-	id: ID! @unique
-	name: String! @unique
-	neighborhoods: [String]!
-	user: [User]!
-	founded: Date
-	population: Int
+interface Animal  {
+  id: ID!
+  name: String
 }
-type User {
-	id: ID! @unique
-	displayname: String @unique
-	email: String! @unique
-	address: City
+
+type Dog implements Animal @storeName(value:"Animal") {
+  id: ID!
+  name:String!
+	breed: String
+	weight: Int!
+}
+
+type Cat implements Animal {
+  id: ID!
+  name:String!
+	markings: String
+}
+
+type Monkey implements Animal {
+  id: ID!
+  name:String!
+	species: String
+}
+
+type Bar @storeName(value:"Foo") {
+  id: ID!
+  name:String!
+	markings: String
 }
 `;
 
