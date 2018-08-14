@@ -34,7 +34,7 @@ GraphQL Genie supports interfaces and unions! You may want to look into using th
 *  **@updatedTimestamp**
 	*  The field will automatically be updated when the record is updated
 	*  Must be of type DateTime
-*  [**@storeName(value: String!)**](#store-name)
+*  ####@storeName(value: String!)
 	*  If you want the actual name of the type in your backend store to be something other than based off the type name
 	*  Interfaces and Unions
 		*  With Genie when using Interfaces and Unions only one actual backend store type will be created for an Interface/Union. For example if you had the interface `Animal` and two types `Dog` and `Cat` that implement it will create the actual store type `Animal_Cat_Dog`. The backend type is a alphabatized union separated by _. 
