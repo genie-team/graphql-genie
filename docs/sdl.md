@@ -9,7 +9,7 @@
 
 **GraphQL Genie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**\
 
-GraphQL Genie supports interfaces and unions! You may want to look into using the @storeName [custom directive](#custom-directives-you-can-use) and see special concerns in [altering your schema](#altering-your-schema) when using them.
+GraphQL Genie supports interfaces and unions! You may want to look into using the `@storeName` [custom directive](#custom-directives-you-can-use) and see special concerns in [altering your schema](#altering-your-schema) when using them.
 
 ### Custom directives you can use.
  * **@unique**
@@ -93,9 +93,9 @@ In most cases altering your schema after some data has been created should cause
 
 If you add a non-null field you may get errors querying that field on data that existed before that field existed (returning null on non null type) unless you update every record of that data to add a value first.
 
-If you are adding a new type that implements an interface or is part of a union you may need to use the @storeName [custom directive](#custom-directives-you-can-use) in order to make sure your past data and new data are in the same place of your store.
+If you are adding a new type that implements an interface or is part of a union you may need to use the `@storeName` [custom directive](#custom-directives-you-can-use) in order to make sure your past data and new data are in the same place of your store.
 
-If you are adding a single existing type to a new union or interface you will similarily have to use the @storeName [custom directive](#custom-directives-you-can-use).
+If you are adding a single existing type to a new union or interface you will similarily have to use the `@storeName` [custom directive](#custom-directives-you-can-use).
 
 **_Warning_**
 
