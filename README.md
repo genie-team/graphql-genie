@@ -17,6 +17,7 @@
 - [Demo](#demo)
 - [Getting started](#getting-started)
 - [Documentation and Features](#documentation-and-features)
+	- [Schema Defining and Altering](#schema-defining-and-altering)
 	- [Data Store Options](#data-store-options)
 	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
 	- [GraphQLGenie API](#graphqlgenie-api)
@@ -28,6 +29,7 @@
 - [Features/Advantages/Differences](#featuresadvantagesdifferences)
 - [Roadmap](#roadmap)
 - [Changelog](#changelog)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -110,6 +112,10 @@ const schema: GraphQLSchema = genie.getSchema();
 ```
 
 ## Documentation and Features
+
+### Schema Defining and Altering
+
+[Documentation in docs/sdl.md](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md)
 
 ### Data Store Options
 
@@ -210,6 +216,17 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 ## Changelog
 * See [releases](https://github.com/genie-team/graphql-genie/releases)
+
+## Contributing
+* Fork
+* Make Changes
+* Run the following and make sure no failures or errors
+	* npm run test
+	* npm run lint
+	* npm run build
+	* npm run browser
+	* npm run module
+* Open pull request
 
 ## Thanks/Credit <!-- omit in toc --> 
 

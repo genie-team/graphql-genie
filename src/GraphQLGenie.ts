@@ -197,7 +197,7 @@ export class GraphQLGenie {
 
 	}
 
-	public use = (plugin: GeniePlugin) => {
+	public use = (plugin: GeniePlugin): GraphQLGenie => {
 		const pluginResult = plugin(this);
 		if (pluginResult && isFunction(pluginResult.then)) {
 			throw new Error('You must use call .useAsync for plugins that are asynchronous');
@@ -206,7 +206,7 @@ export class GraphQLGenie {
 		return this;
 	}
 
-	public useAsync = async (plugin: GeniePlugin) => {
+	public useAsync = async (plugin: GeniePlugin): Promise<GraphQLGenie> => {
 		const pluginResult = plugin(this);
 		if (pluginResult && isFunction(pluginResult.then)) {
 			await pluginResult;

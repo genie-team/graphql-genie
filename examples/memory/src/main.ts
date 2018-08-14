@@ -94,7 +94,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		window['graphql'] = graphql;
 		window['subscribe'] = subscribe;
 	}
-	
 
 	// create a bunch of data
 

@@ -33,6 +33,10 @@ Every query will have optional arguments `where`, `first`, `last`, `skip`, `befo
 
 If `generateMigrations` is true in the generatorOptions (defaults to true) a query will be created called `exportData`. This exports all of the data (or the specified types) in the data base. See the [getRawData function](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata) of GraphQL Genie for more details as this query calls that function
 
+```graphql
+exportData(types: [String]): JSON
+```
+
 ## Query docs
 
 For the following typedefs `user`, `users`, `city` and `cities` queries will be created.

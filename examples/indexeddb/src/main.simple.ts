@@ -8,10 +8,6 @@ import gql from 'graphql-tag';
 
 const typeDefs = gql`
 
-# This is sample IDL schema for GraphQL Genie.
-#
-
-
 type City {
 	id: ID! @unique
 	name: String! @unique
@@ -21,12 +17,7 @@ type City {
 	population: Int
 	created: DateTime @createdTimestamp
 }
-type User {
-	id: ID! @unique
-	displayname: String @unique
-	email: String! @unique
-	address: City
-}
+
 `;
 
 const fortuneOptions: FortuneOptions = {
