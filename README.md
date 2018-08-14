@@ -17,6 +17,7 @@
 - [Demo](#demo)
 - [Getting started](#getting-started)
 - [Documentation and Features](#documentation-and-features)
+	- [Schema Definition and useful directives](#schema-definition-and-useful-directives)
 	- [Data Store Options](#data-store-options)
 	- [GraphQL Genie Schema API (queries and mutations)](#graphql-genie-schema-api-queries-and-mutations)
 	- [GraphQLGenie API](#graphqlgenie-api)
@@ -111,6 +112,10 @@ const schema: GraphQLSchema = genie.getSchema();
 ```
 
 ## Documentation and Features
+
+### Schema Definition and useful directives
+
+[Documentation in docs/sdl.md](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md)
 
 ### Data Store Options
 
