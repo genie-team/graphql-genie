@@ -48,7 +48,7 @@ export class GenerateUpdate implements TypeGenerator {
 				fields: {
 					data: { type: new GraphQLNonNull(generator.generateUpdateInput()) },
 					where: { type: new GraphQLNonNull(generator.generateWhereUniqueInput()) },
-					conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators) },
+					conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'Update will only be performed if these conditions are met' },
 					clientMutationId: { type: GraphQLString }
 				}
 			});

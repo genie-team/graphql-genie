@@ -6,13 +6,13 @@ import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { assign, forOwn, isArray, isEmpty, isFunction, isPlainObject, set } from 'lodash';
+import { assign, forOwn, get, isArray, isEmpty, isFunction, isPlainObject, isString, set } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
-import { DataResolver, FortuneOptions, GenerateConfig, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { DataResolver, FortuneOptions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
-import { Relations, computeRelations, getTypeResolver } from './TypeGeneratorUtilities';
+import { Relations, computeRelations, getTypeResolver, meetsConditions } from './TypeGeneratorUtilities';
 import { GenerateGetOne } from './GenerateGetOne';
 import { GenerateMigrations } from './GenerateMigrations';
 
@@ -150,7 +150,7 @@ export class GraphQLGenie {
 		}
 
 		if (this.config.generateMigrations) {
-			this.generators.push(new GenerateMigrations(this));
+			this.generators.push(new GenerateMigrations(this, currOutputObjectTypeDefs));
 		}
 
 		let newTypes = '';
@@ -231,7 +231,7 @@ export class GraphQLGenie {
 		return this.schemaBuilder.printSchemaWithDirectives();
 	}
 
-	private mapIdsToCreatedIds = (currIDs, objectsMap: Map<String, Object>) => {
+	private mapIdsToCreatedIds = (currIDs, objectsMap: Map<String, GenericObject>) => {
 		if (currIDs) {
 			// tslint:disable-next-line:prefer-conditional-expression
 			if (isArray(currIDs)) {
@@ -250,17 +250,56 @@ export class GraphQLGenie {
 		return currIDs;
 	}
 
-	public importRawData = async (data: any[], merge = false, defaultTypename?: string, context?) => {
-		const meta = context ? {context} : undefined;
-		let index = 0;
+	public importRawData = async (data: any[], merge = false, defaultTypename?: string, context?, conditions?: { id: string | string[], conditions: GenericObject }[]) => {
+		const meta = context ? { context } : undefined;
+		conditions = conditions && merge ? conditions : [];
+		// altered data
+		const alteredData = new Map<String, GenericObject>();
+		// there is a condition but nothing with this id even exists
+		const missingIds: string[] = [];
+		const missingData: GenericObject[] = [];
+		// didn't meet the condition
+		const unalteredData: GenericObject[] = [];
+
+		const userTypes = this.getUserTypes();
+
+		const conditionsMap = new Map<string, GenericObject[]>();
+		conditions.forEach(condition => {
+			if (!isEmpty(condition.conditions)) {
+				const ids = isArray(condition.id) ? condition.id : [condition.id];
+				ids.forEach(id => {
+					if (!conditionsMap.has(id)) {
+						conditionsMap.set(id, []);
+					}
+					conditionsMap.get(id).push(condition.conditions);
+				});
+			}
+		});
+
 		const createPromises = [];
 		let createData = data;
-		const objectsMap = new Map<String, Object>();
-		data = data.map(object => {
-			const typeName = object['__typename'] || defaultTypename;
+		const objectsMap = new Map<String, GenericObject>();
+		data = data.map((object, index) => {
+			if (isEmpty(object)) {
+				throw new Error('Data has a null or empty object at index ' + index);
+			}
+			let typeName = object.__typename;
+			let idTypename: string;
+			if (!typeName && isString(object.id)) {
+				try {
+					idTypename = atob(object.id).split(':')[1];
+				} catch (e) {
+					// empty by design
+				}
+			}
+			typeName = idTypename && !typeName ? idTypename : typeName;
+			typeName = typeName ? typeName : defaultTypename;
 			if (!typeName) {
 				throw new Error('Every object must have a __typename or defaultTypeName must be provided');
+			} else if (!userTypes.includes(typeName)) {
+				throw new Error(`Bad typename in data, ${typeName} does not exist in schema`);
 			}
+			object.__typename = typeName;
 			object.id = object.id || this.graphQLFortune.computeId(typeName);
 			return object;
 		});
@@ -268,31 +307,36 @@ export class GraphQLGenie {
 			createData = [];
 			const findPromises = [];
 			data.forEach(object => {
-				const typeName = object['__typename'] || defaultTypename;
-				findPromises.push(this.graphQLFortune.find(typeName, object['id']));
+				const typeName = object.__typename;
+				findPromises.push(this.graphQLFortune.find(typeName, object.id));
 			});
 			const findResults = await Promise.all(findPromises);
-			findResults.forEach(result => {
+			findResults.forEach((result, index) => {
 				if (isEmpty(result)) {
-					createData.push(data[index]);
+					if (conditionsMap.has(data[index].id)) {
+						missingIds.push(data[index].id);
+						missingData.push(data[index]);
+					} else {
+						createData.push(data[index]);
+					}
 				} else {
 					objectsMap.set(result.id, result);
 				}
-				index++;
 			});
 		}
 		createData.forEach(object => {
-			const typeName = object['__typename'] || defaultTypename;
+			const typeName = object.__typename;
 			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
 			const fieldMap = schemaType.getFields();
 			const objectFields = Object.keys(object);
-			const record = {};
+			const record: GenericObject = {};
 			if (merge && object.id) {
-				record['id'] = object.id;
+				record.id = object.id;
 			}
 			objectFields.forEach(fieldName => {
 				const schemaField = fieldMap[fieldName];
 				const currVal = object[fieldName];
+				// only add if truthy and not empty
 				let addToRecord = false;
 				if (isArray(currVal) && !isEmpty(currVal)) {
 					addToRecord = true;
@@ -309,7 +353,8 @@ export class GraphQLGenie {
 			createPromises.push(
 				new Promise((resolve, reject) => {
 					this.graphQLFortune.create(typeName, record, meta).then(createdObj => {
-						objectsMap.set(object['id'], createdObj);
+						objectsMap.set(object.id, createdObj);
+						alteredData.set(object.id, createdObj);
 						resolve(createdObj);
 					}).catch(reason => {
 						reject(reason);
@@ -319,87 +364,116 @@ export class GraphQLGenie {
 		});
 		await Promise.all(createPromises);
 
-		index = 0;
 		const updatePromies = [];
-		data.forEach(object => {
-			const typeName = object['__typename'] || defaultTypename;
+
+		// do the updates
+		await Promise.all(data.map(async (object): Promise<void> => {
+			if (missingIds.includes(object.id)) {
+				return;
+			}
+			const typeName = object.__typename;
 			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
-			const fieldMap = schemaType.getFields();
-			const objectFields = Object.keys(object);
-			let update = {};
-			objectFields.forEach(fieldName => {
-				const schemaField = fieldMap[fieldName];
-				if (schemaField) {
-					const schemaFieldType = getNamedType(schemaField.type);
-					if (merge || !isScalarType(schemaFieldType)) {
-						let currValue = object[fieldName];
-						if (!isEmpty(currValue)) {
-							if (!isScalarType(schemaFieldType)) {
-								if (isArray(currValue)) {
-									// if it's an array then set
+			const existingData = objectsMap.get(object.id);
+			let objMeetsConditions = true;
+			if (conditionsMap.has(object.id)) {
+				const allConditions = await Promise.all(conditionsMap.get(object.id).map(async (condition): Promise<boolean> => {
+					return await meetsConditions(condition, typeName, schemaType, existingData, this.graphQLFortune, get(context, 'context', context), get(context, 'info'));
+				}));
+				objMeetsConditions = !allConditions.includes(false);
+			}
+			if (!objMeetsConditions) {
+				unalteredData.push(existingData);
+			} else {
+				let update: GenericObject = {};
+				const objectFields = Object.keys(object);
+				const fieldMap = schemaType.getFields();
 
-									// use new ids if found
-									currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+				objectFields.forEach(fieldName => {
+					const schemaField = fieldMap[fieldName];
+					if (schemaField) {
+						const schemaFieldType = getNamedType(schemaField.type);
+						if (merge || !isScalarType(schemaFieldType)) {
+							let currValue = object[fieldName];
+							if (!isEmpty(currValue)) {
+								if (!isScalarType(schemaFieldType)) {
+									if (isArray(currValue)) {
+										// if it's an array then set
 
-									update[fieldName] = { set: currValue };
-								} else {
-									// if not an array we need to handle scalars vs objects with push/pull/set
+										// use new ids if found
+										currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
 
-									// handle in case it's the full object not just id
-									if (isPlainObject(currValue) && currValue.id) {
-										currValue = currValue.id;
-									}
-									// if it's not an object than it's just an id so we should set it
-									// tslint:disable-next-line:prefer-conditional-expression
-									if (!isPlainObject(currValue)) {
-										// use the new object id
-										update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
+										update[fieldName] = { set: currValue };
 									} else {
-										// it's an object so it is push/pull/set
-										if (currValue.push) {
-											currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
-										}
-										if (currValue.pull) {
-											currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
-										}
-										if (currValue.set) {
-											currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
-										}
-										update[fieldName] = currValue;
-									}
-								}
-							} else if (!isPlainObject(currValue)) {
-								currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
-								// not an object and a scalar but lets check if it's an array
-								update[fieldName] = isArray(currValue) ? { set: currValue } : currValue;
-							} else {
-								// it's an object so it is push/pull/set
-								if (currValue.push) {
-									currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
-								}
-								if (currValue.pull) {
-									currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
-								}
-								if (currValue.set) {
-									currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
-								}
-								update[fieldName] = currValue;
-							}
+										// if not an array we need to handle scalars vs objects with push/pull/set
 
+										// handle in case it's the full object not just id
+										if (isPlainObject(currValue) && currValue.id) {
+											currValue = currValue.id;
+										}
+										// if it's not an object than it's just an id so we should set it
+										// tslint:disable-next-line:prefer-conditional-expression
+										if (!isPlainObject(currValue)) {
+											// use the new object id
+											update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
+										} else {
+											// it's an object so it is push/pull/set
+											if (currValue.push) {
+												currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+											}
+											if (currValue.pull) {
+												currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+											}
+											if (currValue.set) {
+												currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+											}
+											update[fieldName] = currValue;
+										}
+									}
+								} else if (!isPlainObject(currValue)) {
+									currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+									// not an object and a scalar but lets check if it's an array
+									update[fieldName] = isArray(currValue) ? { set: currValue } : currValue;
+								} else {
+									// it's an object so it is push/pull/set
+									if (currValue.push) {
+										currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+									}
+									if (currValue.pull) {
+										currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+									}
+									if (currValue.set) {
+										currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+									}
+									update[fieldName] = currValue;
+								}
+
+							}
 						}
 					}
+				});
+				if (!isEmpty(update)) {
+					update.id = objectsMap.get(object.id).id;
+					update = this.graphQLFortune.generateUpdates(update);
+					updatePromies.push(
+						new Promise((resolve, reject) => {
+							this.graphQLFortune.update(typeName, update, meta, { fortuneFormatted: true }).then(updatedObj => {
+								alteredData.set(object.id, updatedObj);
+								resolve(updatedObj);
+							}).catch(reason => {
+								reject(reason);
+							});
+						})
+					);
 				}
-			});
-			if (!isEmpty(update)) {
-				update['id'] = objectsMap.get(object.id)['id'];
-				update = this.graphQLFortune.generateUpdates(update);
-				// console.log(typeName, update);
-				updatePromies.push(this.graphQLFortune.update(typeName, update, meta, { fortuneFormatted: true }));
 			}
-			index++;
-		});
+		}));
+
 		await Promise.all(updatePromies);
-		return true;
+		return {
+			data: [...alteredData.values()],
+			unalteredData,
+			missingData
+		};
 	}
 
 	public getUserTypes = (): string[] => {
@@ -416,7 +490,7 @@ export class GraphQLGenie {
 	}
 
 	public getRawData = async (types = [], context?): Promise<any[]> => {
-		const meta = context ? {context} : undefined;
+		const meta = context ? { context } : undefined;
 		let nodes = [];
 		if (isEmpty(types)) {
 			types = this.getUserTypes();

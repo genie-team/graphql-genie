@@ -920,11 +920,53 @@ describe('genie', () => {
 		expect(nodes).not.toBeNull();
 		expect(nodes.length).toBe(1);
 		nodes[0].city = 'Olympus';
-		await genie.importRawData(nodes, true);
+		const result = await genie.importRawData(nodes, true);
+		expect(result.data.length).toBeGreaterThan(0);
+		expect(result.data[0].city).toBe('Olympus');
 		nodes = await genie.getRawData(['Address']);
 		expect(nodes).not.toBeNull();
 		expect(nodes.length).toBe(1);
 		expect(nodes[0].city).toBe('Olympus');
+	});
+
+	test('genie - importRawData with passing conditions', async () => {
+		const nodes = await genie.getRawData(['Address']);
+		nodes[0].city = 'Troy';
+		const conditions = {match: {
+			city: 'Olympus'
+		}};
+		const result = await genie.importRawData(nodes, true, '', '', [{id: nodes[0].id, conditions}]);
+		expect(result.data.length).toBeGreaterThan(0);
+		expect(result.data[0].city).toBe('Troy');
+	});
+
+	test('genie - importRawData with failing conditions', async () => {
+		const nodes = await genie.getRawData(['Address']);
+		const conditions = {match: {
+			city: 'Olympus'
+		}};
+		const passingConditions = {match: {
+			city: 'Troy'
+		}};
+		const result = await genie.importRawData(nodes, true, '', '', [{id: nodes[0].id, conditions}, {id: nodes[0].id, conditions: passingConditions}]);
+		expect(result.data).toHaveLength(0);
+		expect(result.unalteredData.length).toBeGreaterThan(0);
+		expect(result.unalteredData[0].city).toBe('Troy');
+	});
+
+	test('genie - importRawData with conditions on missing data', async () => {
+		const nodes = await genie.getRawData(['Address']);
+		nodes[0].id = genie.getDataResolver().computeId('Address');
+		nodes[0].city = 'Missing';
+		delete nodes[0].__typename; // test getting typename from id
+		const conditions = {match: {
+			city: 'Troy'
+		}};
+		const result = await genie.importRawData(nodes, true, '', '', [{id: nodes[0].id, conditions}]);
+		expect(result.data).toHaveLength(0);
+		expect(result.unalteredData).toHaveLength(0);
+		expect(result.missingData.length).toBeGreaterThan(0);
+		expect(result.missingData[0].city).toBe('Missing');
 	});
 
 	test('genie - export query', async () => {
@@ -959,14 +1001,18 @@ describe('genie', () => {
 		const dataString = JSON.stringify(dataCopy).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
 		const importData = gql`
 			mutation {
-				importData(data: ${dataString}, merge: true)
+				importData(data: ${dataString}, merge: true) {
+					data
+					unalteredData
+					missingData
+				}
 			}
 		`;
 		result = await client.mutate({
 			mutation: importData
 		});
 
-		expect(result.data['importData']).toBe(true);
+		expect(result.data['importData'].data.length).toBeGreaterThan(0);
 
 		client.cache['data'].data = {};
 
@@ -1023,14 +1069,18 @@ describe('genie', () => {
 		const dataString = JSON.stringify(dataCopy).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
 		const importData = gql`
 			mutation {
-				importData(data: ${dataString}, merge: true, defaultTypeName: "Address")
+				importData(data: ${dataString}, merge: true, defaultTypeName: "Address") {
+					data
+					unalteredData
+					missingData
+				}
 			}
 		`;
 		result = await client.mutate({
 			mutation: importData
 		});
 
-		expect(result.data['importData']).toBe(true);
+		expect(result.data['importData'].data.length).toBeGreaterThan(0);
 
 		client.cache['data'].data = {};
 

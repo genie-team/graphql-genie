@@ -48,6 +48,7 @@ export class GenerateUpsert implements TypeGenerator {
 					create: {type: new GraphQLNonNull(generator.generateCreateInput())},
 					update: {type: new GraphQLNonNull(generator.generateUpdateInput())},
 					where: {type: new GraphQLNonNull(generator.generateWhereUniqueInput())},
+					conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'In case of update it will only be performed if these conditions are met' },
 					clientMutationId: {type: GraphQLString}
 				}
 			});

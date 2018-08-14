@@ -18,6 +18,12 @@ type City {
 	created: DateTime @createdTimestamp
 }
 
+type User {
+	id: ID! @unique
+	email: String! @unique
+  name : String!
+}
+
 `;
 
 const fortuneOptions: FortuneOptions = {
@@ -54,60 +60,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 	window['client'] = client;
 	window['graphql'] = graphql;
 	window['subscribe'] = subscribe;
-
-	let rawData = await genie.getRawData();
-	console.log('rawData :', rawData);
-	rawData.forEach(element => {
-		if (element.name && element.name !== 'test') {
-			element.name = 'NY';
-		}
-	});
-	await genie.importRawData(rawData, true);
-	console.log('merged');
-	rawData = await genie.getRawData();
-	console.log('rawData :', rawData);
-	// await genie.importRawData([{
-	// 	'id': '2d',
-	// 	'name': 'test2',
-	// 	'address': {
-	// 		'id': 'bGExb1dGdlBKc1FZa1RBOkFkZHJlc3M='
-	// 	},
-	// 	'submissions': [
-	// 		{
-	// 			'id': 'ZEpQa1dRTlNxN0xyVG4yOkNvbW1lbnQ='
-	// 		}
-	// 	]
-	// }], true, 'User');
-	// console.log('imported');
-	// console.log(await genie.getRawData());
-
-	// await client.mutate({
-	// 	mutation: gql`mutation {
-	// 		createUser (input: {
-	// 			data: {
-	// 				liked: {
-	// 					comments: {
-	// 						create: {
-	// 							text: "bam"
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}) {
-	// 			data {
-	// 				id
-	// 				liked {
-	// 					edges {
-	// 						node {
-	// 							text
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	`
-	// });
 };
 
 buildClient(genie).catch();

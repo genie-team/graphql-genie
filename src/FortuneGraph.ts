@@ -3,7 +3,7 @@ import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, set, toString } from 'lodash';
 import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
-import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 
 interface FortuneUpdate {
@@ -416,7 +416,7 @@ export default class FortuneGraph implements DataResolver {
 		const fortuneConfig = {};
 		forOwn(this.schemaInfo, (type: any, name: string) => {
 			if (type.kind === 'OBJECT' && name !== 'Query' && name !== 'Mutation' && name !== 'Subscription') {
-				const fields = {};
+				const fields: GenericObject = {};
 				forOwn(type.fields, (field) => {
 					if (field.name !== 'id') {
 
@@ -482,8 +482,8 @@ export default class FortuneGraph implements DataResolver {
 
 						fields[field.name] = currType;
 					}
-					fields['__typename'] = String;
-					fields['importID'] = String;
+					fields.__typename = String;
+					fields.importID = String;
 				});
 				const fortuneName = this.getFortuneTypeName(name);
 				const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};

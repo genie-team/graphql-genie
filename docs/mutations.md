@@ -1,21 +1,22 @@
 - [Mutations](#mutations)
-	- [Create](#create)
-		- [Example](#example)
-	- [Update](#update)
-	- [Import Data](#import-data)
-		- [Examples](#examples)
-			- [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
-			- [Update the user connected to the city](#update-the-user-connected-to-the-city)
-	- [Upsert](#upsert)
-		- [Examples](#examples-1)
-			- [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
-			- [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
-	- [Delete](#delete)
-		- [Examples](#examples-2)
-			- [Delete a user](#delete-a-user)
-	- [UpdateMany and DeleteMany](#updatemany-and-deletemany)
-		- [Examples](#examples-3)
-			- [UpdateManyUsers](#updatemanyusers)
+  - [Create](#create)
+    - [Example](#example)
+  - [Update](#update)
+    - [Examples](#examples)
+      - [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
+      - [Update the user nested with city with passing conditions](#update-the-user-nested-with-city-with-passing-conditions)
+      - [Update the city with failing conditions](#update-the-city-with-failing-conditions)
+  - [Upsert](#upsert)
+    - [Examples](#examples-1)
+      - [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
+      - [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
+  - [Delete](#delete)
+    - [Examples](#examples-2)
+      - [Delete a user](#delete-a-user)
+  - [UpdateMany and DeleteMany](#updatemany-and-deletemany)
+    - [Examples](#examples-3)
+      - [UpdateManyUsers](#updatemanyusers)
+  - [Import Data](#import-data)
 
 # Mutations
 
@@ -170,6 +171,8 @@ will return
 
 Updates also have a single argument, input. input has data and clientMutationId arguments like create. They also have a where field. The where field type is the where unique input, same that we saw in the create if we were connecting a User (UserWhereUniqueInput). You can update based on id or any other field that has the @unique directive.
 
+Updates also have a conditions field, if the condition isn't met the update won't happen. Also the payload will have the `unalteredData` field with the current store data (normal updates that succeed fill the `data` field).
+
 ```graphql
 updateCity(input: UpdateCityMutationInput!): CityPayload
 
@@ -178,6 +181,8 @@ input UpdateCityMutationInput {
   # In the case of city this will just be id, but any field with @unique would be allowed
   where: CityWhereUniqueInput!
   clientMutationId: String
+  # Update will only be performed if these conditions are met
+  conditions: CityWhereInput
 }
 
 # The update input is similar to the unique input. 
@@ -211,10 +216,6 @@ type UserUpdateManyWithoutAddressInput {
   upsert: [UserUpsertWithWhereUniqueWithoutAddressInput!]
 }
 ```
-
-## Import Data
-
-If `generateMigrations` is true in the generatorOptions (defaults to true) a mutation will be created called `importData`. This is used to import/merge data into the database. See the [importRawData function](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) function of GraphQL Genie for more details as this mutation calls that function
 
 ### Examples
 
@@ -275,7 +276,7 @@ Which will return
 
 ```
 
-#### Update the user connected to the city
+#### Update the user nested with city with passing conditions
 
 ```graphql
 mutation {
@@ -294,6 +295,11 @@ mutation {
         }
       }
     },
+    conditions: {
+      match: {
+        neighborhoods: "east side"
+      }
+    }
   }) {
     data {
       name
@@ -301,6 +307,9 @@ mutation {
         displayname
         email
       }
+    }
+    unalteredData {
+      neighborhoods
     }
   }
 }
@@ -320,16 +329,63 @@ will return
             "email": "steven@example.com"
           }
         ]
+      },
+      "unalteredData": null
+    }
+  }
+}
+```
+
+#### Update the city with failing conditions
+```graphql
+mutation {
+  updateCity(input:{
+    where: {id: "ID1"}
+    data: {
+      name: "NYC",
+    },
+    conditions: {
+      match: {
+        neighborhoods: "bronx"
+      }
+    }
+  }) {
+    data {
+      name
+    }
+    unalteredData {
+      name
+      neighborhoods
+    }
+  }
+}
+```
+
+will return (note data is null instead of unalteredData and the name is not changed)
+
+```graphql
+{
+  "data": {
+    "updateCity": {
+      "data": null,
+      "unalteredData": {
+        "name": New York
+        "neighborhoods": [
+          "queens",
+          "manhattan",
+          "east side"
+        ],
       }
     }
   }
 }
 ```
 
-
 ## Upsert
 
 Upserts also have a single argument, input. input has where and clientMutationId arguments like update. But instead of a data field it has a create and an update field. If the where argument finds something the update data will be used and the record will be updated, otherwise a new record will be created with the create data
+
+Upsert also have a conditions field, in case of an update the condition isn't met the update won't happen. On create conditions are ignored.
 
 ```graphql
 type UpsertUserMutationInput {
@@ -337,6 +393,7 @@ type UpsertUserMutationInput {
   update: UserUpdateInput!
   where: UserWhereUniqueInput!
   clientMutationId: String
+  conditions: UserWhereInput
 }
 ```
 
@@ -417,6 +474,8 @@ will return
 ## Delete
 
 Deletes also have a single argument, input. input has where and clientMutationId arguments. The data returned will be of the record that used to exist
+
+Deletes also have a conditions argument, if the conditions don't pass the delete won't be performed.
 
 ### Examples
 
@@ -513,3 +572,7 @@ will return
   }
 }
 ```
+
+## Import Data
+
+If `generateMigrations` is true in the generatorOptions (defaults to true) a mutation will be created called `importData`. This is used to import/merge data into the database. See the [importRawData function](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) function of GraphQL Genie for more details as this mutation calls that function

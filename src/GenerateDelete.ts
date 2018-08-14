@@ -46,6 +46,7 @@ export class GenerateDelete implements TypeGenerator {
 				name: deleteInputName,
 				fields: {
 					where: { type: new GraphQLNonNull(generator.generateWhereUniqueInput()) },
+					conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'Delete will only be performed if these conditions are met'},
 					clientMutationId: { type: GraphQLString }
 				}
 			});

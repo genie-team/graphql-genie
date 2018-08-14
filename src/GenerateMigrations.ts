@@ -9,11 +9,14 @@ export class GenerateMigrations implements TypeGenerator {
 	private genie: GraphQLGenie;
 	private resolvers: Map<string, Map<string, GraphQLFieldResolver<any, any>>>;
 	private fieldsOnObject: Map<string, object>;
+	private currOutputObjectTypeDefs: Set<string>;
 
-	constructor($genie: GraphQLGenie) {
+	constructor($genie: GraphQLGenie, $currOutputObjectTypeDefs: Set<string>) {
 		this.resolvers = new  Map<string, Map<string, GraphQLFieldResolver<any, any>>>();
 		this.fieldsOnObject = new Map<string, object>();
 		this.genie = $genie;
+		this.currOutputObjectTypeDefs = $currOutputObjectTypeDefs;
+
 		this.generate();
 	}
 
@@ -39,9 +42,24 @@ export class GenerateMigrations implements TypeGenerator {
 
 		this.resolvers.set('Query', exportDataResolver);
 
+		this.currOutputObjectTypeDefs.add(`
+			type ImportDataPayload {
+				data: JSON,
+				unalteredData: JSON,
+				missingData: JSON
+			}
+		`);
+
+		this.currOutputObjectTypeDefs.add(`
+			input ConditionsInput {
+				id: [String]!,
+				conditions: JSON!
+			}
+		`);
+
 		this.fieldsOnObject.set('Mutation', {
 			'importData': {
-				type: GraphQLBoolean,
+				type: 'ImportDataPayload',
 				args: {
 					data: {
 						type: new GraphQLNonNull(new GraphQLList(GraphQLJSON))
@@ -54,7 +72,11 @@ export class GenerateMigrations implements TypeGenerator {
 					},
 					defaultTypename: {
 						type: GraphQLBoolean,
-						descriptions: 'Must be provided if every object in data does not have a `__typename` property'
+						descriptions: 'Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded'
+					},
+					conditions: {
+						type: 'ConditionsInput',
+						descriptions: 'Conditions can be used to only update records if they are met'
 					}
 				}
 			}
@@ -62,7 +84,7 @@ export class GenerateMigrations implements TypeGenerator {
 
 		const importDataResolver = new Map<string, GraphQLFieldResolver<any, any>>();
 		importDataResolver.set('importData', async (_root: any, args: { [key: string]: any }, context, _info) => {
-			return await this.genie.importRawData(args.data, args.merge, args.defaultTypename, context);
+			return await this.genie.importRawData(args.data, args.merge, args.defaultTypename, context, args.conditions);
 		});
 
 		this.resolvers.set('Mutation', importDataResolver);

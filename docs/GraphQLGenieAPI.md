@@ -181,17 +181,35 @@ If `generateMigrations` is configured to true a `exportData` query will be creat
 #### **importRawData**
 
 ```
-importRawData(data: any[], merge = false, defaultTypename?: string, context?): Promise
+importRawData(
+	data: any[], 
+	merge = false, 
+	defaultTypename?: string, 
+	context?, 
+	conditions?: { id: string | string[], conditions: {} }[])
+): Promise<{
+	data: {}[],
+	unalteredData: {}[],
+	missingData: {}[]
+}>
 ```
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
+
+The function resolves to an object where `data` is the created/updated raw data, `unalteredData` is data that existed but didn't meet one of the conditions and `missingData` is data that had a condition but didn't already exist so it was ignored.
 
 If `generateMigrations` is configured to true a `importData` mutation will be created in your API that calls this function.
 
 **data** 
 
-an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. Note that if it is in the format of the graphql query and __typename fields are not added the defaultTypename must be provided
+an array of objects to import. It can be either in the format of raw data (as exported from `getRawData` ) or in the format returned from a graphql query. 
 
+GraphQL Genie must be able to determine the type of each data element in the array. This can be done the following ways.
+* __typename attribute on the object
+	* Anything exported from `getRawData` will have this or it can be added
+* `id` attribute encoded with typename
+	* If the data is from genie it will have this, every genie id is encoded as id:typename
+* `defaultTypename` argument is provided
 
 **merge** - Default = false
 
@@ -213,12 +231,15 @@ Note when merging list fields by default the array in the provided data will rep
 
 **defaultTypename** - Optional.
 
-Must be provided if every object in data does not have a `__typename` property
+Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded
 
 **context** - Optional. 
 
 Context object that will be sent to input/output hooks, may be needed if using the authentication plugin
 
+**conditions** - Optional. 
+
+Conditions can be used to only update records if they are met. The argument is an array of objects. Each object must have an id property which is either an id or string of ids. It must also have a conditions property which matches the [where argument](https://github.com/genie-team/graphql-genie/blob/master/docs/queries.md#where-argument) of the type of the object.
 
 ---
 

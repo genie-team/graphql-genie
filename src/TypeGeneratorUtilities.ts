@@ -370,7 +370,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 				let newArgs: object = { create: currArg.create };
 				if (upsertRecord && !isEmpty(upsertRecord)) {
 					// pass true to where args if currRecord will already be the one we want
-					newArgs = { where: true, update: currArg.update };
+					newArgs = { where: true, update: currArg.update, conditions: conditionsArgs };
 				}
 				dataResolverPromises.push(
 					new Promise((resolve, reject) => {
@@ -508,6 +508,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 		const deletePromises: Array<Promise<any>> = [];
 		deleteArgs.forEach(deleteArg => {
 			if (deleteArg === true) {
+				// nested singular delete
 				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], {context: _context, info: _info}).then(data => {
 						resolve({ index, key, id: null, data });
@@ -516,14 +517,24 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					});
 				}));
 			} else if (whereArgs && !currRecord) {
+				// delete resolver
 				dataResolverPromises.push(new Promise((resolve, reject) => {
 					dataResolver.getValueByUnique(returnTypeName, whereArgs, {context: _context, info: _info}).then(whereData => {
 						currRecord = whereData;
 						if (!currRecord || isEmpty(currRecord)) {
 							throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'delete', {arg: whereArgs, typename: returnTypeName});
 						}
-						dataResolver.delete(currRecord.__typename, [currRecord.id], {context: _context, info: _info}).then(() => {
-							resolve({ index, key, id: null, data: currRecord });
+
+						meetsConditions(conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info).then(meetsConditionsResult => {
+							if (!meetsConditionsResult) {
+								resolve({ index, key, id: [], unalteredData: currRecord});
+							} else {
+								dataResolver.delete(currRecord.__typename, [currRecord.id], {context: _context, info: _info}).then(() => {
+									resolve({ index, key, id: null, data: currRecord });
+								}).catch(reason => {
+									reject(reason);
+								});
+							}
 						}).catch(reason => {
 							reject(reason);
 						});
@@ -532,6 +543,7 @@ const mutateResolver = (mutation: Mutation, dataResolver: DataResolver) => {
 					});
 				}));
 			} else {
+				// nested delete on list
 				deletePromises.push(new Promise((resolve, reject) => {
 					const deleteTypeName = dataResolver.getLink(currRecord.__typename, key);
 					dataResolver.getValueByUnique(deleteTypeName, deleteArg, {context: _context, info: _info}).then(data => {

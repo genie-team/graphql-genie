@@ -100,3 +100,5 @@ export interface DataResolverInputHook {
 export interface DataResolverOutputHook {
 	(context?, record?): any;
 }
+
+export type GenericObject = { [key: string]: any };
