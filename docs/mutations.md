@@ -144,7 +144,7 @@ mutation {
 
 will return
 
-```graphql
+```json
 {
   "data": {
     "createCity": {
@@ -249,9 +249,9 @@ mutation {
 }
 ```
 
-Which will return
+will return
 
-```graphql
+```json
 {
   "data": {
     "updateCity": {
@@ -317,7 +317,7 @@ mutation {
 
 will return
 
-```graphql
+```json
 {
   "data": {
     "updateCity": {
@@ -363,7 +363,7 @@ mutation {
 
 will return (note data is null instead of unalteredData and the name is not changed)
 
-```graphql
+```json
 {
   "data": {
     "updateCity": {
@@ -422,7 +422,7 @@ mutation {
 
 will return 
 
-```graphql
+```json
 {
   "data": {
     "upsertUser": {
@@ -458,7 +458,7 @@ mutation {
 
 will return 
 
-```graphql
+```json
 {
   "data": {
     "upsertUser": {
@@ -497,7 +497,7 @@ mutation {
 
 will return
 
-```graphql
+```json
 {
   "data": {
     "deleteUser": {
@@ -563,7 +563,7 @@ mutation {
 
 will return
 
-```graphql
+```json
 {
   "data": {
     "updateManyCities": {
