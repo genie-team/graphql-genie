@@ -196,7 +196,7 @@ importRawData(
 
 Import data into the store.  Note any relationship fields must also either exist already or also be part of the data provided.
 
-The function resolves to an object where `data` is the created/updated raw data, `unalteredData` is data that existed but didn't meet one of the conditions and `missingData` is data that had a condition but didn't already exist so it was ignored.
+The function resolves to an object where `data` is the created/updated raw data, `unalteredData` is data from the store that existed but didn't meet one of the conditions and `missingData` is data that was passed in that had a condition but didn't already exist so it was ignored.
 
 If `generateMigrations` is configured to true a `importData` mutation will be created in your API that calls this function.
 
