@@ -1,22 +1,22 @@
 - [Mutations](#mutations)
-  - [Create](#create)
-    - [Example](#example)
-  - [Update](#update)
-    - [Examples](#examples)
-      - [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
-      - [Update the user nested with city with passing conditions](#update-the-user-nested-with-city-with-passing-conditions)
-      - [Update the city with failing conditions](#update-the-city-with-failing-conditions)
-  - [Upsert](#upsert)
-    - [Examples](#examples-1)
-      - [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
-      - [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
-  - [Delete](#delete)
-    - [Examples](#examples-2)
-      - [Delete a user](#delete-a-user)
-  - [UpdateMany and DeleteMany](#updatemany-and-deletemany)
-    - [Examples](#examples-3)
-      - [UpdateManyUsers](#updatemanyusers)
-  - [Import Data](#import-data)
+	- [Create](#create)
+		- [Example](#example)
+	- [Update](#update)
+		- [Examples](#examples)
+			- [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
+			- [Update the user nested with city with passing conditions](#update-the-user-nested-with-city-with-passing-conditions)
+			- [Update the city with failing conditions](#update-the-city-with-failing-conditions)
+	- [Upsert](#upsert)
+		- [Examples](#examples-1)
+			- [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
+			- [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
+	- [Delete](#delete)
+		- [Examples](#examples-2)
+			- [Delete a user](#delete-a-user)
+	- [UpdateMany and DeleteMany](#updatemany-and-deletemany)
+		- [Examples](#examples-3)
+			- [UpdateManyUsers](#updatemanyusers)
+	- [Import Data](#import-data)
 
 # Mutations
 
@@ -171,7 +171,7 @@ will return
 
 Updates also have a single argument, input. input has data and clientMutationId arguments like create. They also have a where field. The where field type is the where unique input, same that we saw in the create if we were connecting a User (UserWhereUniqueInput). You can update based on id or any other field that has the @unique directive.
 
-Updates also have a conditions field, if the condition isn't met the update won't happen. Also the payload will have the `unalteredData` field with the current store data (normal updates that succeed fill the `data` field).
+Updates also have a conditions field, if the condition isn't met the update won't happen. This could of course always be done with multiple server calls and some client side logic but this can help minimize round trips. The payload will have the `unalteredData` field with the current store data (normal updates that succeed fill the `data` field).
 
 ```graphql
 updateCity(input: UpdateCityMutationInput!): CityPayload
