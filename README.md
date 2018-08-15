@@ -11,6 +11,7 @@
 [![devDependency Status](https://david-dm.org/genie-team/graphql-genie/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie/?type=dev)
 [![npm](https://img.shields.io/npm/l/graphql-genie.svg)](https://github.com/genie-team/graphql-genie/blob/master/LICENSE)
 
+<img src="http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay"/>
 
 - [Overview](#overview)
 - [Installation](#installation)
