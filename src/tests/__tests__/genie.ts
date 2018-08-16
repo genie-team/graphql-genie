@@ -1099,7 +1099,7 @@ describe('genie', () => {
 	});
 
 	test('genie - connect', async () => {
-		const conReturn = await genie.disconnect();
+		const conReturn = await genie.connect();
 		expect(conReturn).toBeTruthy();
 	});
 });
