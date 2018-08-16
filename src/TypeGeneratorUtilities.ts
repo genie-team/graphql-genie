@@ -725,8 +725,8 @@ export const getTypeResolver = (dataResolver: DataResolver, schema: GraphQLSchem
 			if (returnConnection) {
 				result = {
 					edges: result,
-					pageInfo: connection.pageInfo,
-					aggregate: connection.aggregate
+					pageInfo: connection && connection.pageInfo ? connection.pageInfo : null,
+					aggregate: connection && connection.aggregate ? connection.aggregate : null
 				};
 			}
 
@@ -799,8 +799,8 @@ export const getAllResolver = (dataResolver: DataResolver, schema: GraphQLSchema
 		if (returnConnection) {
 			result = {
 				edges: result,
-				pageInfo: connection.pageInfo,
-				aggregate: connection.aggregate
+				pageInfo: connection && connection.pageInfo ? connection.pageInfo : null,
+				aggregate: connection && connection.aggregate ? connection.aggregate : null
 			};
 		}
 
