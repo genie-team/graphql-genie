@@ -2,6 +2,8 @@
 	- [**constructor**](#constructor)
 	- [**use**](#use)
 	- [**getSchema**](#getschema)
+	- [**connect**](#connect)
+	- [**disconnect**](#disconnect)
 	- [**printSchema**](#printschema)
 	- [**getUserTypes**](#getusertypes)
 	- [**getModelTypes**](#getmodeltypes)
@@ -76,6 +78,28 @@ getSchema(): GraphQLSchema
 ```
 
 Get the schema
+
+---
+#### **connect**
+
+```ts
+connect = async (): Promise<GraphQLGenie> 
+```
+
+This method does not need to be called manually, it is automatically called upon the first request if it is not connected already. 
+However, it may be useful if manually reconnect is needed.
+The resolved value is the instance itself.
+
+---
+
+#### **disconnect**
+
+```ts
+disconnect = async (): Promise<GraphQLGenie> 
+```
+
+Close fortune adapter connection, and reset connection state.
+The resolved value is the instance itself.
 
 ---
 

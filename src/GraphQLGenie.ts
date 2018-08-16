@@ -521,4 +521,24 @@ export class GraphQLGenie {
 		}
 		return introspection;
 	}
+	/**
+	 * This method does not need to be called manually, it is automatically called upon the first request if it is not connected already.
+	 * However, it may be useful if manually reconnect is needed.
+	 * The resolved value is the instance itself.
+	 * @returns Promise<GraphQLGenie>
+	 */
+	public connect = async (): Promise<GraphQLGenie> => {
+		await this.graphQLFortune.getStore().connect();
+		return this;
+	}
+
+	/**
+	 * Close adapter connection, and reset connection state.
+	 * The resolved value is the instance itself.
+	 * @returns Promise<GraphQLGenie>
+	 */
+	public disconnect = async (): Promise<GraphQLGenie> => {
+		await this.graphQLFortune.getStore().disconnect();
+		return this;
+	}
 }

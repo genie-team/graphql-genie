@@ -1092,4 +1092,14 @@ describe('genie', () => {
 		expect(result.data['addresses'][0].city).toBe('Underworld');
 		expect(result.data['addresses'][0].user.name).toBe('Hades');
 	});
+
+	test('genie - disconnect', async () => {
+		const disconReturn = await genie.disconnect();
+		expect(disconReturn).toBeTruthy();
+	});
+
+	test('genie - connect', async () => {
+		const conReturn = await genie.disconnect();
+		expect(conReturn).toBeTruthy();
+	});
 });
