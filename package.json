@@ -28,7 +28,9 @@
     "testGenie": "jest ./tests/__tests__/genie.ts",
     "testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.ts",
     "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
-    "lint-no-fix": "tslint -c tslint.json -p linttsconfig.json"
+		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
+		"postpublish": "npm run tag",
+    "tag": "git tag v`npm v graphql-genie version` && git push origin --tags",
   },
   "jest": {
     "testURL": "http://localhost",
