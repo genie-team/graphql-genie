@@ -40,7 +40,7 @@
     "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
 		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
 		"postpublish": "npm run tag",
-    "tag": "git tag v`npm v graphql-genie version` && git push origin --tags",
+    "tag": "git tag v`npm v graphql-genie version` && git push origin --tags"
   },
   "jest": {
     "testURL": "http://localhost",
