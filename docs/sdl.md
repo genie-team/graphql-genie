@@ -4,7 +4,7 @@
 	- [Scalar Types](#scalar-types)
 	- [Example](#example)
 	- [Altering your schema and Migrations](#altering-your-schema-and-migrations)
-		- [Special cases and scription migrations](#special-cases-and-scription-migrations)
+		- [Special cases and scripting migrations](#special-cases-and-scription-migrations)
 
 ## Type Definitions
 
@@ -100,7 +100,7 @@ If you are adding a new type that implements an interface or is part of a union 
 If you are adding a single existing type to a new union or interface you will similarily have to use the `@storeName` [custom directive](#custom-directives-you-can-use).
 
 
-#### Special cases and scription migrations
+#### Special cases and scripting migrations
 
 You will need to script a migration of data in changes to field names/types or that result in data that is currently stored in multiple places needing to be stored under a single type. This is the case if you are:
 * Changing a field name
