@@ -1,22 +1,23 @@
 - [Mutations](#mutations)
-	- [Create](#create)
-		- [Example](#example)
-	- [Update](#update)
-		- [Examples](#examples)
-			- [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
-			- [Update the user nested with city with passing conditions](#update-the-user-nested-with-city-with-passing-conditions)
-			- [Update the city with failing conditions](#update-the-city-with-failing-conditions)
-	- [Upsert](#upsert)
-		- [Examples](#examples-1)
-			- [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
-			- [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
-	- [Delete](#delete)
-		- [Examples](#examples-2)
-			- [Delete a user](#delete-a-user)
-	- [UpdateMany and DeleteMany](#updatemany-and-deletemany)
-		- [Examples](#examples-3)
-			- [UpdateManyUsers](#updatemanyusers)
-	- [Import Data](#import-data)
+  - [Create](#create)
+    - [Example](#example)
+  - [Update](#update)
+    - [Examples](#examples)
+      - [Update the city name and push onto neighborhoods](#update-the-city-name-and-push-onto-neighborhoods)
+      - [Update the user nested with city with passing conditions](#update-the-user-nested-with-city-with-passing-conditions)
+      - [Update the city with failing conditions](#update-the-city-with-failing-conditions)
+  - [Upsert](#upsert)
+    - [Examples](#examples-1)
+      - [Upsert a user resulting in a create](#upsert-a-user-resulting-in-a-create)
+      - [Upsert a user resulting in an update](#upsert-a-user-resulting-in-an-update)
+  - [Delete](#delete)
+    - [Examples](#examples-2)
+      - [Delete a user](#delete-a-user)
+  - [UpdateMany and DeleteMany](#updatemany-and-deletemany)
+    - [Examples](#examples-3)
+      - [UpdateManyUsers](#updatemanyusers)
+      - [Delete Every User](#delete-every-user)
+  - [Import Data](#import-data)
 
 # Mutations
 
@@ -568,6 +569,35 @@ will return
   "data": {
     "updateManyCities": {
       "count": 2
+    }
+  }
+}
+```
+
+#### Delete Every User
+
+```graphql
+mutation { deleteManyUsers (
+  input: {
+    where: {
+      exists: {
+        id: true
+      }
+    }
+  }
+) {
+  count
+}
+}
+```
+
+will return
+
+```json
+{
+  "data": {
+    "deleteManyUsers": {
+      "count": 200
     }
   }
 }
