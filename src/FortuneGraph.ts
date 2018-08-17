@@ -483,7 +483,6 @@ export default class FortuneGraph implements DataResolver {
 						fields[field.name] = currType;
 					}
 					fields.__typename = String;
-					fields.importID = String;
 				});
 				const fortuneName = this.getFortuneTypeName(name);
 				const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};

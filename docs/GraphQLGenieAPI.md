@@ -172,7 +172,6 @@ If `generateMigrations` is configured to true a `exportData` query will be creat
    {
       "id":"eFRKZHZNM2xPaURGU3ljOlVzZXI=",
       "__typename":"User",
-      "importID":null,
       "email":null,
       "name":"Update5",
       "submissions":[
@@ -184,14 +183,12 @@ If `generateMigrations` is configured to true a `exportData` query will be creat
    {
       "id":"UldLemkxNnVld1N0Q1pOOkFkZHJlc3M=",
       "__typename":"Address",
-      "importID":null,
       "city":"EC",
       "user":"eFRKZHZNM2xPaURGU3ljOlVzZXI="
    },
    {
       "id":"VkhoRzNWNWJkNHlUVDBuOkNvbW1lbnQ=",
       "__typename":"Comment",
-      "importID":null,
       "title":null,
       "text":"update5",
       "author":"eFRKZHZNM2xPaURGU3ljOlVzZXI=",
