@@ -245,7 +245,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 [Your Name and link Here]
 
-If you contribute and want a thanks callout on genie project READMEs let me know via [twitter message](https://twitter.com/aCoreyJ) (at least .25/week)
+If you contribute and want a thanks callout on genie project READMEs let me know via [twitter message](https://twitter.com/aCoreyJ) (at least 1.00/month). Thanks so much!
 
 ## Thanks/Credit <!-- omit in toc --> 
 
