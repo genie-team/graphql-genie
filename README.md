@@ -38,7 +38,7 @@
 
 ## Overview
 
-Write a [GraphQL Type Schema](https://graphql.org/learn/schema/) and [GraphQL Genie](https://github.com/genie-team/graphql-genie) automatically generates a fully featured GraphQL API with referential integrity and inverse updates that can be used client side or server side. 
+Simply pass in your [GraphQL type defintions](https://github.com/genie-team/graphql-genie/blob/master/docs/sdl.md) and get a fully featured GraphQL API with referential integrity, inverse updates, subscriptions and role based access control that can be used client side or server side. 
 
 - **Full GraphQL Support** You can use all the features of the type schema, including interfaces and unions. 
 - **Feature Rich API** including nested operations, filtered queries, pagination. Transactional if your adapter supports it.
