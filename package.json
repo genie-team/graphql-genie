@@ -39,7 +39,7 @@
     "testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.ts",
     "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
 		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
-    "tag": "git tag -a v`npm v graphql-genie version` -m  && git push origin --tags"
+    "tag": "git tag -a v`npm v graphql-genie version` && git push origin --tags"
   },
   "jest": {
     "testURL": "http://localhost",
