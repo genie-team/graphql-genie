@@ -24,6 +24,8 @@ type Post implements Submission {
 	published: Boolean @default(value: "true")
 	created: DateTime @createdTimestamp
 	updated: DateTime @updatedTimestamp
+	createdManual: DateTime @createdTimestamp(allowManual: true)
+	updatedManual: DateTime @updatedTimestamp(allowManual: true)
 }
 
 type Comment implements Submission {

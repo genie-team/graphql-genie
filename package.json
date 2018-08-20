@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "GraphQL Genie",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -40,7 +40,7 @@
     "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
 		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
 		"postpublish": "npm run tag",
-    "tag": "git tag v`npm v graphql-genie version` && git push origin --tags"
+    "tag": "git tag -a v`npm v graphql-genie version` && git push origin --tags"
   },
   "jest": {
     "testURL": "http://localhost",

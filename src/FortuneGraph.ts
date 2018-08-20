@@ -387,7 +387,7 @@ export default class FortuneGraph implements DataResolver {
 		return this.fortuneTypeNames;
 	}
 
-	private getStoreName = (type, currStoreName: string, currTypeName: string): {storeName: string, typeName: string} => {
+	private getStoreName = (type, currStoreName: string, currTypeName: string): { storeName: string, typeName: string } => {
 		let storeName = get(type, 'metadata.storeName', null);
 		let typeName = type.name;
 		if (!isEmpty(storeName) && currStoreName && currStoreName !== storeName) {
@@ -442,7 +442,9 @@ export default class FortuneGraph implements DataResolver {
 							this.addInputHook(name, (context, record) => {
 								switch (context.request.method) {
 									case 'create':
-										record[field.name] = new Date();
+										if ((isArray && isEmpty(record[field.name])) || !record[field.name]) {
+											record[field.name] = new Date();
+										}
 										return record;
 								}
 							});
@@ -452,7 +454,9 @@ export default class FortuneGraph implements DataResolver {
 								switch (context.request.method) {
 									case 'update':
 										if (!('replace' in update)) update.replace = {};
-										update.replace[field.name] = new Date();
+										if ((isArray && isEmpty(update.replace[field.name])) || !update.replace[field.name]) {
+											update.replace[field.name] = new Date();
+										}
 										return update;
 								}
 							});

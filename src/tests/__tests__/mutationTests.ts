@@ -87,6 +87,7 @@ describe('mutationTests', () => {
 	});
 
 	test('create - create post connect author', async () => {
+		const date = new Date(1988, 2, 23);
 		const post = await client.mutate({
 			mutation: gql`mutation {
 				createPost(
@@ -100,6 +101,8 @@ describe('mutationTests', () => {
 									email: "zeus@example.com"
 								}
 							}
+							created: "${date.toISOString()}"
+							createdManual: "${date.toISOString()}"
 						}
 					}
 				) {
@@ -111,17 +114,23 @@ describe('mutationTests', () => {
 						author {
 							email
 						}
+						created
+						createdManual
 					}
 				}
 			}
 			`
 		});
+		console.log('post :', post);
 		testData.posts.push(post.data.createPost.data);
 		expect(post.data.createPost.data.title).toBe('Genie is great');
 		expect(post.data.createPost.data.text).toBe('Look how fast I can create an executable schema');
 		expect(post.data.createPost.data.tags).toEqual(['genie', 'graphql', 'database']);
 		expect(post.data.createPost.data.author.email).toBe('zeus@example.com');
-
+		const created = new Date(post.data.createPost.data.created);
+		expect(created > date).toBe(true);
+		const createdManual = new Date(post.data.createPost.data.createdManual);
+		expect(createdManual.getTime()).toBe(date.getTime());
 	});
 
 	test('update - push onto tags', async () => {
@@ -256,6 +265,36 @@ describe('mutationTests', () => {
 		expect(post.data.updatePost.unalteredData.tags).not.toContain('old');
 		expect(post.data.updatePost.unalteredData.tags).toEqual(['genie', 'graphql', 'database', 'fortune', 'fortune', 'apollo']);
 
+	});
+
+	test('update - updated set to passed in value', async () => {
+		const date = new Date(1988, 2, 23);
+		const post = await client.mutate({
+			mutation: gql`mutation {
+				updatePost(
+					input: {
+						data: {
+							updated: "${date.toISOString()}"
+							updatedManual: "${date.toISOString()}"
+						}
+						where: {
+							id: "${testData.posts[0].id}"
+						}
+					}
+				) {
+					data {
+						id
+						updated
+						updatedManual
+					}
+				}
+			}
+			`
+		});
+		const updated = new Date(post.data.updatePost.data.updated);
+		expect(updated > date).toBe(true);
+		const updatedManual = new Date(post.data.updatePost.data.updatedManual);
+		expect(updatedManual.getTime()).toBe(date.getTime());
 	});
 
 	test('update - pull from tags', async () => {

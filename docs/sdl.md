@@ -4,7 +4,7 @@
 	- [Scalar Types](#scalar-types)
 	- [Example](#example)
 	- [Altering your schema and Migrations](#altering-your-schema-and-migrations)
-		- [Special cases and scripting migrations](#special-cases-and-scription-migrations)
+		- [Special cases and scripting migrations](#special-cases-and-scripting-migrations)
 
 ## Type Definitions
 
@@ -29,12 +29,14 @@ GraphQL Genie supports interfaces and unions! You may want to look into using th
 	*  The directive @connection can be put on a list field to turn it into a type following the [Relay Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm) rather than just returning a normal list.
 *  **@model**
 	*  By default any object type will be part of the CRUD model, using the @model directive will limit to just types that use this directive
-*  **@createdTimestamp**
+*  **@createdTimestamp (allowManual: Boolean = false)**
 	*  The field will be automatically set when the record is created
 	*  Must be of type DateTime
-*  **@updatedTimestamp**
+	*  If you want to also be able to allow the field to be set manually in mutations set allowManual to true
+*  **@updatedTimestamp (allowManual: Boolean = false)**
 	*  The field will automatically be updated when the record is updated
 	*  Must be of type DateTime
+	*  If you want to also be able to allow the field to be set manually in mutations set allowManual to true
 *  **@storeName(value: String!)**
 	*  If you want the actual name of the type in your backend store to be something other than based off the type name. Using this you can effectively rename your type without actually migrating any data
 	*  Interfaces and Unions

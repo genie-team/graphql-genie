@@ -36,11 +36,9 @@ export class GraphQLSchemaBuilder {
 
 		directive @unique on FIELD_DEFINITION
 
-		directive @updatedTimestamp on FIELD_DEFINITION
+		directive @updatedTimestamp(allowManual: Boolean = false) on FIELD_DEFINITION
 
-		directive @createdTimestamp on FIELD_DEFINITION
-
-		directive @createdTimestamp on FIELD_DEFINITION
+		directive @createdTimestamp(allowManual: Boolean = false) on FIELD_DEFINITION
 
 		"""
 		An object with an ID
@@ -408,6 +406,9 @@ class UpdatedTimestampDirective extends SchemaDirectiveVisitor {
 		const type = field.type;
 		if (type.name === 'DateTime') {
 			field['updatedTimestamp'] = true;
+			if (this.args && this.args.allowManual) {
+				field['updatedTimestampAllowManual'] = true;
+			}
 		}
 	}
 }
@@ -416,6 +417,9 @@ class CreatedTimestampDirective extends SchemaDirectiveVisitor {
 		const type = field.type;
 		if (type.name === 'DateTime') {
 			field.createdTimestamp = true;
+			if (this.args && this.args.allowManual) {
+				field['createdTimestampAllowManual'] = true;
+			}
 		}
 	}
 }

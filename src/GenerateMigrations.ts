@@ -71,7 +71,7 @@ export class GenerateMigrations implements TypeGenerator {
 						Note when merging list fields by default the array in the provided data will replace the existing data array. If you don't want to do that instead of providing an array you can provide an object with fields for push and pull or set. `
 					},
 					defaultTypename: {
-						type: GraphQLBoolean,
+						type: GraphQLString,
 						descriptions: 'Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded'
 					},
 					conditions: {

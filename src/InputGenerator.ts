@@ -61,9 +61,9 @@ export class InputGenerator {
 		if (field) {
 			if (field.name === 'id') {
 				isAutoField = true;
-			} else if (get(field, 'metadata.updatedTimestamp') === true) {
+			} else if (get(field, 'metadata.updatedTimestamp') === true && !get(field, 'metadata.updatedTimestampAllowManual', false) ) {
 				isAutoField = true;
-			} else if (get(field, 'metadata.createdTimestamp') === true) {
+			} else if (get(field, 'metadata.createdTimestamp') === true && !get(field, 'metadata.createdTimestampAllowManual', false)) {
 				isAutoField = true;
 			}
 		}
