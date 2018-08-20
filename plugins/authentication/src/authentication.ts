@@ -288,12 +288,7 @@ const checkArgsFromResolver = async (type: GraphQLType, args, schema: GraphQLSch
 	}
 
 	const argResults = flattenDeep(await Promise.all(argPromises));
-	argResults.forEach(allowed => {
-		if (!allowed) {
-			return false;
-		}
-	});
-	return true;
+	return !argResults.includes(false);
 };
 
 const checkArgs = async (type: GraphQLObjectType, whereArgs, schema: GraphQLSchema, authFn, record) => {
@@ -353,7 +348,8 @@ const checkArgs = async (type: GraphQLObjectType, whereArgs, schema: GraphQLSche
 		}
 
 	}
-	return await Promise.all(promises);
+	const argResultReturn = Promise.all(promises);
+	return await argResultReturn;
 };
 
 class AuthDirective extends SchemaDirectiveVisitor {

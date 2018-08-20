@@ -68,7 +68,7 @@ const getUserIDsOfRequestedData = (records: object[], filterRecords: object[]): 
 
 	return userIDs;
 };
-const context = (currUser?) => {
+const context = (currUser?, returnErr = true) => {
 	currUser = currUser || { id: 1, roles: ['ADMIN'] };
 	return {
 		authenticate: (method, requiredRoles, records, filterRecords, _updates, typeName, fieldName, _isFromFilter) => {
@@ -81,6 +81,7 @@ const context = (currUser?) => {
 
 			records = records || [];
 			// implement logic for our custom rules
+			let passes = true;
 			records.forEach(record => {
 				rules.forEach(rule => {
 					// we don't want users to be able to create themselves with any other role than USER
@@ -89,25 +90,43 @@ const context = (currUser?) => {
 						if (record[fieldName]) {
 							if (isArray(record[fieldName])) {
 								if (record[fieldName].length > 1 || record[fieldName][0] !== allowedValue) {
-									throw new Error(`${fieldName} must be [${allowedValue}]`);
+									if (returnErr) {
+										throw new Error(`${fieldName} must be ${allowedValue}`);
+									} else {
+										passes = false;
+									}
 								}
 							} else if (record[fieldName] !== allowedValue) {
-								throw new Error(`${fieldName} must be ${allowedValue}`);
+								if (returnErr) {
+									throw new Error(`${fieldName} must be ${allowedValue}`);
+								} else {
+									passes = false;
+								}
 							}
 						}
 					} else if (rule === 'SELF') {
 						// users shouldn't be able to set posts author other than to themselves
 						if (['create', 'update'].includes(method)) {
 							if (isEmpty(currUser)) {
-								throw new Error(`Must be logged in to set ${fieldName}`);
+								if (returnErr) {
+									throw new Error(`Must be logged in to set ${fieldName}`);
+								} else {
+									passes = false;
+								}
 							} else if (record[fieldName] && record[fieldName] !== currUser['id']) {
-								throw new Error(`${fieldName} field must be set to logged in USER`);
+								if (returnErr) {
+									throw new Error(`${fieldName} field must be set to logged in USER`);
+								} else {
+									passes = false;
+								}
 							}
 						}
 					}
 				});
 			});
-
+			if (!passes) {
+				return passes;
+			}
 			if (requiredRolesForMethod.includes('ANY')) {
 				return true;
 			}
@@ -127,9 +146,17 @@ const context = (currUser?) => {
 			});
 			if (!hasNecessaryRole) {
 				if (fieldName) {
-					throw new Error(`Not authorized to ${method} ${fieldName} on type ${typeName}`);
+					if (returnErr) {
+						throw new Error(`Not allowed to ${method} ${fieldName} on type ${typeName}`);
+					} else {
+						return false;
+					}
 				} else {
-					throw new Error(`Not authorized to ${method} ${typeName}`);
+					if (returnErr) {
+						throw new Error(`Not allowed to ${method} ${typeName}`);
+					} else {
+						return false;
+					}
 				}
 			}
 			return true;
@@ -179,6 +206,7 @@ mutation updatePost($input: UpdatePostMutationInput!) {
 	}
 }
 `;
+
 describe('authTest', () => {
 	test('must have auth fn', async () => {
 
@@ -324,7 +352,7 @@ describe('authTest', () => {
 			`)
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 	});
 
 	test('make sure you cant read others email with a fragment', async () => {
@@ -345,7 +373,7 @@ describe('authTest', () => {
 			`)
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 	});
 
 	test('make sure you can find yourself by email', async () => {
@@ -382,13 +410,13 @@ describe('authTest', () => {
 			`)
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 
 		result = await graphql({
 			schema,
 			contextValue: context(currUser),
 			source: print(gql` query {
-					user(email: "any value should say not authorized") {
+					user(email: "any value should say not allowed") {
 						id
 						username
 					}
@@ -396,7 +424,7 @@ describe('authTest', () => {
 			`)
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 	});
 
 	test('make sure you cant create yourself with admin role', async () => {
@@ -407,7 +435,7 @@ describe('authTest', () => {
 			variableValues: { input: { data: { username: 'new', password: 'pass', email: 'new@example.com', roles: ['ADMIN'] } } },
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toBe('roles must be [USER]');
+		expect(result.errors[0].message).toBe('roles must be USER');
 	});
 
 	test('make sure you need author to make a post', async () => {
@@ -432,7 +460,7 @@ describe('authTest', () => {
 			variableValues: { input: { data: { title: 'bam', text: 'bam', author: {connect: {id: currUser.id}} } } },
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/gi);
+		expect(result.errors[0].message).toMatch(/not allowed/gi);
 
 	});
 
@@ -486,7 +514,7 @@ describe('authTest', () => {
 			variableValues: { input: {where: {id: testData.posts[0].id}, data: { title: 'update' } } },
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 	});
 
 	test('make sure you cant read own password', async () => {
@@ -505,7 +533,7 @@ describe('authTest', () => {
 			`)
 		});
 		expect(result.errors).not.toBeUndefined();
-		expect(result.errors[0].message).toMatch(/not authorized/ig);
+		expect(result.errors[0].message).toMatch(/not allowed/ig);
 	});
 
 	test('make sure you can delete own post', async () => {
@@ -525,4 +553,164 @@ describe('authTest', () => {
 		expect(result.errors).toBeUndefined();
 		expect(result.data.deletePost.data.id).toBe(user.posts[0].id);
 	});
+});
+
+describe('authTestBoolean', () => {
+
+	test('make sure you cant read others email', async () => {
+		const currUser = testData.users[0];
+		const findUser = testData.users[1];
+		const result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(gql` query {
+					user(id: "${findUser.id}") {
+						id
+						username
+						email
+					}
+				}
+			`)
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
+	test('make sure you cant read others email with a fragment', async () => {
+		const currUser = testData.users[0];
+		const findUser = testData.users[1];
+		const result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(gql` query {
+					node(id: "${findUser.id}") {
+						id
+						...on User {
+							username
+							email
+						}
+					}
+				}
+			`)
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
+	test('make sure you cant find others email', async () => {
+		const currUser = testData.users[0];
+		const findUser = testData.users[1];
+		let result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(gql` query {
+					user(email: "${findUser.email}") {
+						id
+						username
+					}
+				}
+			`)
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+
+		result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(gql` query {
+					user(email: "any value should say not authorized") {
+						id
+						username
+					}
+				}
+			`)
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
+	test('make sure you cant create yourself with admin role', async () => {
+		const result = await graphql({
+			schema,
+			contextValue: context({}, false),
+			source: print(createUser),
+			variableValues: { input: { data: { username: 'new', password: 'pass', email: 'new@example.com', roles: ['ADMIN'] } } },
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
+	test('make sure you need author to make a post', async () => {
+		const currUser = testData.users[0];
+
+		const result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(createPost),
+			variableValues: { input: { data: { title: 'bam', text: 'bam' } } },
+		});
+		expect(result.errors).not.toBeUndefined();
+
+	});
+
+	test('make sure you have to be logged in to create a post', async () => {
+		const currUser = testData.users[0];
+
+		const result = await graphql({
+			schema,
+			contextValue: context({}, false),
+			source: print(createPost),
+			variableValues: { input: { data: { title: 'bam', text: 'bam', author: {connect: {id: currUser.id}} } } },
+		});
+
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/gi);
+
+	});
+
+	test('make sure you cant create a post on another user', async () => {
+		const currUser = testData.users[0];
+		const otherUser = testData.users[1];
+
+		const result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(createPost),
+			variableValues: { input: { data: { title: 'bam', text: 'bam', author: {connect: {id: otherUser.id}} } } },
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/gi);
+	});
+
+	test('make sure you cant update another users post', async () => {
+		const currUser = testData.users[0];
+		const result = await graphql({
+			schema,
+			contextValue: context(currUser, false),
+			source: print(updatePost),
+			variableValues: { input: {where: {id: testData.posts[0].id}, data: { title: 'update' } } },
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
+	test('make sure you cant read own password', async () => {
+		const user = testData.users[0];
+		const result = await graphql({
+			schema,
+			contextValue: context(user, false),
+			source: print(gql` query {
+					user(id: "${user.id}") {
+						id
+						username
+						email
+						password
+					}
+				}
+			`)
+		});
+		expect(result.errors).not.toBeUndefined();
+		expect(result.errors[0].message).toMatch(/not authorized/ig);
+	});
+
 });
