@@ -10,7 +10,8 @@ export {
 	PageInfo,
 	Aggregate,
 	TypeGenerator,
-	GeniePlugin
+	GeniePlugin,
+	GenericObject
 } from './GraphQLGenieInterfaces';
 export {
 	typeIsList,
