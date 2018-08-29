@@ -19,13 +19,27 @@ const testData = {
 
 const postsQ = gql`
 query {
-	posts {
+	posts (orderBy: {
+    created: DESC
+   }) {
 		title
 		text
 		author {
-			id
 			username
 		}
+	}
+}
+`;
+
+const usersQ = gql`
+query {
+	users (orderBy: {
+    created: DESC
+   }) {
+		id
+		username
+		name
+		email
 	}
 }
 `;
@@ -37,6 +51,10 @@ mutation createPost($input: CreatePostMutationInput!) {
 			id
 			title
 			text
+			author {
+				email
+				username
+			}
 		}
 		clientMutationId
 	}
@@ -47,10 +65,6 @@ const createUser = gql`
 mutation createUser($input: CreateUserMutationInput!) {
 	createUser(input: $input) {
 		data {
-			id
-			name
-			age
-			birthday
 			email
 		}
 		clientMutationId
@@ -85,19 +99,93 @@ describe('onlineTests', () => {
 			}
 		});
 		const postData = post.data.createPost.data;
-		console.log('postData :', postData);
 		testData.posts.push(postData);
 		expect(postData.title).toBe(title);
 		expect(postData.text).toBe(text);
 
-		const localPosts = await client.localClient.query({query: postsQ});
-		expect(localPosts).toHaveLength(1);
-		expect(localPosts[0].title).toBe(title);
-		expect(localPosts[0].text).toBe(text);
+		const remotePosts = await client.remoteClient.query({query: postsQ, fetchPolicy: 'network-only'});
+		expect(remotePosts.data['posts']).toHaveLength(1);
+		expect(remotePosts.data['posts'][0].title).toBe(title);
+		expect(remotePosts.data['posts'][0].text).toBe(text);
 
-		const remotePosts = await client.remoteClient.query({query: postsQ});
-		expect(remotePosts.data).toHaveLength(1);
-		expect(remotePosts.data[0].title).toBe(title);
-		expect(remotePosts.data[0].text).toBe(text);
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
+		const localPosts = await client.localClient.query({query: postsQ, fetchPolicy: 'network-only'});
+		expect(localPosts.data['posts']).toHaveLength(1);
+		expect(localPosts.data['posts'][0].title).toBe(title);
+		expect(localPosts.data['posts'][0].text).toBe(text);
+	});
+
+	test('online - createPost with user', async () => {
+		const title = 'Advanced';
+		const text = 'This is the graphql genie persistance example with nested creating a user as well';
+		const post = await client.mutate({
+			mutation: createPost,
+			variables: {
+				input: {
+					data: {
+						title,
+						text,
+						author: {
+							create: {
+								username: 'zeus',
+								email: 'zeus@example.com',
+								password: 'p$ssw0rd'
+							}
+						}
+					}
+				}
+			}
+		});
+		const postData = post.data.createPost.data;
+		testData.posts.push(postData);
+		expect(postData.title).toBe(title);
+		expect(postData.text).toBe(text);
+		expect(postData.author.username).toBe('zeus');
+
+		const remotePosts = await client.remoteClient.query({query: postsQ, fetchPolicy: 'network-only'});
+		expect(remotePosts.data['posts'][0].title).toBe(title);
+		expect(remotePosts.data['posts'][0].text).toBe(text);
+		expect(remotePosts.data['posts'][0].author.username).toBe('zeus');
+
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
+		const localPosts = await client.localClient.query({query: postsQ, fetchPolicy: 'network-only'});
+		expect(localPosts.data['posts'][0].title).toBe(title);
+		expect(localPosts.data['posts'][0].text).toBe(text);
+		expect(localPosts.data['posts'][0].author.username).toBe('zeus');
+	});
+
+	test('online - create User to test query updating local data', async () => {
+		const user = await client.mutate({
+			mutation: createUser,
+			variables: {
+				input: {
+					data: {
+						username: 'loki',
+						email: 'loki@example.com',
+						password: 'p$ssw0rd'
+					}
+				}
+			}
+		});
+
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
+		let localUsers = await client.localClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(localUsers.data['users'][0].username).toBeNull();
+		expect(localUsers.data['users'][0].email).toBe('loki@example.com');
+
+		const remoteUsers = await client.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(remoteUsers.data['users'][0].username).toBe('loki');
+		expect(remoteUsers.data['users'][0].email).toBe('loki@example.com');
+
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
+
+		localUsers = await client.localClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(localUsers.data['users'][0].username).toBe('loki');
+		expect(localUsers.data['users'][0].email).toBe('loki@example.com');
+
 	});
 });

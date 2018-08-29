@@ -4,7 +4,7 @@ import { DocumentNode, FetchResult } from 'apollo-link';
 import { GraphQLGenie } from 'graphql-genie';
 import { checkDocument, cloneDeep, isEqual } from 'apollo-utilities';
 import { DefinitionNode, FieldNode, GraphQLNamedType, GraphQLObjectType, OperationDefinitionNode, SelectionSetNode, getNamedType, graphql, isEnumType, isInterfaceType, isListType, isObjectType, isScalarType, print } from 'graphql';
-import { flatten, get, isArray, isEmpty, isPlainObject, set } from 'lodash';
+import { get, isArray, isEmpty, isObject, isPlainObject, set, transform } from 'lodash';
 import gql from 'graphql-tag';
 interface LocalForageDbMethodsCore {
 	getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T>;
@@ -51,8 +51,8 @@ export class GeniePersitence {
 	public remoteClient: ApolloClient<any>;
 	public localGenie: GraphQLGenie;
 	private persistStorage: LocalForageDbMethodsCore;
-	private remoteQueue: PQueue;
-	private localQueue: PQueue;
+	public remoteQueue: PQueue;
+	public localQueue: PQueue;
 	private currStoreIndex: number;
 	private idDocumentCache = new WeakMap<DocumentNode, DocumentNode>();
 	public persisting = false;
@@ -147,6 +147,7 @@ export class GeniePersitence {
 
 			window.addEventListener('offline', () => {
 				this.remoteQueue.pause();
+				this.localQueue.start();
 			});
 
 			window.addEventListener('online', () => {
@@ -163,7 +164,7 @@ export class GeniePersitence {
 	public async setupHooks() {
 		if (this.remoteClient && !this.persisting) {
 
-			const userTypes = await this.localGenie.getUserTypes();
+			const userTypes = this.localGenie.getUserTypes();
 			// make sure changes to local that don't make server get queued
 			userTypes.forEach(typeName => {
 				this.localGenie.getDataResolver().addOutputHook(typeName, (context, record) => {
@@ -218,9 +219,6 @@ export class GeniePersitence {
 										}
 									}
 								}
-								console.log('importDataToRemote :', record);
-								console.log('previousValues :', previousValues);
-								console.log('conditions :', conditions);
 
 								// write cache data
 								if (!options || !options.fetchPolicy || options.fetchPolicy !== 'no-cache') {
@@ -264,50 +262,7 @@ export class GeniePersitence {
 					}
 				});
 			});
-
-			const queryFields = this.localGenie.getSchema().getQueryType().getFields();
-			Object.keys(queryFields).forEach(fieldName => {
-				const field = queryFields[fieldName];
-				// want the multiple type
-				if (isListType(field.type)) {
-					// only if it's a user type query
-					const fieldType = getNamedType(field.type);
-					if (isObjectType(fieldType) && userTypes.includes(fieldType.name)) {
-						const scalarFields = [];
-						const fields = fieldType.getFields();
-						Object.keys(fields).forEach(fieldName => {
-							const currType = getNamedType(fields[fieldName].type);
-							if (isScalarType(currType) || isEnumType(currType)) {
-								scalarFields.push(fieldName);
-							}
-						});
-
-						this.remoteClient.cache.watch({
-							callback: newData => {
-								if (newData.result) {
-									let data = <any[]>flatten(Object.values(newData.result));
-									data = data.filter(element => element && element.id);
-									if (!isEmpty(data)) {
-										console.log('importDataToLocal :', data);
-										this.localQueue.add(async () => await this.localGenie.importRawData(data, true, fieldType.name));
-									}
-								}
-								console.log('newData :', newData);
-							},
-							optimistic: false,
-							query: gql`
-								query {
-									${field.name} {
-										${scalarFields}
-									}
-								}
-							`
-						});
-					}
-				}
-			});
 		}
-
 	}
 
 	private isDeepEmpty(obj): boolean {
@@ -373,12 +328,20 @@ export class GeniePersitence {
 				}
 
 				if (!result) {
+					const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
+					this.localQueue.add(() => {  return this.localQueue.pause(); }, { priority: 98 });
+					this.localQueue.add(() => {  return true; }, { priority: 99 });
 					result = await this.remoteClient.query(remoteOptions);
+					this.localQueue.add(() => {
+						this.syncLocal(currCache);
+					}, { priority: 1 });
+					this.localQueue.start();
 				}
 				if (this.remoteQueue.size > 0) {
 					this.remoteQueue.start();
 				}
 			} catch (e) {
+				this.localQueue.start();
 				this.remoteQueue.pause();
 				result = await this.localClient.query(localOptions);
 			}
@@ -389,10 +352,84 @@ export class GeniePersitence {
 		return result;
 	}
 
+	private difference(object, base): GenericObject {
+		function changes(object, base) {
+			return transform(object, function(result, value, key) {
+				if (!isEqual(value, base[key]) && !((base[key] === null && value === undefined) || (base[key] === undefined && value === null))) {
+					result[key] = (isObject(value) && isObject(base[key])) ? changes(value, base[key]) : value;
+				}
+			});
+		}
+		return changes(object, base);
+	}
+
+	private syncLocal(previousCache: GenericObject) {
+		const currCache = this.remoteClient.extract();
+		this.localClient.restore(currCache);
+		const userTypes = this.localGenie.getUserTypes();
+		const newData = [];
+		Object.keys(currCache).forEach(key => {
+			const isFragment = !key.includes('ROOT_') && key.includes(':');
+			if (isFragment) {
+				let fragment = currCache[key];
+				if (userTypes.includes(fragment.__typename)) {
+					const previousFragment = previousCache[key];
+					if (previousFragment) {
+
+						fragment = this.difference(fragment, previousFragment);
+						if (!isEmpty(fragment)) {
+							fragment.id = previousFragment.id;
+							fragment.__typename = previousFragment.__typename;
+						}
+					} else {
+						// deep copy so we don't mess with the actual cache
+						fragment = JSON.parse(JSON.stringify(fragment));
+					}
+					Object.keys(fragment).forEach(fragKey => {
+						let currField = fragment[fragKey];
+						if (isArray(currField)) {
+							if (isPlainObject(currField[0]) && currField[0].id) {
+								currField = currField.map(element => {
+									if (element.id) {
+										if (element.id.includes(':')) {
+											element.id = element.id.split(':')[1];
+										}
+										return element.id;
+									} else {
+										return element;
+									}
+								});
+							}
+						} else {
+							if (isPlainObject(currField) && currField.id) {
+								currField = currField.id;
+								if (currField.includes(':')) {
+									currField = currField.split(':')[1];
+								}
+							}
+						}
+						fragment[fragKey] = currField;
+					});
+					if (!isEmpty(fragment)) {
+						newData.push(fragment);
+					}
+				}
+			}
+		});
+		if (!isEmpty(newData)) {
+			this.localQueue.add(async () => await this.localGenie.importRawData(newData, true), { priority: 0 });
+		}
+	}
+
 	private async onlineMutate<T, TVariables = OperationVariables>(
 		remoteOptions: MutationOptions<T, TVariables>,
 	): Promise<FetchResult<T>> {
+		this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 });
+		this.localQueue.add(() => {  return true; }, { priority: 99 });
+		const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
 		const result = await this.remoteClient.mutate(remoteOptions);
+		this.localQueue.add(() => { this.syncLocal(currCache); }, { priority: 1 });
+		this.localQueue.start();
 		if (this.remoteQueue.size > 0) {
 			this.remoteQueue.start();
 		}
@@ -402,6 +439,7 @@ export class GeniePersitence {
 	private async offlineMutate<T, TVariables = OperationVariables>(
 		localOptions: MutationOptions<T, TVariables>,
 	): Promise<FetchResult<T>> {
+		this.localQueue.start();
 		this.remoteQueue.pause();
 		set(localOptions, 'context.contextValue.importData', true);
 		// we need to make sure the importData context is sent
@@ -437,6 +475,7 @@ export class GeniePersitence {
 				result = await this.onlineMutate(remoteOptions);
 			} catch (e) {
 				this.remoteQueue.pause();
+				this.localQueue.start();
 				result = await this.offlineMutate(remoteOptions);
 			}
 		} else {
@@ -503,6 +542,7 @@ export class GeniePersitence {
 			} catch (e) {
 				console.error(e);
 				this.remoteQueue.pause();
+				this.localQueue.start();
 				await this.addToRemoteQueue(options, id, this.remoteQueue, sentData);
 			}
 		});
@@ -556,7 +596,6 @@ export class GeniePersitence {
 				});
 
 				if (!alreadyHasThisField && addIdToSelectionSet) {
-					console.log('selectionSet.selections :', selectionSet.selections);
 					selectionSet.selections['push'](ID_FIELD);
 				}
 			}

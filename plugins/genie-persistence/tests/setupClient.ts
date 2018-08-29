@@ -14,6 +14,8 @@ type Post @model {
 	text: String
 	isPublic: Boolean
 	author: User @relation(name: "posts")
+	created: DateTime @createdTimestamp
+	updated: DateTime @updatedTimestamp
 }
 
 type User @model {
@@ -23,6 +25,8 @@ type User @model {
 	password: String!
   name : String
 	posts: [Post] @relation(name: "posts")
+	created: DateTime @createdTimestamp
+	updated: DateTime @updatedTimestamp
 }
 `;
 
