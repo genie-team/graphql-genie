@@ -75,7 +75,7 @@ export class GenerateMigrations implements TypeGenerator {
 						descriptions: 'Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded'
 					},
 					conditions: {
-						type: 'ConditionsInput',
+						type: '[ConditionsInput]',
 						descriptions: 'Conditions can be used to only update records if they are met'
 					}
 				}

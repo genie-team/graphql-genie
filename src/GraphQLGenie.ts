@@ -1,13 +1,13 @@
 
-import { GenerateUpdate } from './GenerateUpdate';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, introspectionFromSchema, isObjectType, isScalarType, printType } from 'graphql';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, getNullableType, introspectionFromSchema, isEnumType, isListType, isObjectType, isScalarType, printType } from 'graphql';
+import { GenerateUpsert } from './GenerateUpsert';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { assign, forOwn, get, isArray, isEmpty, isFunction, isPlainObject, isString, set } from 'lodash';
-import { GenerateUpsert } from './GenerateUpsert';
+import { GenerateUpdate } from './GenerateUpdate';
 import { DataResolver, FortuneOptions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
@@ -392,10 +392,10 @@ export class GraphQLGenie {
 					const schemaField = fieldMap[fieldName];
 					if (schemaField) {
 						const schemaFieldType = getNamedType(schemaField.type);
-						if (merge || !isScalarType(schemaFieldType)) {
+						if (merge || (!isScalarType(schemaFieldType) && !isEnumType(schemaFieldType))) {
 							let currValue = object[fieldName];
 							if (!isEmpty(currValue)) {
-								if (!isScalarType(schemaFieldType)) {
+								if (!isScalarType(schemaFieldType) && !isEnumType(schemaFieldType)) {
 									if (isArray(currValue)) {
 										// if it's an array then set
 
@@ -446,7 +446,8 @@ export class GraphQLGenie {
 									}
 									update[fieldName] = currValue;
 								}
-
+							} else {
+								update[fieldName] = isListType(getNullableType(schemaField.type)) ? {set: currValue} : currValue;
 							}
 						}
 					}

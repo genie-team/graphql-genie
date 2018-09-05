@@ -2,7 +2,7 @@ import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, set, toString } from 'lodash';
-import fortuneCommon from '../node_modules/fortune/lib/adapter/adapters/common';
+import fortuneCommon from 'fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 
@@ -442,7 +442,7 @@ export default class FortuneGraph implements DataResolver {
 							this.addInputHook(name, (context, record) => {
 								switch (context.request.method) {
 									case 'create':
-										if ((isArray && isEmpty(record[field.name])) || !record[field.name]) {
+										if (!record.hasOwnProperty(field.name)) {
 											record[field.name] = new Date();
 										}
 										return record;
@@ -454,7 +454,7 @@ export default class FortuneGraph implements DataResolver {
 								switch (context.request.method) {
 									case 'update':
 										if (!('replace' in update)) update.replace = {};
-										if ((isArray && isEmpty(update.replace[field.name])) || !update.replace[field.name]) {
+										if (!update.replace.hasOwnProperty(field.name)) {
 											update.replace[field.name] = new Date();
 										}
 										return update;
