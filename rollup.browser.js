@@ -57,7 +57,7 @@ export default [
 			builtins(),
 			globals()
 		],
-		external: ['graphql-subscriptions', 'graphql-tools', 'fortune', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
+		external: ['graphql-subscriptions', 'graphql-tools', 'fortune', 'fortune/lib/adapter/adapters/common', 'lodash', 'graphql', 'graphql/language', 'graphql/execution/values', 'graphql/language/printer', 'graphql/error']
 
 	}
 ];
