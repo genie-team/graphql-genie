@@ -8,7 +8,7 @@
 
 ## Type Definitions
 
-**GraphQL Genie works off regular [GraphQL type defintions](https://graphql.org/learn/schema/) with some additional features**
+**GraphQL Genie works off regular [GraphQL type definitions](https://graphql.org/learn/schema/) with some additional features**
 
 GraphQL Genie supports interfaces and unions! You may want to look into using the `@storeName` [custom directive](#custom-directives-you-can-use) and see special concerns in [altering your schema](#altering-your-schema) when using them.
 
@@ -21,7 +21,7 @@ GraphQL Genie supports interfaces and unions! You may want to look into using th
 	*  The directive @relation(name: String) can be attached to a relation field
 	*  Fields with relations will have referential integrity and inverse updates
 	*  Genie will compute relations automatically (like between User and Address below) but if the relation is ambiguous the @relation directive should be used
-	*  If a related object is delated, it's related nodes will be set to null
+	*  If a related object is deleted, it's related nodes will be set to null
 *  **@default(value: String!)**
 	*  The directive @default(value: String!) sets a default value for a scalar field. 
 	*  Note that the value argument is of type String for all scalar fields
@@ -99,7 +99,7 @@ Note that if you add a non-null field you may get errors querying that field on 
 
 If you are adding a new type that implements an interface or is part of a union you may need to use the `@storeName` [custom directive](#custom-directives-you-can-use) in order to make sure your past data and new data are in the same place of your store.
 
-If you are adding a single existing type to a new union or interface you will similarily have to use the `@storeName` [custom directive](#custom-directives-you-can-use).
+If you are adding a single existing type to a new union or interface you will similarly have to use the `@storeName` [custom directive](#custom-directives-you-can-use).
 
 
 #### Special cases and scripting migrations
@@ -120,4 +120,3 @@ One way to migrate the data
 	* Adding values to new non-null fields
 * If the new schema is pointing to the same database, delete old type data (from types you exported) (you can use the [deleteMany mutation](https://github.com/genie-team/graphql-genie/blob/master/docs/mutations.md#updatemany-and-deletemany))
 * [Import data](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) into the new schema genie by calling [`importRawData`](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) or using the [`importData`](https://github.com/genie-team/graphql-genie/blob/master/docs/mutations.md#import-data) mutation and pass in the result of the export.
-
