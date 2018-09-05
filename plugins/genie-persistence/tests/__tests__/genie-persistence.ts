@@ -1,7 +1,8 @@
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
-import { getClient } from '../setupClient';
+import { getClient, localForageInstance } from '../setupClient';
 import { GeniePersitence } from '../../src/genie-persistence';
+import { commonjs } from 'rollup-plugin-commonjs';
 
 let client: GeniePersitence;
 beforeAll(() => {
@@ -12,6 +13,22 @@ beforeAll(() => {
 beforeEach(() => {
 	// client.cache['data'].data = {};
 });
+let online = true;
+Object.defineProperty(navigator, 'onLine', {
+	get: function() {
+		return online;
+	},
+});
+const goOffline = () => {
+	online = false;
+	window.dispatchEvent(new Event('offline'));
+};
+
+const goOnline = () => {
+	online = true;
+	window.dispatchEvent(new Event('online'));
+};
+
 const testData = {
 	users: [],
 	posts: []
@@ -20,8 +37,8 @@ const testData = {
 const postsQ = gql`
 query {
 	posts (orderBy: {
-    created: DESC
-   }) {
+		created: DESC
+	 }) {
 		title
 		text
 		author {
@@ -34,8 +51,8 @@ query {
 const usersQ = gql`
 query {
 	users (orderBy: {
-    created: DESC
-   }) {
+		created: DESC
+	 }) {
 		id
 		username
 		name
@@ -72,6 +89,18 @@ mutation createUser($input: CreateUserMutationInput!) {
 }
 `;
 
+const updateUser = gql`
+mutation updateUser($input: UpdateUserMutationInput!) {
+	updateUser(input: $input) {
+		data {
+			email
+			username
+		}
+		clientMutationId
+	}
+}
+`;
+
 const updatePost = gql`
 mutation updatePost($input: UpdatePostMutationInput!) {
 	updatePost(input: $input) {
@@ -85,6 +114,7 @@ mutation updatePost($input: UpdatePostMutationInput!) {
 describe('onlineTests', () => {
 
 	test('online - createPost', async () => {
+		goOnline();
 		const title = 'Welcome';
 		const text = 'This is the graphql genie persistance example';
 		const post = await client.mutate({
@@ -117,6 +147,7 @@ describe('onlineTests', () => {
 	});
 
 	test('online - createPost with user', async () => {
+		goOnline();
 		const title = 'Advanced';
 		const text = 'This is the graphql genie persistance example with nested creating a user as well';
 		const post = await client.mutate({
@@ -157,6 +188,7 @@ describe('onlineTests', () => {
 	});
 
 	test('online - create User to test query updating local data', async () => {
+		goOnline();
 		const user = await client.mutate({
 			mutation: createUser,
 			variables: {
@@ -186,6 +218,68 @@ describe('onlineTests', () => {
 		localUsers = await client.localClient.query({query: usersQ, fetchPolicy: 'network-only'});
 		expect(localUsers.data['users'][0].username).toBe('loki');
 		expect(localUsers.data['users'][0].email).toBe('loki@example.com');
+	});
+});
+describe.only('offlineTests', () => {
+	test('offline - create User to test query updating local data', async () => {
+		goOffline();
+		const user = await client.mutate({
+			mutation: createUser,
+			variables: {
+				input: {
+					data: {
+						username: 'thor',
+						email: 'thor@example.com',
+						password: 'p$ssw0rd'
+					}
+				}
+			}
+		});
 
+		const users = await client.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(users.data['users'][0].username).toBe('thor');
+		expect(users.data['users'][0].email).toBe('thor@example.com');
+
+		expect(await localForageInstance.length()).toBe(1);
+		expect(client.remoteQueue.size).toBe(1);
+
+		goOnline();
+		await client.remoteQueue.onEmpty();
+		await client.remoteQueue.onIdle();
+		const remoteUsers = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(remoteUsers.data['users'][0].username).toBe('thor');
+		expect(remoteUsers.data['users'][0].email).toBe('thor@example.com');
+		expect(remoteUsers.data['users'][0].id).toBe(users.data['users'][0].id);
+	});
+
+	test('offline - update user', async () => {
+		goOffline();
+		const user = await client.mutate({
+			mutation: updateUser,
+			variables: {
+				input: {
+					data: {
+						username: 'Thor'
+					},
+					where: {
+						email: 'thor@example.com'
+					}
+				}
+			}
+		});
+
+		const users = await client.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(users.data['users'][0].username).toBe('Thor');
+		expect(users.data['users'][0].email).toBe('thor@example.com');
+
+		expect(await localForageInstance.length()).toBe(1);
+		expect(client.remoteQueue.size).toBe(1);
+
+		goOnline();
+		await client.remoteQueue.onEmpty();
+		await client.remoteQueue.onIdle();
+		const remoteUsers = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(remoteUsers.data['users'][0].username).toBe('Thor');
+		expect(remoteUsers.data['users'][0].email).toBe('thor@example.com');
 	});
 });

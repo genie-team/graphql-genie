@@ -100,13 +100,14 @@ const getRemoteClient = (): ApolloClient<any> => {
 };
 
 let client: GeniePersitence;
+export const localForageInstance = localForage.createInstance({name: 'geniePersist'});
 export const getClient = async (): Promise<GeniePersitence> => {
 	if (!client) {
 		client = new GeniePersitence({
 			localClient:  getLocalClient(),
 			remoteClient: getRemoteClient(),
 			localGenie:  getLocalGenie(),
-			localForageInstance: localForage.createInstance({name: 'geniePersist'})
+			localForageInstance
 		});
 		await client.persist();
 	}

@@ -3,8 +3,8 @@ import ApolloClient, { ApolloQueryResult, MutationOptions, OperationVariables, Q
 import { DocumentNode, FetchResult } from 'apollo-link';
 import { GraphQLGenie } from 'graphql-genie';
 import { checkDocument, cloneDeep, isEqual } from 'apollo-utilities';
-import { DefinitionNode, FieldNode, GraphQLNamedType, GraphQLObjectType, OperationDefinitionNode, SelectionSetNode, getNamedType, graphql, isEnumType, isInterfaceType, isListType, isObjectType, isScalarType, print } from 'graphql';
-import { get, isArray, isEmpty, isObject, isPlainObject, set, transform } from 'lodash';
+import { DefinitionNode, FieldNode, GraphQLNamedType, GraphQLObjectType, OperationDefinitionNode, SelectionSetNode, getNamedType, graphql, isInterfaceType, isObjectType, print } from 'graphql';
+import { get, isArray, isEmpty, isObject, isPlainObject, isString, set, transform } from 'lodash';
 import gql from 'graphql-tag';
 interface LocalForageDbMethodsCore {
 	getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T>;
@@ -132,6 +132,7 @@ export class GeniePersitence {
 				return a.options.context.order - b.options.context.order;
 			});
 			cachedMutations.forEach(mutation => {
+				// tslint:disable-next-line
 				this.addToRemoteQueue(mutation.options, mutation.key, loadFromStorageQ);
 			});
 			cachedMutations = null;
@@ -203,9 +204,9 @@ export class GeniePersitence {
 								} else {
 									data = record;
 								}
-								let conditions: { match: GenericObject };
+								let conditions: { match: GenericObject, exists: GenericObject };
 								if (!isEmpty(previousValues)) {
-									conditions = { match: {} };
+									conditions = { match: {}, exists: {}};
 									for (const fieldName in previousValues) {
 										if (fieldName !== 'id'
 											&& !fieldName.startsWith('__')
@@ -213,8 +214,10 @@ export class GeniePersitence {
 											&& updatedFields.includes(fieldName)) {
 
 											const element = previousValues[fieldName];
-											if (!isArray(element) || (!isEmpty(element) && isArray(element))) {
+											if ((!isArray(element) && element) || (!isEmpty(element) && isArray(element))) {
 												conditions.match[fieldName] = element;
+											} else if (!isArray(element) && element === null) {
+												conditions.exists[fieldName] = false;
 											}
 										}
 									}
@@ -231,7 +234,7 @@ export class GeniePersitence {
 
 								// importData(data: [JSON]!merge: BooleandefaultTypename: String conditions: ConditionsInput): ImportDataPayload
 
-								const importData = gql`mutation importData($data: [JSON]!, $merge: Boolean, $defaultTypename: String, $conditions: ConditionsInput) {
+								const importData = gql`mutation importData($data: [JSON]!, $merge: Boolean, $defaultTypename: String, $conditions: [ConditionsInput]) {
 									importData(data: $data, merge: $merge, defaultTypename: $defaultTypename, conditions: $conditions) {
 										data
 										unalteredData
@@ -243,8 +246,9 @@ export class GeniePersitence {
 								options.variables = {
 									data,
 									merge: true,
-									conditions
+									conditions: conditions ? [{id: data.id, conditions}] : undefined
 								};
+								// tslint:disable-next-line
 								this.addToRemoteQueue(options, undefined, this.remoteQueue, data);
 								return record;
 							case 'delete':
@@ -257,6 +261,7 @@ export class GeniePersitence {
 										clientMutationId
 									}
 								}`;
+								// tslint:disable-next-line
 								this.addToRemoteQueue(options);
 						}
 					}
@@ -501,6 +506,7 @@ export class GeniePersitence {
 		startingQueue.add(async () => {
 			try {
 				await this.removeItem(id);
+				options = this.objifyMutationOptions(options);
 				const mutationResult = await this.remoteClient.mutate(options);
 				if (sentData && mutationResult && mutationResult.data && mutationResult.data.importData) {
 					if (!isEmpty(mutationResult.data.importData.unalteredData)) {
@@ -644,13 +650,14 @@ export class GeniePersitence {
 		return JSON.stringify(options);
 	}
 
-	private objifyMutationOptions<T, TVariables = OperationVariables>(options: string): MutationOptions<T, TVariables> {
-		// make the mutation a string so it's smaller
-		const optionsObj = JSON.parse(options);
-
-		optionsObj.mutation = gql(optionsObj.mutation);
-
-		return optionsObj;
+	private objifyMutationOptions<T, TVariables = OperationVariables>(options: string | MutationOptions<T, TVariables>): MutationOptions<T, TVariables> {
+		if (isString(options)) {
+			options = < MutationOptions<T, TVariables>> JSON.parse(options);
+		}
+		if (isString(options.mutation)) {
+			options.mutation = gql(options.mutation);
+		}
+		return options;
 	}
 
 	private defaultThrowMergeConflict(sentData, remoteData) {
