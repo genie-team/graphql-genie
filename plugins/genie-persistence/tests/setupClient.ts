@@ -36,6 +36,7 @@ const fortuneOptions: FortuneOptions = {
 	} ]
 };
 
+export const throwMergeConflict = jest.fn();
 let localGenie: GraphQLGenie;
 const getLocalGenie = (): GraphQLGenie => {
 	if (!localGenie) {
@@ -107,7 +108,8 @@ export const getClient = async (): Promise<GeniePersitence> => {
 			localClient:  getLocalClient(),
 			remoteClient: getRemoteClient(),
 			localGenie:  getLocalGenie(),
-			localForageInstance
+			localForageInstance,
+			throwMergeConflict
 		});
 		await client.persist();
 	}

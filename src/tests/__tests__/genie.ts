@@ -1,6 +1,7 @@
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { genie, getClient } from '../setupTests';
+import { GraphQLScalarType } from '../../../plugins/genie-persistence/node_modules/@types/graphql';
 let client: ApolloClient<any>;
 beforeAll(async () => {
 	client = await getClient();
@@ -1091,6 +1092,48 @@ describe('genie', () => {
 		expect(result.data['addresses'].length).toBe(1);
 		expect(result.data['addresses'][0].city).toBe('Underworld');
 		expect(result.data['addresses'][0].user.name).toBe('Hades');
+	});
+
+	test('genie - export query and import mutation with date', async () => {
+		const exportData = gql`
+			{
+				exportData(types: ["Comment"])
+			}
+		`;
+		let result: any = await client.query({
+			query: exportData
+		});
+		expect(result.data['exportData']).not.toBeNull();
+
+		const dataCopy = JSON.parse(JSON.stringify(result.data['exportData']));
+		const date = new Date();
+		dataCopy[0]['text'] = 'Import Data';
+		dataCopy[0]['updated'] = date;
+		const dataString = JSON.stringify(dataCopy).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
+		const importData = gql`
+			mutation {
+				importData(data: ${dataString}, merge: true) {
+					data
+					unalteredData
+					missingData
+				}
+			}
+		`;
+		result = await client.mutate({
+			mutation: importData
+		});
+
+		expect(result.data['importData'].data.length).toBeGreaterThan(0);
+
+		client.cache['data'].data = {};
+
+		result = await client.query({
+			query: exportData
+		});
+		expect(result.data['exportData']).not.toBeNull();
+		expect(result.data['exportData'][0]['text']).toBe('Import Data');
+		const dateScalar = <GraphQLScalarType>genie.getSchema().getType('DateTime');
+		expect(result.data['exportData'][0]['updated']).toEqual(dateScalar.serialize(date));
 	});
 
 	test('genie - disconnect', async () => {

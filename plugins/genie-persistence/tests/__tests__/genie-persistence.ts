@@ -1,8 +1,7 @@
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
-import { getClient, localForageInstance } from '../setupClient';
+import { getClient, localForageInstance, throwMergeConflict } from '../setupClient';
 import { GeniePersitence } from '../../src/genie-persistence';
-import { commonjs } from 'rollup-plugin-commonjs';
 
 let client: GeniePersitence;
 beforeAll(() => {
@@ -252,14 +251,15 @@ describe.only('offlineTests', () => {
 		expect(remoteUsers.data['users'][0].id).toBe(users.data['users'][0].id);
 	});
 
-	test('offline - update user', async () => {
+	test('offline - update user synchs when online', async () => {
 		goOffline();
 		const user = await client.mutate({
 			mutation: updateUser,
 			variables: {
 				input: {
 					data: {
-						username: 'Thor'
+						username: 'Thor',
+						email: 'thorGodOfThunder@example.com'
 					},
 					where: {
 						email: 'thor@example.com'
@@ -270,7 +270,7 @@ describe.only('offlineTests', () => {
 
 		const users = await client.query({query: usersQ, fetchPolicy: 'network-only'});
 		expect(users.data['users'][0].username).toBe('Thor');
-		expect(users.data['users'][0].email).toBe('thor@example.com');
+		expect(users.data['users'][0].email).toBe('thorGodOfThunder@example.com');
 
 		expect(await localForageInstance.length()).toBe(1);
 		expect(client.remoteQueue.size).toBe(1);
@@ -280,6 +280,51 @@ describe.only('offlineTests', () => {
 		await client.remoteQueue.onIdle();
 		const remoteUsers = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
 		expect(remoteUsers.data['users'][0].username).toBe('Thor');
-		expect(remoteUsers.data['users'][0].email).toBe('thor@example.com');
+		expect(remoteUsers.data['users'][0].email).toBe('thorGodOfThunder@example.com');
+	});
+
+	test('offline - update user throws merge conflict', async () => {
+		goOffline();
+		let user = await client.mutate({
+			mutation: updateUser,
+			variables: {
+				input: {
+					data: {
+						email: 'thorIsGreat@example.com'
+					},
+					where: {
+						email: 'thorGodOfThunder@example.com'
+					}
+				}
+			}
+		});
+
+		let users = await client.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(users.data['users'][0].email).toBe('thorIsGreat@example.com');
+
+		expect(await localForageInstance.length()).toBe(1);
+		expect(client.remoteQueue.size).toBe(1);
+
+		user = await client.remoteClient.mutate({
+			mutation: updateUser,
+			variables: {
+				input: {
+					data: {
+						email: 'thor1@example.com'
+					},
+					where: {
+						email: 'thorGodOfThunder@example.com'
+					}
+				}
+			}
+		});
+		users = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(users.data['users'][0].email).toBe('thor1@example.com');
+		goOnline();
+		await client.remoteQueue.onEmpty();
+		await client.remoteQueue.onIdle();
+		expect(throwMergeConflict).toBeCalled();
+		const remoteUsers = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(remoteUsers.data['users'][0].email).toBe('thor1@example.com');
 	});
 });

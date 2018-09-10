@@ -1,13 +1,13 @@
 
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, getNullableType, introspectionFromSchema, isEnumType, isListType, isObjectType, isScalarType, printType } from 'graphql';
-import { GenerateUpsert } from './GenerateUpsert';
+import { GenerateUpdate } from './GenerateUpdate';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, getNullableType, introspectionFromSchema, isEnumType, isListType, isObjectType, isScalarType, printType } from 'graphql';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { assign, forOwn, get, isArray, isEmpty, isFunction, isPlainObject, isString, set } from 'lodash';
-import { GenerateUpdate } from './GenerateUpdate';
+import { GenerateUpsert } from './GenerateUpsert';
 import { DataResolver, FortuneOptions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
@@ -15,6 +15,7 @@ import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getTypeResolver, meetsConditions } from './TypeGeneratorUtilities';
 import { GenerateGetOne } from './GenerateGetOne';
 import { GenerateMigrations } from './GenerateMigrations';
+import { isNumber } from 'util';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
@@ -301,6 +302,32 @@ export class GraphQLGenie {
 			}
 			object.__typename = typeName;
 			object.id = object.id || this.graphQLFortune.computeId(typeName);
+
+			// make sure we parse the values
+			const schemaType = <GraphQLObjectType>this.schema.getType(typeName);
+			const fieldMap = schemaType.getFields();
+			const objectFields = Object.keys(object);
+			objectFields.forEach(fieldName => {
+				const schemaField = fieldMap[fieldName];
+				if (schemaField) {
+					const namedType = getNamedType(schemaField.type);
+					if (isScalarType(namedType)) {
+						let currVal = object[fieldName];
+						const scalarType = <GraphQLScalarType>this.schema.getType(namedType.name);
+						if (isArray(currVal) && !isEmpty(currVal)) {
+							currVal = currVal.map((val) => {
+								if (val && isString(val)) {
+									val = scalarType.parseValue(val);
+								}
+								return val;
+							});
+						} else if (isString(currVal)) {
+							currVal = scalarType.parseValue(currVal);
+						}
+						object[fieldName] = currVal;
+					}
+				}
+			});
 			return object;
 		});
 		if (merge) {
@@ -447,7 +474,7 @@ export class GraphQLGenie {
 									update[fieldName] = currValue;
 								}
 							} else {
-								update[fieldName] = isListType(getNullableType(schemaField.type)) ? {set: currValue} : currValue;
+								update[fieldName] = isListType(getNullableType(schemaField.type)) ? { set: currValue } : currValue;
 							}
 						}
 					}
@@ -499,7 +526,45 @@ export class GraphQLGenie {
 		if (types) {
 			const promises = [];
 			types.forEach(typeName => {
-				promises.push(this.graphQLFortune.find(typeName, undefined, undefined, meta));
+				promises.push(
+					new Promise((resolve, reject) => {
+						this.graphQLFortune.find(typeName, undefined, undefined, meta).then(fortuneData => {
+							// make sure we serialize the values
+							const schemaType = <GraphQLObjectType>this.getSchema().getType(typeName);
+							const fieldMap = schemaType.getFields();
+							if (isEmpty(fortuneData)) {
+								resolve(fortuneData);
+								return;
+							}
+							fortuneData = fortuneData.map((record) => {
+								const objectFields = Object.keys(record);
+								objectFields.forEach(fieldName => {
+									const schemaField = fieldMap[fieldName];
+									if (schemaField) {
+										const namedType = getNamedType(schemaField.type);
+										let currVal = record[fieldName];
+										if (isScalarType(namedType)) {
+											const scalarType = <GraphQLScalarType>this.getSchema().getType(namedType.name);
+											if (isArray(currVal)) {
+												currVal = currVal.map((val) => {
+													if (val && !isString(val) && !isNumber(val)) {
+														val = scalarType.serialize(val);
+													}
+													return val;
+												});
+											} else if (currVal && !isString(currVal) && !isNumber(currVal)) {
+												currVal = scalarType.serialize(currVal);
+											}
+											record[fieldName] = currVal;
+										}
+									}
+								});
+								return record;
+							});
+							resolve(fortuneData);
+						}).catch(reason => { reject(reason); });
+					})
+				);
 			});
 			const allData = await Promise.all(promises);
 			nodes = [].concat.apply([], allData); // flatten

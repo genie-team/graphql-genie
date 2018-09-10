@@ -3,8 +3,8 @@ import ApolloClient, { ApolloQueryResult, MutationOptions, OperationVariables, Q
 import { DocumentNode, FetchResult } from 'apollo-link';
 import { GraphQLGenie } from 'graphql-genie';
 import { checkDocument, cloneDeep, isEqual } from 'apollo-utilities';
-import { DefinitionNode, FieldNode, GraphQLNamedType, GraphQLObjectType, OperationDefinitionNode, SelectionSetNode, getNamedType, graphql, isInterfaceType, isObjectType, print } from 'graphql';
-import { get, isArray, isEmpty, isObject, isPlainObject, isString, set, transform } from 'lodash';
+import { DefinitionNode, FieldNode, GraphQLNamedType, GraphQLObjectType, GraphQLScalarType, OperationDefinitionNode, SelectionSetNode, getNamedType, graphql, isEnumType, isInterfaceType, isObjectType, isScalarType, print } from 'graphql';
+import { get, isArray, isEmpty, isNumber, isObject, isPlainObject, isString, set, transform } from 'lodash';
 import gql from 'graphql-tag';
 interface LocalForageDbMethodsCore {
 	getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T>;
@@ -176,8 +176,40 @@ export class GeniePersitence {
 							case 'update':
 								let previousValues = {};
 								let data: GenericObject = {};
+								const cacheRecord: GenericObject = {};
 								const updatedFields: string[] = [];
-
+								// make sure we serialize the values
+								const schema = this.localGenie.getSchema();
+								const schemaType = <GraphQLObjectType>schema.getType(typeName);
+								const fieldMap = schemaType.getFields();
+								const objectFields = Object.keys(record);
+								objectFields.forEach(fieldName => {
+									const schemaField = fieldMap[fieldName];
+									if (schemaField) {
+										const namedType = getNamedType(schemaField.type);
+										let currVal = record[fieldName];
+										if (isScalarType(namedType)) {
+											const scalarType = <GraphQLScalarType>schema.getType(namedType.name);
+											if (isArray(currVal) && !isEmpty(currVal)) {
+												currVal = currVal.map((val) => {
+													if (val && !isString(val) && !isNumber(val)) {
+														val = scalarType.serialize(val);
+													}
+													return val;
+												});
+											} else if (currVal && !isString(currVal) && !isNumber(currVal)) {
+												currVal = scalarType.serialize(currVal);
+											}
+											record[fieldName] = currVal;
+											cacheRecord[fieldName] = currVal;
+										} else if (isEnumType(namedType)) {
+											cacheRecord[fieldName] = currVal;
+										} else {
+											// TODO ????
+											cacheRecord[fieldName] = currVal;
+										}
+									}
+								});
 								if (context.request.method === 'update') {
 									data.id = record.id;
 									data.__typename = record.__typename;
@@ -206,7 +238,7 @@ export class GeniePersitence {
 								}
 								let conditions: { match: GenericObject, exists: GenericObject };
 								if (!isEmpty(previousValues)) {
-									conditions = { match: {}, exists: {}};
+									conditions = { match: {}, exists: {} };
 									for (const fieldName in previousValues) {
 										if (fieldName !== 'id'
 											&& !fieldName.startsWith('__')
@@ -224,10 +256,10 @@ export class GeniePersitence {
 								}
 
 								// write cache data
-								if (!options || !options.fetchPolicy || options.fetchPolicy !== 'no-cache') {
+								if (this.dataIdFromObject && (!options || !options.fetchPolicy || options.fetchPolicy !== 'no-cache')) {
 									this.localClient.writeData({
-										id: this.dataIdFromObject ? this.dataIdFromObject(record) : undefined,
-										data: record
+										id: this.dataIdFromObject(record),
+										data: cacheRecord,
 									});
 								}
 								// const dataString = JSON.stringify(record).replace(/\"([^(\")"]+)\":/g, '$1:');  // This will remove all the quotes around props
@@ -246,7 +278,7 @@ export class GeniePersitence {
 								options.variables = {
 									data,
 									merge: true,
-									conditions: conditions ? [{id: data.id, conditions}] : undefined
+									conditions: conditions ? [{ id: data.id, conditions }] : undefined
 								};
 								// tslint:disable-next-line
 								this.addToRemoteQueue(options, undefined, this.remoteQueue, data);
@@ -334,8 +366,8 @@ export class GeniePersitence {
 
 				if (!result) {
 					const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
-					this.localQueue.add(() => {  return this.localQueue.pause(); }, { priority: 98 });
-					this.localQueue.add(() => {  return true; }, { priority: 99 });
+					this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 });
+					this.localQueue.add(() => { return true; }, { priority: 99 });
 					result = await this.remoteClient.query(remoteOptions);
 					this.localQueue.add(() => {
 						this.syncLocal(currCache);
@@ -359,7 +391,7 @@ export class GeniePersitence {
 
 	private difference(object, base): GenericObject {
 		function changes(object, base) {
-			return transform(object, function(result, value, key) {
+			return transform(object, function (result, value, key) {
 				if (!isEqual(value, base[key]) && !((base[key] === null && value === undefined) || (base[key] === undefined && value === null))) {
 					result[key] = (isObject(value) && isObject(base[key])) ? changes(value, base[key]) : value;
 				}
@@ -430,7 +462,7 @@ export class GeniePersitence {
 		remoteOptions: MutationOptions<T, TVariables>,
 	): Promise<FetchResult<T>> {
 		this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 });
-		this.localQueue.add(() => {  return true; }, { priority: 99 });
+		this.localQueue.add(() => { return true; }, { priority: 99 });
 		const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
 		const result = await this.remoteClient.mutate(remoteOptions);
 		this.localQueue.add(() => { this.syncLocal(currCache); }, { priority: 1 });
@@ -652,7 +684,7 @@ export class GeniePersitence {
 
 	private objifyMutationOptions<T, TVariables = OperationVariables>(options: string | MutationOptions<T, TVariables>): MutationOptions<T, TVariables> {
 		if (isString(options)) {
-			options = < MutationOptions<T, TVariables>> JSON.parse(options);
+			options = <MutationOptions<T, TVariables>>JSON.parse(options);
 		}
 		if (isString(options.mutation)) {
 			options.mutation = gql(options.mutation);
