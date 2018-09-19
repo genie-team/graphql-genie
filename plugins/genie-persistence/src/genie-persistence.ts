@@ -162,6 +162,57 @@ export class GeniePersitence {
 		this.remoteQueue.start();
 	}
 
+	private updateLocalClientCache(options, idObj, record, fieldName) {
+		if (this.dataIdFromObject && (!options || !options.fetchPolicy || options.fetchPolicy !== 'no-cache')) {
+			const inverse: string = get(this.localGenie.getDataResolver().getStore(), ['recordTypes', record.__typename, fieldName, 'inverse']);
+			const link: string = get(this.localGenie.getDataResolver().getStore(), ['recordTypes', record.__typename, fieldName, 'link']);
+			const relationIsArray: string = get(this.localGenie.getDataResolver().getStore(), ['recordTypes', link, inverse, 'isArray']);
+			if (inverse && !relationIsArray) {
+				this.localClient.writeData({
+					id: this.dataIdFromObject(idObj),
+					data: {
+						[inverse]: {id: record.id, __typename: record.__typename}
+					}
+				});
+			} else if (inverse) {
+				const localCache = this.localClient.cache.readFragment({
+					id: this.dataIdFromObject(idObj),
+					fragment: gql`
+						fragment cacheData on ${link} {
+							${inverse} {
+								id
+							}
+						}
+					`
+				});
+				if (localCache && localCache[inverse]) {
+					let exists = false;
+					localCache[inverse].forEach(({id}) => {
+						if (id === record.id) {
+							exists = true;
+						}
+					});
+					if (!exists) {
+						localCache[inverse].push({id: record.id, __typename: record.__typename});
+						this.localClient.writeData({
+							id: this.dataIdFromObject(idObj),
+							data: {
+								[inverse]: localCache[inverse]
+							}
+						});
+					}
+				} else {
+					this.localClient.writeData({
+						id: this.dataIdFromObject(idObj),
+						data: {
+							[inverse]: [{id: record.id, __typename: record.__typename}]
+						}
+					});
+				}
+			}
+		}
+	}
+
 	public async setupHooks() {
 		if (this.remoteClient && !this.persisting) {
 
@@ -205,7 +256,23 @@ export class GeniePersitence {
 										} else if (isEnumType(namedType)) {
 											cacheRecord[fieldName] = currVal;
 										} else {
-											// TODO ????
+											if (isArray(currVal) && !isEmpty(currVal)) {
+												currVal = currVal.map((val) => {
+													// write cache data for relation
+													const idObj = {
+														id: val,
+														__typename: namedType.name
+													};
+													this.updateLocalClientCache(options, idObj, record, fieldName);
+													return idObj;
+												});
+											} else if (currVal && !isEmpty(currVal)) {
+												currVal = {
+													id: currVal,
+													__typename: namedType.name
+												};
+												this.updateLocalClientCache(options, currVal, record, fieldName);
+											}
 											cacheRecord[fieldName] = currVal;
 										}
 									}

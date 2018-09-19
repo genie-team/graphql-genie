@@ -56,6 +56,10 @@ query {
 		username
 		name
 		email
+		posts {
+			title
+			text
+		}
 	}
 }
 `;
@@ -145,7 +149,7 @@ describe('onlineTests', () => {
 		expect(localPosts.data['posts'][0].text).toBe(text);
 	});
 
-	test('online - createPost with user', async () => {
+	test.only('online - createPost with user', async () => {
 		goOnline();
 		const title = 'Advanced';
 		const text = 'This is the graphql genie persistance example with nested creating a user as well';
@@ -184,6 +188,9 @@ describe('onlineTests', () => {
 		expect(localPosts.data['posts'][0].title).toBe(title);
 		expect(localPosts.data['posts'][0].text).toBe(text);
 		expect(localPosts.data['posts'][0].author.username).toBe('zeus');
+		const localUsers = await client.query({query: usersQ, fetchPolicy: 'network-only'});
+		expect(localUsers.data['users'][0].username).toBe('zeus');
+
 	});
 
 	test('online - create User to test query updating local data', async () => {
@@ -204,6 +211,7 @@ describe('onlineTests', () => {
 		await client.localQueue.onEmpty();
 		await client.localQueue.onIdle();
 		let localUsers = await client.localClient.query({query: usersQ, fetchPolicy: 'network-only'});
+		// this is null because the mutation doesn't return the username
 		expect(localUsers.data['users'][0].username).toBeNull();
 		expect(localUsers.data['users'][0].email).toBe('loki@example.com');
 
@@ -219,7 +227,7 @@ describe('onlineTests', () => {
 		expect(localUsers.data['users'][0].email).toBe('loki@example.com');
 	});
 });
-describe.only('offlineTests', () => {
+describe('offlineTests', () => {
 	test('offline - create User to test query updating local data', async () => {
 		goOffline();
 		const user = await client.mutate({
@@ -326,5 +334,93 @@ describe.only('offlineTests', () => {
 		expect(throwMergeConflict).toBeCalled();
 		const remoteUsers = await client.remoteClient.query({query: usersQ, fetchPolicy: 'network-only'});
 		expect(remoteUsers.data['users'][0].email).toBe('thor1@example.com');
+	});
+
+	test('offline - relation cache', async () => {
+		goOffline();
+		const username = 'hera';
+		const email = 'hera@example.com';
+		const title = 'Hera post title';
+		const text = 'Hera post text';
+		const user = await client.mutate({
+			mutation: createUser,
+			variables: {
+				input: {
+					data: {
+						username: username,
+						email: email,
+						password: 'p$ssw0rd',
+						posts: {
+							create: {
+								title,
+								text
+							}
+						}
+					}
+				}
+			}
+		});
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
+
+		const localUsers = await client.query({query: usersQ});
+		expect(localUsers.data['users'][0].username).toBe(username);
+		expect(localUsers.data['users'][0].email).toBe(email);
+		expect(localUsers.data['users'][0].posts[0].title).toBe(title);
+		expect(localUsers.data['users'][0].posts[0].text).toBe(text);
+	});
+
+	test.only('offline - createPost with user relation cache', async () => {
+		goOffline();
+		const title = 'Relation';
+		const text = 'This is the graphql genie persistance example with nested creating a user as well';
+		const post = await client.mutate({
+			mutation: createPost,
+			variables: {
+				input: {
+					data: {
+						title,
+						text,
+						author: {
+							create: {
+								username: 'tyr',
+								email: 'tyr@example.com',
+								password: 'p$ssw0rd'
+							}
+						}
+					}
+				}
+			}
+		});
+		const postData = post.data.createPost.data;
+		testData.posts.push(postData);
+		expect(postData.title).toBe(title);
+		expect(postData.text).toBe(text);
+		expect(postData.author.username).toBe('tyr');
+
+		const posts = await client.query({query: postsQ});
+		expect(posts.data['posts'][0].title).toBe(title);
+		expect(posts.data['posts'][0].text).toBe(text);
+		expect(posts.data['posts'][0].author.username).toBe('tyr');
+
+		const postUpdate = await client.mutate({
+			mutation: updatePost,
+			variables: {
+				input: {
+					where: {
+						id: testData.posts[0].id
+					},
+					data: {
+						author: {
+							connect: {
+									id: posts.data['posts'][0].author.id
+							}
+						}
+					}
+				}
+			}
+		});
+		await client.localQueue.onEmpty();
+		await client.localQueue.onIdle();
 	});
 });

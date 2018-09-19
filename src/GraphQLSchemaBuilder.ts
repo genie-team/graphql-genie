@@ -1,11 +1,11 @@
 
-import { DocumentNode, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print  } from 'graphql';
+import { DocumentNode, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isEnumType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
-import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, buildSchemaFromTypeDefinitions, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
-import { camelCase, find, has, isEmpty, set, values } from 'lodash';
+import { camelCase, each, find, has, isEmpty, set, values } from 'lodash';
 import pluralize from 'pluralize';
-import { GenerateConfig } from './GraphQLGenieInterfaces';
+import { GenerateConfig, GenericObject } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
 import { getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
 
@@ -118,7 +118,54 @@ export class GraphQLSchemaBuilder {
 		if (!this.typeDefs.includes('type Query')) {
 			newTypeDefs += 'type Query {noop:Int}';
 		}
-
+		// let's make sure we have a valid schema
+		try {
+			buildSchemaFromTypeDefinitions(newTypeDefs);
+		} catch (e) {
+			// let's see if it errored due to unknown directive, which is something we can fake past and assume the directive will be added later
+			let match;
+			let hasMatch = false;
+			const re = /Unknown directive\s*"(.*)"/g;
+			let directiveTypeDefs = newTypeDefs;
+			while ((match = re.exec(e.message)) != null) {
+				hasMatch = true;
+				if (match[1] && !directiveTypeDefs.includes(`directive @${match[1]}`)) {
+					directiveTypeDefs += `
+						directive @${match[1]} on SCHEMA | SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | INTERFACE | UNION | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+					`;
+				}
+			}
+			if (hasMatch) {
+				try {
+					buildSchemaFromTypeDefinitions(directiveTypeDefs);
+					newTypeDefs = directiveTypeDefs;
+				} catch (e) {
+					// we added the directive but still error, let's add the arguments
+					hasMatch = false;
+					const re = /Unknown argument\s*"(.*)"\s*on directive\s*"@(.*)"/g;
+					const directives: GenericObject = {};
+					while ((match = re.exec(e.message)) != null) {
+						hasMatch = true;
+						directives[match[2]] = directives[match[2]] ? directives[match[2]] : [];
+						const field = match[1] + ': JSON';
+						if (!directives[match[2]].includes(field)) {
+							directives[match[2]].push(field);
+						}
+					}
+					if (hasMatch) {
+						directiveTypeDefs = newTypeDefs;
+						each(directives, (fields, directive) => {
+							directiveTypeDefs += `
+								directive @${directive} (
+									${fields.join('\n')}
+								) on SCHEMA | SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | INTERFACE | UNION | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+						`;
+						});
+						newTypeDefs = directiveTypeDefs;
+					}
+				}
+			}
+		}
 		this.schema = makeExecutableSchema({
 			typeDefs: newTypeDefs,
 			resolvers: this.resolveFunctions,
@@ -166,7 +213,7 @@ export class GraphQLSchemaBuilder {
 				Object.keys(fieldMap).forEach(fieldName => {
 					const graphQLfield = fieldMap[fieldName];
 					const returnType = getNamedType(graphQLfield.type);
-					if (!isScalarType(returnType)) { // scalars don't have filters
+					if (!isScalarType(returnType) && !isEnumType(returnType)) { // scalars don't have filters
 						if (isInterfaceType(returnType) || isUnionType(returnType)) { // can't grab args from existing query type
 							const where = this.schema.getType(returnType.name + 'WhereInput');
 							if (typeIsList(graphQLfield.type)) {

@@ -1,7 +1,7 @@
 import { GraphQLSchema, graphql, print } from 'graphql';
 import gql from 'graphql-tag';
 import authenticationPlugin from '../../src/authentication';
-import { GraphQLGenie } from 'graphql-genie';
+import { GraphQLGenie } from '../../../../src/index';
 import { isArray, isEmpty } from 'lodash';
 
 let schema: GraphQLSchema;
