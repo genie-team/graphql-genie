@@ -69,6 +69,8 @@ useAsync(plugin: GeniePlugin): Promise<GraphQLGenie>
 
 Pass in a plugin that alters the schema, see the [subscriptions plugin](https://github.com/genie-team/graphql-genie/tree/master/plugins/subscriptions) for an example
 
+Make sure to call getSchema() after all uses of `use`
+
 > See info about the GeniePlugin interface in [GraphQLGenieInterfaces.ts](https://github.com/genie-team/graphql-genie/blob/master/src/GraphQLGenieInterfaces.ts)
 
 #### **getSchema**

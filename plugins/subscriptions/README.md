@@ -41,6 +41,7 @@ const genie = new GraphQLGenie(...args);
 genie.use(subscriptionPlugin(new PubSub())); 
 
 //get the GraphQLSchema and use it with any other tools you need, such as subscriptions-transport-ws
+//always call getSchema after .use
 const schema = genie.getSchema();
 ```
 
