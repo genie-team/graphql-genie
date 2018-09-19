@@ -44,7 +44,7 @@ const genie = new GraphQLGenie(...args);
 // or you could pass in to the constructor as part of the plugins variable
 genie.use(authPlugin()); 
 
-//get the GraphQLSchema and use it with any other tools you need, such as subscriptions-transport-ws
+//get the GraphQLSchema and use it with any other tools you need
 //always call getSchema after .use
 const schema = genie.getSchema();
 ```
