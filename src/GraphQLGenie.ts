@@ -8,7 +8,7 @@ import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
 import { assign, forOwn, get, isArray, isEmpty, isFunction, isPlainObject, isString, set } from 'lodash';
 import { GenerateUpsert } from './GenerateUpsert';
-import { DataResolver, FortuneOptions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
+import { DataResolver, FortuneOptions, FortuneRecordTypeDefinitions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
 import SchemaInfoBuilder from './SchemaInfoBuilder';
@@ -19,6 +19,7 @@ import { isNumber } from 'util';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;
+	private fortuneRecordTypeDefinitions: FortuneRecordTypeDefinitions;
 	private config: GenerateConfig = {
 		generateGetOne: true,
 		generateGetAll: true,
@@ -45,6 +46,7 @@ export class GraphQLGenie {
 		if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
 			this.fortuneOptions.settings.enforceLinks = true;
 		}
+		this.fortuneRecordTypeDefinitions = options.fortuneRecordTypeDefinitions;
 
 		if (options.generatorOptions) {
 			this.config = Object.assign(this.config, options.generatorOptions);
@@ -85,7 +87,7 @@ export class GraphQLGenie {
 		this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
 		this.schemaInfo = this.schemaInfoBuilder.getSchemaInfo();
 		this.relations = computeRelations(this.schemaInfo);
-		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
+		this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo, this.fortuneRecordTypeDefinitions);
 		this.buildQueries();
 		this.buildResolvers();
 
