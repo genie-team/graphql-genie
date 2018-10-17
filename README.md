@@ -46,7 +46,6 @@ Simply pass in your [GraphQL type defintions](https://github.com/genie-team/grap
 - **Works with other GraphQL libraries** like [Relay](https://facebook.github.io/relay/)(react) and [Apollo Client](https://github.com/apollographql/apollo-client)(vanilla js or any framework)
 - **Portable data** with a variety of [data stores](#data-store-options) including client and server side support and [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) query/mutation fields and functions. 
 - **FortuneJS Storage** allows many storage options and the ability to easily create your own. See [data store options](#data-store-options)
- 
 
 In short GraphQL Genie handles creating the root Query, Mutation and Subscription types and resolvers for a variety of [data stores](#data-store). If that doesn't mean anything to you it may be good to read up on some [graphql basics](https://www.okgrow.com/posts/graphql-basics) or learn by experimenting with the [demo](https://genie-team.github.io/graphql-genie-client/)
 
@@ -221,6 +220,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * Performance improvements - send info for all necessary queries to fortune so it can handle in less requests, and make sure genie properly handles return of that additional data
 * Progressive Web App example
 * More advanced migration and build process features
+* **Production Ready?** I would not say Genie is production ready yet, there has not been a lot of actual use yet since it is so new. Almost to a point where I will share it more widely which will help. I plan on using it in a production (although low risk) project in late 2018.
 
 ## Changelog
 * See [releases](https://github.com/genie-team/graphql-genie/releases)
