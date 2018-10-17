@@ -217,6 +217,8 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 * [FortuneJS](http://fortune.js.org) allows easy creation of new adapters
 
 ## Roadmap
+* Genie Persistence Plugin - will work with apollo client to work offline and persist to the database when it's available
+* Performance improvements - send info for all necessary queries to fortune so it can handle in less requests, and make sure genie properly handles return of that additional data
 * Progressive Web App example
 * More advanced migration and build process features
 
