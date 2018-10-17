@@ -27,7 +27,7 @@ jobs:
           - v1-dependencies-
 
       - run: yarn install
-      - run: yarn add p-queue --force
+      - run: yarn installPluginDevDependencies
       - run: yarn add graphql-genie --force
 
       - save_cache:
