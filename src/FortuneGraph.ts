@@ -1,9 +1,9 @@
 import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
-import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, set, toString } from 'lodash';
+import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, merge, set, toString } from 'lodash';
 import fortuneCommon from 'fortune/lib/adapter/adapters/common';
-import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, GenericObject } from './GraphQLGenieInterfaces';
+import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, FortuneRecordTypeDefinitions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 
 interface FortuneUpdate {
@@ -22,7 +22,7 @@ export default class FortuneGraph implements DataResolver {
 	private outputHooks: Map<string, DataResolverOutputHook[]>;
 	private store;
 	private transaction;
-	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[]) {
+	constructor(fortuneOptions: FortuneOptions, schemaInfo: IntrospectionType[], fortuneRecordTypeDefinitions?: FortuneRecordTypeDefinitions) {
 		this.fortuneOptions = fortuneOptions;
 		if (!this.fortuneOptions || !this.fortuneOptions.hooks) {
 			set(this.fortuneOptions, 'hooks', {});
@@ -31,7 +31,7 @@ export default class FortuneGraph implements DataResolver {
 		this.uniqueIndexes = new Map<string, string[]>();
 		this.inputHooks = new Map<string, DataResolverInputHook[]>();
 		this.outputHooks = new Map<string, DataResolverOutputHook[]>();
-		this.store = this.buildFortune();
+		this.store = this.buildFortune(fortuneRecordTypeDefinitions);
 
 	}
 
@@ -410,7 +410,7 @@ export default class FortuneGraph implements DataResolver {
 		return this.fortuneTypeNames.has(name) ? this.fortuneTypeNames.get(name) : name;
 	}
 
-	private buildFortune = () => {
+	private buildFortune = (fortuneRecordTypeDefinitions?: FortuneRecordTypeDefinitions) => {
 		this.computeFortuneTypeNames();
 		const relations = computeRelations(this.schemaInfo, this.getFortuneTypeName);
 		const fortuneConfig = {};
@@ -516,6 +516,9 @@ export default class FortuneGraph implements DataResolver {
 			}
 
 		});
+		if (fortuneRecordTypeDefinitions) {
+			merge(fortuneConfig, fortuneRecordTypeDefinitions);
+		}
 		const store = fortune(fortuneConfig, this.fortuneOptions);
 		return store;
 	}

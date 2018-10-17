@@ -75,6 +75,7 @@ export interface GraphQLGenieOptions {
 	typeDefs?: string | DocumentNode;
 	generatorOptions?: GenerateConfig;
 	fortuneOptions?: FortuneOptions;
+	fortuneRecordTypeDefinitions?: FortuneRecordTypeDefinitions;
 	plugins?: GeniePlugin[] | GeniePlugin;
 }
 
@@ -88,6 +89,9 @@ export interface FortuneOptions {
 	hooks?: object;
 	documentation?: object;
 	settings?: FortuneSettings;
+}
+export interface FortuneRecordTypeDefinitions {
+	[key: string]: {[property: string]: any};
 }
 
 export interface GeniePlugin {
