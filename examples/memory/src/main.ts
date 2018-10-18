@@ -4,11 +4,12 @@ import { SchemaLink } from 'apollo-link-schema';
 import { execute, graphql, subscribe } from 'graphql';
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
 import subscriptionPlugin from 'graphql-genie-subscriptions';
-import auth from 'graphql-genie-authentication';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
+import { setContext } from 'apollo-link-context';
 
 const typeDefs = `
+scalar Any
 
 interface Submission {
 	id: ID! @unique
@@ -33,6 +34,7 @@ type Comment implements Submission {
   author: User @relation(name: "WrittenSubmissions")
 	post: Post @relation(name: "CommentsOnPost")
 	approved: Boolean @default(value: "true")
+	bam: Any
 }
 
 
@@ -59,6 +61,15 @@ type Address {
 
 union Star = Address | User | Comment | Post
 
+enum Role {
+	# Open to all requests
+	ANY
+	# Must be logged in
+	USER
+	# User must have created/be the type
+	OWNER
+	ADMIN
+}
 
 `;
 
@@ -74,14 +85,18 @@ const genie = new GraphQLGenie({ typeDefs, fortuneOptions, generatorOptions: {
 }});
 const buildClient = async (genie: GraphQLGenie) => {
 	genie.use(subscriptionPlugin(new PubSub()));
-	genie.use(auth());
 	const schema = genie.getSchema();
 	const introspectionQueryResultData = <any> genie.getFragmentTypes();
 	const fragmentMatcher = new IntrospectionFragmentMatcher({
 		introspectionQueryResultData
 	});
+	const authLink = setContext(() => {
+		return {
+			authenticate: () => true
+		};
+	});
 	const client = new ApolloClient({
-		link: new SchemaLink({ schema: schema }),
+		link: authLink.concat(new SchemaLink({ schema: schema })),
 		cache: new InMemoryCache({fragmentMatcher}),
 		connectToDevTools: true
 	});
@@ -136,7 +151,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				clientMutationId
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 
 	console.log(zeus);
@@ -164,7 +182,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(addPost);
 
@@ -198,7 +219,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(addAddress);
 
@@ -226,7 +250,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 			}
 
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(disconnectAddress);
 
@@ -269,7 +296,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(updatePostOnUser);
 
@@ -297,7 +327,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(upsertCreate);
 
@@ -326,7 +359,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(upsertUpdate);
 
@@ -369,7 +405,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(nestedUpsertCreate);
 
@@ -413,7 +452,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(nestedUpsertUpdate);
 
@@ -449,7 +491,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(nestedUpsertCreateSingle);
 
@@ -485,7 +530,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(nestedUpsertUpdateSingle);
 
@@ -516,7 +564,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(nestedUpdateSingle);
 
@@ -534,7 +585,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(deleteUser);
 
@@ -563,7 +617,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(deleteAddressFromUser);
 
@@ -593,7 +650,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 				}
 			}
 		}
-		`
+		`,
+		context: {
+			authenticate: () => true
+		}
 	});
 	console.log(deletePostFromUser);
 
@@ -615,7 +675,10 @@ const buildClient = async (genie: GraphQLGenie) => {
 	`;
 let result = await client.mutate({
 	mutation: createComment,
-	variables: { input: {data: { title: 'nice post', author: {connect: {email: 'zeus@example.com'}}}}}
+	variables: { input: {data: { title: 'nice post', author: {connect: {email: 'zeus@example.com'}}}}},
+	context: {
+		authenticate: () => true
+	}
 });
 console.log(result);
 
@@ -631,7 +694,10 @@ mutation createUser($input: CreateUserMutationInput!) {
 
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Hela', email: 'hela@example.com', birthday: '1900-01-01'}}}
+	variables: { input: {data: { name: 'Hela', email: 'hela@example.com', birthday: '1900-01-01'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 
 const updatePost = gql`
@@ -648,34 +714,52 @@ result = await client.mutate({
 	variables: { input: {
 		data: { likedBy: { connect: [{email: 'loki@example.com'}, {email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
 		where: { id: firstPostId}
-	}}
+	}},
+	context: {
+		authenticate: () => true
+	}
 });
 
 // create some users
 const newUsers = [];
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: {age: 6, birthday: '2012-02-02', name: 'Test 1', email: 'test1@example.com'}}}
+	variables: { input: {data: {age: 6, birthday: '2012-02-02', name: 'Test 1', email: 'test1@example.com'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: {birthday: '2012-02-02', name: 'Test 2', email: 'test2@example.com'}}}
+	variables: { input: {data: {birthday: '2012-02-02', name: 'Test 2', email: 'test2@example.com'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Test 3', email: 'test3@example.com'}}}
+	variables: { input: {data: { name: 'Test 3', email: 'test3@example.com'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Test 4', email: 'test4@example.com'}}}
+	variables: { input: {data: { name: 'Test 4', email: 'test4@example.com'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 newUsers.push(result.data.createUser.data);
 result = await client.mutate({
 	mutation: createUser,
-	variables: { input: {data: { name: 'Test 4', email: 'test5@example.com'}}}
+	variables: { input: {data: { name: 'Test 4', email: 'test5@example.com'}}},
+	context: {
+		authenticate: () => true
+	}
 });
 newUsers.push(result.data.createUser.data);
 console.log('subscribe main');
@@ -749,7 +833,10 @@ const sub: AsyncIterator<any> = <AsyncIterator<any>> await subscribe(schema,
 		}
 	}
 
-	`
+	`, null,
+	{
+		authenticate: () => true
+	}
 );
 
 const exe = await execute(schema, gql`mutation {
@@ -758,7 +845,10 @@ const exe = await execute(schema, gql`mutation {
       title
     }
   }
-}`);
+}`, null,
+	{
+		authenticate: () => true
+	});
 console.log(exe);
 
 result = await client.mutate({
@@ -766,7 +856,10 @@ result = await client.mutate({
 	variables: { input: {
 		data: { likedBy: { connect: [{email: 'hela@example.com'}, {email: 'zeus@example.com'}]}},
 		where: { id: thirdPostId}
-	}}
+	}},
+	context: {
+		authenticate: () => true
+	}
 });
 console.log((await sub.next()).value.data.post);
 

@@ -1,8 +1,8 @@
 import { atob, btoa } from 'abab';
-import fortune from 'fortune';
+import * as fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, merge, set, toString } from 'lodash';
-import fortuneCommon from 'fortune/lib/adapter/adapters/common';
+import * as fortuneCommon from 'fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, FortuneRecordTypeDefinitions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 
@@ -461,7 +461,7 @@ export default class FortuneGraph implements DataResolver {
 								}
 							});
 						}
-
+						const currKind = currType.kind;
 						currType = currType.kind === 'ENUM' ? 'String' : currType.name;
 						if (currType === 'ID' || currType === 'String') {
 							currType = String;
@@ -473,6 +473,8 @@ export default class FortuneGraph implements DataResolver {
 							currType = Object;
 						} else if (currType === 'Date' || currType === 'Time' || currType === 'DateTime') {
 							currType = Date;
+						} else if (currKind === 'SCALAR') {
+							currType = Object;
 						}
 						let inverse: string;
 						if (isString(currType)) {

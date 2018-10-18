@@ -1,7 +1,7 @@
 
 import { GraphQLBoolean, GraphQLEnumType, GraphQLField, GraphQLInputFieldConfigMap, GraphQLInputObjectType, GraphQLInputType, GraphQLList, GraphQLNamedType, GraphQLNonNull, GraphQLScalarType, GraphQLSchema, IntrospectionField, IntrospectionObjectType, IntrospectionType, getNamedType, getNullableType, isEnumType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { camelCase, each, get, isEmpty, merge } from 'lodash';
-import pluralize from 'pluralize';
+import * as pluralize from 'pluralize';
 import { GenerateConfig } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
 import { Mutation, Relations, capFirst, fortuneFilters } from './TypeGeneratorUtilities';

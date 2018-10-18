@@ -2,9 +2,9 @@
 import { DocumentNode, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isEnumType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
 import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, buildSchemaFromTypeDefinitions, makeExecutableSchema } from 'graphql-tools';
-import GraphQLJSON from 'graphql-type-json';
+import * as GraphQLJSON from 'graphql-type-json';
 import { camelCase, each, find, has, isEmpty, set, values } from 'lodash';
-import pluralize from 'pluralize';
+import * as pluralize from 'pluralize';
 import { GenerateConfig, GenericObject } from './GraphQLGenieInterfaces';
 import { getReturnType, typeIsList } from './GraphQLUtils';
 import { getRootMatchFields, queryArgs } from './TypeGeneratorUtilities';
