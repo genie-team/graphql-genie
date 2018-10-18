@@ -1,8 +1,8 @@
 import { atob, btoa } from 'abab';
-import * as fortune from 'fortune';
+import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, merge, set, toString } from 'lodash';
-import * as fortuneCommon from 'fortune/lib/adapter/adapters/common';
+import fortuneCommon from 'fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, FortuneRecordTypeDefinitions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 

@@ -1,6 +1,6 @@
 
 import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull, GraphQLSchema, GraphQLString, IntrospectionObjectType, IntrospectionType } from 'graphql';
-import * as pluralize from 'pluralize';
+import pluralize from 'pluralize';
 import { DataResolver, GenerateConfig, TypeGenerator } from './GraphQLGenieInterfaces';
 import { InputGenerator } from './InputGenerator';
 import { Relations, deleteResolver, getPayloadTypeDef, getPayloadTypeName, parseFilter } from './TypeGeneratorUtilities';

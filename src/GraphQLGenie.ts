@@ -1,13 +1,13 @@
 
+import { GenerateUpsert } from './GenerateUpsert';
 import { GenerateUpdate } from './GenerateUpdate';
-import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, getNullableType, introspectionFromSchema, isEnumType, isListType, isObjectType, isScalarType, printType } from 'graphql';
 import FortuneGraph from './FortuneGraph';
 import { GenerateConnections } from './GenerateConnections';
 import { GenerateCreate } from './GenerateCreate';
 import { GenerateDelete } from './GenerateDelete';
 import { GenerateGetAll } from './GenerateGetAll';
-import { assign, forOwn, get, isArray, isEmpty, isFunction, isPlainObject, isString, set } from 'lodash';
-import { GenerateUpsert } from './GenerateUpsert';
+import { assign, forOwn, get, isArray, isEmpty, isFunction, isNumber, isPlainObject, isString, set } from 'lodash';
+import { GraphQLFieldResolver, GraphQLInputObjectType, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, IntrospectionObjectType, IntrospectionQuery, IntrospectionType, getNamedType, getNullableType, introspectionFromSchema, isEnumType, isListType, isObjectType, isScalarType, printType } from 'graphql';
 import { DataResolver, FortuneOptions, FortuneRecordTypeDefinitions, GenerateConfig, GenericObject, GeniePlugin, GraphQLGenieOptions, TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLSchemaBuilder } from './GraphQLSchemaBuilder';
 import { getReturnType } from './GraphQLUtils';
@@ -15,7 +15,6 @@ import SchemaInfoBuilder from './SchemaInfoBuilder';
 import { Relations, computeRelations, getTypeResolver, meetsConditions } from './TypeGeneratorUtilities';
 import { GenerateGetOne } from './GenerateGetOne';
 import { GenerateMigrations } from './GenerateMigrations';
-import { isNumber } from 'util';
 
 export class GraphQLGenie {
 	private fortuneOptions: FortuneOptions;

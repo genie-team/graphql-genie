@@ -1,6 +1,6 @@
 import { GraphQLArgument, GraphQLInputObjectType, GraphQLList, GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLResolveInfo, GraphQLSchema, GraphQLType, IntrospectionObjectType, IntrospectionType, defaultFieldResolver, getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
 import { difference, each, eq, find, get, isArray, isEmpty, isObject, keys, map, set, union } from 'lodash';
-import * as pluralize from 'pluralize';
+import pluralize from 'pluralize';
 import { Connection, DataResolver } from './GraphQLGenieInterfaces';
 import { FindByUniqueError, getReturnType, typeIsList } from './GraphQLUtils';
 export class Relation {
