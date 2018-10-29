@@ -15,6 +15,7 @@
 [![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) 
 [![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP) 
 
+[![Discord](https://img.shields.io/discord/502198426533101578.svg?style=for-the-badge)](https://discord.gg/jvFrPQn)
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -161,7 +162,7 @@ Of course Genie creates a normal schema so you can add authentication in any oth
 
 You can use the methods on the GraphQLSchemaBuilder (returned by getSchemaBuilder()) to add types and resolvers to the generated schema. Or since it is just a normal schema you can use any tool you want (such as [graphql-tools](https://www.apollographql.com/docs/graphql-tools)) to alter the schema in any way. Including adding resolvers, mocking, stitching, transforming, etc.
 
-If you want guidance feel free to [ask](https://stackoverflow.com/questions/ask) on [stack overflow](https://stackoverflow.com/questions/tagged/graphql-genie) (tag with graphql-genie)
+If you want guidance or discussion feel free to [ask](https://stackoverflow.com/questions/ask) on [stack overflow](https://stackoverflow.com/questions/tagged/graphql-genie) (tag with graphql-genie) or chat on [discord](https://discord.gg/jvFrPQn)
 
 ## Examples
 
