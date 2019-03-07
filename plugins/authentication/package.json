@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-authentication",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "GraphQL Genie Authentication",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/module.js",
@@ -56,7 +56,8 @@
     "ts-jest": "^24.0.0",
     "tslint": "^5.13.1",
     "tslint-genie-rules": "^1.3.0",
-    "typescript": "^3.3.3333"
+		"typescript": "^3.3.3333",
+		"graphql-genie": "^0.4.20"
   },
   "dependencies": {
     "graphql-fields": "^2.0.3"

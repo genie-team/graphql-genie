@@ -131,7 +131,7 @@ describe('onlineTests', () => {
 				}
 			}
 		});
-		const postData = post.data.createPost.data;
+		const postData = post.data['createPost'].data;
 		testData.posts.push(postData);
 		expect(postData.title).toBe(title);
 		expect(postData.text).toBe(text);
@@ -171,7 +171,7 @@ describe('onlineTests', () => {
 				}
 			}
 		});
-		const postData = post.data.createPost.data;
+		const postData = post.data['createPost'].data;
 		testData.posts.push(postData);
 		expect(postData.title).toBe(title);
 		expect(postData.text).toBe(text);
@@ -392,7 +392,7 @@ describe('offlineTests', () => {
 				}
 			}
 		});
-		const postData = post.data.createPost.data;
+		const postData = post.data['createPost'].data;
 		testData.posts.push(postData);
 		expect(postData.title).toBe(title);
 		expect(postData.text).toBe(text);

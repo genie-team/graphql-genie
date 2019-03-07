@@ -2,7 +2,7 @@ import { ApolloClient } from 'apollo-client';
 import { GraphQLSchema, execute, subscribe } from 'graphql';
 import { PubSub } from 'graphql-subscriptions';
 import gql from 'graphql-tag';
-import { genie, getClient } from '../../../../src/tests/setupTests';
+import { genie, getClient } from '../setupTests';
 import subscriptionPlugin from '../../src/subscriptions';
 
 let client: ApolloClient<any>;

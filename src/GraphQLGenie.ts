@@ -1,4 +1,4 @@
-
+import { atob } from 'abab';
 import { GenerateUpsert } from './GenerateUpsert';
 import { GenerateUpdate } from './GenerateUpdate';
 import FortuneGraph from './FortuneGraph';

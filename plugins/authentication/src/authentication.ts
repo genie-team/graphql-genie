@@ -1,5 +1,5 @@
 import { GraphQLObjectType, GraphQLSchema, GraphQLType, defaultFieldResolver , getNamedType, isEnumType, isInterfaceType, isObjectType, isScalarType, isUnionType } from 'graphql';
-import { FindByUniqueError, GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from '../../../src/index';
+import { FindByUniqueError, GeniePlugin, GraphQLGenie, getRecordFromResolverReturn } from 'graphql-genie';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { flattenDeep, get, isArray, isEmpty, omit } from 'lodash';
 import graphqlFields from 'graphql-fields';
