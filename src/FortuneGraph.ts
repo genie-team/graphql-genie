@@ -2,7 +2,7 @@ import { atob, btoa } from 'abab';
 import fortune from 'fortune';
 import { IntrospectionInterfaceType, IntrospectionType } from 'graphql';
 import { each, find, findIndex, forOwn, get, has, isArray, isEmpty, isEqual, isPlainObject, isString, keys, merge, set, toString } from 'lodash';
-import fortuneCommon from 'fortune/lib/adapter/adapters/common';
+import * as fortuneCommon from 'fortune/lib/adapter/adapters/common';
 import { Connection, DataResolver, DataResolverInputHook, DataResolverOutputHook, Features, FortuneOptions, FortuneRecordTypeDefinitions, GenericObject } from './GraphQLGenieInterfaces';
 import { computeRelations } from './TypeGeneratorUtilities';
 
@@ -479,7 +479,7 @@ export default class FortuneGraph implements DataResolver {
 						let inverse: string;
 						if (isString(currType)) {
 							currType = this.getFortuneTypeName(currType);
-							inverse = relations.getInverseWithoutName(currType, field.name);
+							inverse = relations.getInverseWithoutName(currType, field.name, this.getFortuneTypeName(type.name));
 						}
 						currType = isArray ? Array(currType) : currType;
 						if (inverse) {

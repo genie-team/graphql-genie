@@ -2,7 +2,7 @@
 import { GraphQLBoolean, GraphQLFieldResolver, GraphQLList, GraphQLNonNull, GraphQLString } from 'graphql';
 import { TypeGenerator } from './GraphQLGenieInterfaces';
 import { GraphQLGenie } from './GraphQLGenie';
-import GraphQLJSON  from 'graphql-type-json';
+import GraphQLJSON from 'graphql-type-json';
 
 export class GenerateMigrations implements TypeGenerator {
 

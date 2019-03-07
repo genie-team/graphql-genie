@@ -39,16 +39,16 @@ export class Relation {
 		return this.type1 === relation.type0 && this.field1 === relation.field0 && this.field1isList === relation.field0isList;
 	}
 
-	getInverse(type: string, field: string): string {
-		const inverse = this.getInverseTuple(type, field);
+	getInverse(type: string, field: string, inverseType?: string): string {
+		const inverse = this.getInverseTuple(type, field, inverseType);
 		return inverse ? inverse[1] : null;
 	}
 
-	getInverseTuple(type: string, field: string): [string, string] {
+	getInverseTuple(type: string, field: string, inverseType?: string): [string, string] {
 		let inverse = null;
-		if (this.type0 === type && this.field0 === field) {
+		if (this.type0 === type && this.field0 === field && (!inverseType || this.type1 === inverseType)) {
 			inverse = [this.type1, this.field1];
-		} else if (this.type1 === type && this.field1 === field) {
+		} else if (this.type1 === type && this.field1 === field  && (!inverseType || this.type0 === inverseType)) {
 			inverse = [this.type0, this.field0];
 		}
 		return inverse;
@@ -70,12 +70,12 @@ export class Relations {
 		return relations;
 	}
 
-	public getInverseWithoutName(type: string, field: string): string {
+	public getInverseWithoutName(type: string, field: string, inverseType: string): string {
 		let inverse: string = null;
 		const iter = this.relations.values();
 		let relation = iter.next().value;
 		while (!inverse && relation) {
-			inverse = relation.getInverse(type, field);
+			inverse = relation.getInverse(type, field, inverseType);
 			relation = iter.next().value;
 		}
 		return inverse;

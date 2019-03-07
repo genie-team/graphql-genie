@@ -125,7 +125,7 @@ type UserPreviousValues {
 
 All the graphql-yoga [code examples](https://github.com/genie-team/graphql-genie/blob/master/examples) use the subscriptions plugin.
 
-The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.ts) are a good place to see example subscription queries.
+The [tests](https://github.com/genie-team/graphql-genie/blob/master/plugins/subscriptions/tests/__tests__/subscriptions.test.ts) are a good place to see example subscription queries.
 
 ## Thanks/Credit
 

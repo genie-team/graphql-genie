@@ -206,7 +206,7 @@ GraphQL Genie is inspired by [Prisma GraphQL](https://github.com/prismagraphql/p
 
 * Bi-directional relationships in any database with a GraphQL API
 * Portable storage options, great for Progressive Web Apps. Use anywhere for any purpose.
-* [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) data between data sources. Used in some examples to seed data or see [examples in test case](https://github.com/genie-team/graphql-genie/blame/master/src/tests/__tests__/genie.ts#L912)
+* [Export](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#getrawdata)/[Import/Merge](https://github.com/genie-team/graphql-genie/blob/master/docs/GraphQLGenieAPI.md#importrawdata) data between data sources. Used in some examples to seed data or see [examples in test case](https://github.com/genie-team/graphql-genie/blame/master/src/tests/__tests__/genie.test.ts#L912)
 * Share GraphQL data model on server and client. import/export mutation/query fields will also be created.
 * You can use [The Apollo Platform](https://www.apollographql.com/), [Relay](https://facebook.github.io/relay/), [GraphQL Bindings](https://github.com/graphql-binding/graphql-binding) or any of the many other tools in the growing GraphQL ecosystem. 
 * You can use your existing [authentication](#authentication) methods or one provided by an outside service.

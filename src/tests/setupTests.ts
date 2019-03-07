@@ -69,14 +69,16 @@ const fortuneOptions = { settings: { enforceLinks: true } };
 
 export const genie = new GraphQLGenie({ typeDefs, fortuneOptions});
 
-export const getClient = () => {
-	if (!process['testSetup']['client']) {
-		const schema = genie.getSchema();
-		const introspectionQueryResultData = <any> genie.getFragmentTypes();
+export const getClient = (overRideGenie?: GraphQLGenie) => {
+	let client: ApolloClient<any>;
+	if (!process['testSetup']['client'] || overRideGenie) {
+		const genieToCreateClient = overRideGenie || genie;
+		const schema = genieToCreateClient.getSchema();
+		const introspectionQueryResultData = <any> genieToCreateClient.getFragmentTypes();
 		const fragmentMatcher = new IntrospectionFragmentMatcher({
 			introspectionQueryResultData
 		});
-		const client = new ApolloClient({
+		client = new ApolloClient({
 			link: new SchemaLink({ schema: schema }),
 			cache: new InMemoryCache({fragmentMatcher}),
 			defaultOptions: {
@@ -85,7 +87,9 @@ export const getClient = () => {
 			}
 		});
 		client.initQueryManager();
-		process['testSetup']['client'] = client;
+		if (!overRideGenie) {
+			process['testSetup']['client'] = client;
+		}
 	}
-	return process['testSetup']['client'];
+	return client;
 };

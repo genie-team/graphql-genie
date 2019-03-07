@@ -1,104 +1,105 @@
 {
-  "name": "graphql-genie",
-  "version": "0.4.19",
-  "description": "GraphQL Genie",
-  "browser": "./lib/browser.umd.js",
-  "jsnext:main": "./lib/module.js",
-  "module": "./lib/module.js",
-  "main": "./lib/module.js",
-  "typings": "./lib/index.d.ts",
-  "keywords": [
-    "graphql",
-    "graphql-subscriptions",
-    "api",
-    "database",
-    "genie",
-    "serverless",
-    "pwa",
-    "progressive web app"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/genie-team/graphql-genie.git"
-  },
-  "author": "Genie Team",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/genie-team/graphql-genie"
-  },
-  "homepage": "https://github.com/genie-team/graphql-genie",
-  "scripts": {
-    "build": "tsc -p .",
-    "browser": "rollup -c rollup.browser.js",
-    "module": "rollup -c rollup.module.js",
-    "prepublishOnly": "npm run test && npm run lint && npm run build && npm run browser && npm run module",
-    "start": "rollup -c rollup.browser.js -w",
-    "test": "jest",
-    "testMutation": "jest ./tests/__tests__/mutationTests.ts",
-    "testGenie": "jest ./tests/__tests__/genie.ts",
-    "testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.ts",
-    "lint": "tslint -c tslint.json -p linttsconfig.json --fix",
-    "lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
+	"name": "graphql-genie",
+	"version": "0.4.20",
+	"description": "GraphQL Genie",
+	"browser": "./lib/browser.umd.js",
+	"jsnext:main": "./lib/module.js",
+	"module": "./lib/module.js",
+	"main": "./lib/module.js",
+	"typings": "./lib/index.d.ts",
+	"keywords": [
+		"graphql",
+		"graphql-subscriptions",
+		"api",
+		"database",
+		"genie",
+		"serverless",
+		"pwa",
+		"progressive web app"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/genie-team/graphql-genie.git"
+	},
+	"author": "Genie Team",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/genie-team/graphql-genie"
+	},
+	"homepage": "https://github.com/genie-team/graphql-genie",
+	"scripts": {
+		"build": "tsc -p .",
+		"browser": "rollup -c rollup.browser.js",
+		"module": "rollup -c rollup.module.js",
+		"prepublishOnly": "npm run testMutation && npm run testGenie && npm run lint && npm run build && npm run browser && npm run module",
+		"start": "rollup -c rollup.browser.js -w",
+		"test": "jest",
+		"testMutation": "jest ./tests/__tests__/mutationTests.test.ts",
+		"testGenie": "jest ./src/tests/__tests__/genie.test.ts",
+		"testAuth": "jest ./plugins/authentication/tests/__tests__/authentication.test.ts",
+		"testSubs": "jest subscriptions.test.ts",
+		"lint": "tslint -c tslint.json -p linttsconfig.json --fix",
+		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
 		"tag": "git tag -a v`npm v graphql-genie version` && git push origin --tags",
 		"installPluginDevDependencies": "cd plugins/genie-persistence && yarn install"
-  },
-  "jest": {
-    "testURL": "http://localhost",
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
-  },
-  "devDependencies": {
-    "@types/graphql": "^0.13.1",
-    "@types/jest": "^23.0.0",
-    "@types/lodash": "^4.14.107",
-    "@types/node": "^8.9.4",
-    "apollo-cache-inmemory": "^1.2.2",
-    "apollo-client": "^2.3.2",
-    "apollo-link-schema": "^1.1.0",
-    "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1",
-    "fortune": "^5.4.2",
-    "graphql": "^14.0.0",
-    "graphql-fields": "^1.1.0",
-    "graphql-genie": "^0.4.0",
-    "graphql-subscriptions": "^0.5.8",
-    "graphql-tag": "^2.9.2",
-    "graphql-tools": "^3.0.0",
-    "jest": "^23.1.0",
-    "lodash": "^4.17.10",
-    "rollup": "^0.60.1",
-    "rollup-plugin-commonjs": "^9.1.3",
-    "rollup-plugin-json": "^3.0.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.2.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
-    "rollup-plugin-replace": "^2.0.0",
-    "rollup-plugin-typescript2": "^0.14.0",
-    "ts-jest": "^22.4.4",
-    "tslint": "^5.9.1",
-    "tslint-genie-rules": "^1.2.0",
-    "typescript": "^2.9.0"
-  },
-  "peerDependencies": {
-    "fortune": "^5.0.0",
-    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0",
-    "graphql-tools": "^3.0.0",
-    "lodash": "^4.0.0"
-  },
-  "dependencies": {
-    "abab": "^2.0.0",
-    "graphql-iso-date": "^3.5.0",
-    "graphql-type-json": "^0.2.1",
-    "pluralize": "^7.0.0"
-  }
+	},
+	"jest": {
+		"testURL": "http://localhost",
+		"transform": {
+			"^.+\\.tsx?$": "ts-jest"
+		},
+		"testRegex": "(/__tests__/.0.0.0|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+		"moduleFileExtensions": [
+			"ts",
+			"tsx",
+			"js",
+			"jsx",
+			"json",
+			"node"
+		]
+	},
+	"devDependencies": {
+		"@types/graphql": "^14.0.7",
+		"@types/jest": "^24.0.9",
+		"@types/lodash": "^4.14.121",
+		"@types/node": "^11.9.5",
+		"apollo-cache-inmemory": "^1.5.0",
+		"apollo-client": "^2.5.0",
+		"apollo-link-schema": "^1.1.6",
+		"eslint": "^5.14.1",
+		"eslint-config-google": "^0.12.0",
+		"fortune": "^5.5.17",
+		"graphql": "^14.1.1",
+		"graphql-fields": "^2.0.1",
+		"graphql-subscriptions": "^1.0.0",
+		"graphql-tag": "^2.10.1",
+		"graphql-tools": "^4.0.0",
+		"jest": "^24.1.0",
+		"lodash": "^4.17.11",
+		"rollup": "^1.3.0",
+		"rollup-plugin-commonjs": "^9.2.1",
+		"rollup-plugin-json": "^3.1.0",
+		"rollup-plugin-node-builtins": "^2.1.2",
+		"rollup-plugin-node-globals": "^1.4.0",
+		"rollup-plugin-node-resolve": "^4.0.0",
+		"rollup-plugin-replace": "^2.1.0",
+		"rollup-plugin-typescript2": "^0.19.3",
+		"ts-jest": "^24.0.0",
+		"ts-node": "^8.0.0",
+		"tslint": "^5.13.0",
+		"tslint-genie-rules": "^1.3.0",
+		"typescript": "^3.3.0"
+	},
+	"peerDependencies": {
+		"fortune": "^5.0.0",
+		"graphql": "^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0",
+		"graphql-tools": "^3.0.0 || ^4.0.0",
+		"lodash": "^4.0.0"
+	},
+	"dependencies": {
+		"abab": "^2.0.0",
+		"graphql-iso-date": "^3.6.1",
+		"graphql-type-json": "^0.2.1",
+		"pluralize": "^7.0.0"
+	}
 }

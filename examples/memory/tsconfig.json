@@ -2,6 +2,7 @@
   "compilerOptions": {
 		"resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"allowUnreachableCode": false,
 		"sourceMap": false,
     "declaration": false,

@@ -20,7 +20,8 @@ export default [
 				'lodash': 'lodash',
 				'fortune': 'fortune',
 				'graphql-tools': 'graphql-tools',
-				'graphql-subscriptions': 'graphql-subscriptions'
+				'graphql-subscriptions': 'graphql-subscriptions',
+				'pluralize': 'pluralize'
 			}
 		},
 		watch: {

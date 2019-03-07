@@ -205,7 +205,7 @@ const startServer = async (genie: GraphQLGenie) => {
 	server.express.use(express.static(publicPath));
 	server.start(opts, () => {
 		console.log('Server is running on localhost:4000');
-	});
+	}).catch();
 
 };
 

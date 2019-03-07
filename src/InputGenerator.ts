@@ -41,11 +41,12 @@ export class InputGenerator {
 		manyWithout: (fieldType: GraphQLNamedType, relationFieldName: string) => GraphQLInputType,
 		oneWithout: (fieldType: GraphQLNamedType, relationFieldName: string) => GraphQLInputType,
 		many: (fieldType: GraphQLNamedType) => GraphQLInputType,
-		one: (fieldType: GraphQLNamedType) => GraphQLInputType
+		one: (fieldType: GraphQLNamedType) => GraphQLInputType,
+		nameOfTypeFieldIsOn: string
 	): GraphQLInputType {
 		let inputType: GraphQLInputType;
 		const fieldType = getNamedType(field.type);
-		const relationFieldName = this.relations.getInverseWithoutName(fieldType.name, field.name);
+		const relationFieldName = this.relations.getInverseWithoutName(fieldType.name, field.name, nameOfTypeFieldIsOn);
 		const isList = typeIsList(field.type);
 		// tslint:disable-next-line:prefer-conditional-expression
 		if (relationFieldName) {
@@ -70,7 +71,7 @@ export class InputGenerator {
 		return isAutoField;
 	}
 
-	private generateInputTypeForFieldInfo(field: IntrospectionField, mutation: Mutation): GraphQLInputType {
+	private generateInputTypeForFieldInfo(field: IntrospectionField, mutation: Mutation, nameOfTypeFieldIsOn: string): GraphQLInputType {
 		let inputType: GraphQLInputType;
 		const fieldTypeName = getReturnType(field.type);
 		const schemaType = this.schema.getType(fieldTypeName);
@@ -93,7 +94,7 @@ export class InputGenerator {
 			let fieldSuffix = Mutation[mutation];
 			fieldSuffix += isArray ? 'Many' : 'One';
 
-			const relationFieldName = this.relations.getInverseWithoutName(fieldTypeName, field.name);
+			const relationFieldName = this.relations.getInverseWithoutName(fieldTypeName, field.name, nameOfTypeFieldIsOn);
 			fieldSuffix += relationFieldName ? 'Without'  : '';
 			fieldInputName += fieldSuffix + capFirst(relationFieldName) + 'Input';
 			if (isInterfaceType(schemaType) || isUnionType(schemaType)) {
@@ -362,7 +363,7 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
-					let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
+					let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create, fieldType.name);
 					if (field.type.kind === 'NON_NULL' && field.type.ofType.kind !== 'LIST') {
 						inputType = new GraphQLNonNull(inputType);
 					}
@@ -457,11 +458,13 @@ export class InputGenerator {
 						inputType = this.generateInputTypeForField(field, this.generateCreateManyWithoutInput,
 							this.generateCreateOneWithoutInput,
 							this.generateCreateManyInput,
-							this.generateCreateOneInput);
+							this.generateCreateOneInput,
+							this.type.name);
 					} else {
 						inputType = this.generateInputTypeForFieldInfo(
 							infoTypeFields.find(currField => currField.name === field.name),
-						 	Mutation.Create);
+							 Mutation.Create,
+							 this.type.name);
 					}
 					if (inputType && !isListType(fieldNullableType) && isNonNullType(field.type) && !isNonNullType(inputType)) {
 						inputType = new GraphQLNonNull(inputType);
@@ -499,7 +502,7 @@ export class InputGenerator {
 			const infoType = <IntrospectionObjectType>this.schemaInfo[fieldType.name];
 			infoType.fields.forEach(field => {
 				if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
-					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update);
+					const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update, fieldType.name);
 					merge(fields, this.generateFieldForInput(
 						field.name,
 						inputType));
@@ -633,11 +636,13 @@ export class InputGenerator {
 						inputType = this.generateInputTypeForField(field, this.generateUpdateManyWithoutInput,
 							this.generateUpdateOneWithoutInput,
 							this.generateUpdateManyInput,
-							this.generateUpdateOneInput);
+							this.generateUpdateOneInput,
+							this.type.name);
 					} else {
 						inputType = this.generateInputTypeForFieldInfo(
 							infoTypeFields.find(currField => currField.name === field.name),
-						 	Mutation.Update);
+							 Mutation.Update,
+							 this.type.name);
 					}
 					if (inputType) {
 						merge(fields, this.generateFieldForInput(

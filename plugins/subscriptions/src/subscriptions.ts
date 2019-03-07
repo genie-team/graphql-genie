@@ -39,7 +39,7 @@ export default (pubsub: PubSub): GeniePlugin => {
 					case 'create':
 					case 'update':
 					case 'delete':
-						pubsub.publish(fieldName, { context, record });
+						pubsub.publish(fieldName, { context, record }).catch();
 				}
 			});
 		});

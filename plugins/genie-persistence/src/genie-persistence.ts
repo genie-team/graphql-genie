@@ -433,12 +433,12 @@ export class GeniePersitence {
 
 				if (!result) {
 					const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
-					this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 });
-					this.localQueue.add(() => { return true; }, { priority: 99 });
+					this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 }).catch();
+					this.localQueue.add(() => { return true; }, { priority: 99 }).catch();
 					result = await this.remoteClient.query(remoteOptions);
 					this.localQueue.add(() => {
 						this.syncLocal(currCache);
-					}, { priority: 1 });
+					}, { priority: 1 }).catch();
 					this.localQueue.start();
 				}
 				if (this.remoteQueue.size > 0) {
@@ -521,18 +521,18 @@ export class GeniePersitence {
 			}
 		});
 		if (!isEmpty(newData)) {
-			this.localQueue.add(async () => await this.localGenie.importRawData(newData, true), { priority: 0 });
+			this.localQueue.add(async () => await this.localGenie.importRawData(newData, true), { priority: 0 }).catch();
 		}
 	}
 
 	private async onlineMutate<T, TVariables = OperationVariables>(
 		remoteOptions: MutationOptions<T, TVariables>,
 	): Promise<FetchResult<T>> {
-		this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 });
-		this.localQueue.add(() => { return true; }, { priority: 99 });
+		this.localQueue.add(() => { return this.localQueue.pause(); }, { priority: 98 }).catch();
+		this.localQueue.add(() => { return true; }, { priority: 99 }).catch();
 		const currCache = JSON.parse(JSON.stringify(this.remoteClient.extract()));
 		const result = await this.remoteClient.mutate(remoteOptions);
-		this.localQueue.add(() => { this.syncLocal(currCache); }, { priority: 1 });
+		this.localQueue.add(() => { this.syncLocal(currCache); }, { priority: 1 }).catch();
 		this.localQueue.start();
 		if (this.remoteQueue.size > 0) {
 			this.remoteQueue.start();

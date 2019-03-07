@@ -2,9 +2,10 @@ import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { genie, getClient } from '../setupTests';
 import { GraphQLScalarType } from '../../../plugins/genie-persistence/node_modules/@types/graphql';
+import { GraphQLGenie } from '../..';
 let client: ApolloClient<any>;
 beforeAll(async () => {
-	client = await getClient();
+	client = getClient();
 });
 
 beforeEach(() => {
@@ -1144,5 +1145,94 @@ describe('genie', () => {
 	test('genie - connect', async () => {
 		const conReturn = await genie.connect();
 		expect(conReturn).toBeTruthy();
+	});
+
+	test('genie - relation test', async () => {
+		const typeDefs = gql`
+		type Comment {
+			id: ID! @unique
+			createdAt: DateTime @createdTimestamp
+			updatedAt: DateTime @updatedTimestamp
+			author: User @relation(name: "commentsByUser")
+			body: String
+			post: Post @relation(name: "commentsOnPost")
+		}
+
+		enum postType {
+			TEXT
+			LINK
+		}
+
+		type Post {
+			id: ID! @unique
+			createdAt: DateTime @createdTimestamp
+			updatedAt: DateTime @updatedTimestamp
+			author: User @relation(name: "postsByUser")
+			type: postType
+			comments: [Comment!] @relation(name: "commentsOnPost")
+		}
+
+		type User {
+			id: ID! @unique
+			createdAt: DateTime @createdTimestamp
+			updatedAt: DateTime @updatedTimestamp
+			userName: String! @unique
+			posts: [Post!] @relation(name: "postsByUser")
+			comments: [Comment!] @relation(name: "commentsByUser")
+		}
+		`;
+		const fortuneOptions = { settings: { enforceLinks: true } };
+
+		const genie = new GraphQLGenie({
+			typeDefs,
+			fortuneOptions,
+			generatorOptions: {
+				generateGetAll: true,
+				generateCreate: true,
+				generateUpdate: true,
+				generateDelete: true,
+				generateUpsert: true,
+			},
+		});
+		const client = getClient(genie);
+		const result: any = await client.query({
+			query: gql`{ users { id } }`
+		});
+		expect(result).toBeDefined();
+	});
+
+	test('genie - another relation test', async () => {
+		const typeDefs = gql`
+			type Person {
+			id: ID! @unique
+			name: String!
+			devices: [Device!]
+			bugReports: [BugReport!]
+			}
+
+			type Device {
+			id: ID! @unique
+			hostname: String!
+			person: Person
+			}
+
+			type BugReport {
+			id: ID! @unique
+			summary: String!
+			person: Person
+		}
+		`;
+		const fortuneOptions = { settings: { enforceLinks: true } };
+
+		const genie = new GraphQLGenie({
+			typeDefs,
+			fortuneOptions
+		});
+
+		const client = getClient(genie);
+		const result: any = await client.query({
+			query: gql`{ devices { id } }`
+		});
+		expect(result).toBeDefined();
 	});
 });

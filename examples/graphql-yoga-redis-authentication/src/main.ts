@@ -192,7 +192,7 @@ const startServer = async (genie: GraphQLGenie) => {
 		},
 	}));
 
-	server.start(opts, () => console.log('Server is running on localhost:4000'));
+	server.start(opts, () => console.log('Server is running on localhost:4000')).catch();
 };
 
 const loadUsers = async (genie: GraphQLGenie, users: Map<String, object>) => {
