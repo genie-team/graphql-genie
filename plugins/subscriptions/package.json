@@ -1,6 +1,6 @@
 {
   "name": "graphql-genie-subscriptions",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "GraphQL Genie Subscriptions",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/subscriptions.js",
@@ -31,7 +31,7 @@
   },
   "peerDependencies": {
     "graphql-genie": "^0.4.20",
-    "graphql-subscriptions": "^0.5.0",
+    "graphql-subscriptions": ">=0.5.0",
     "graphql-tools": "^4.0.4",
     "lodash": ">=4.0.0"
   },
