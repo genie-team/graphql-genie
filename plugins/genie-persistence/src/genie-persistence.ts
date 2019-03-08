@@ -607,9 +607,9 @@ export class GeniePersitence {
 				await this.removeItem(id);
 				options = this.objifyMutationOptions(options);
 				const mutationResult = await this.remoteClient.mutate(options);
-				if (sentData && mutationResult && mutationResult.data && mutationResult.data.importData) {
-					if (!isEmpty(mutationResult.data.importData.unalteredData)) {
-						const remoteData = mutationResult.data.importData.unalteredData;
+				if (sentData && get(mutationResult, 'data.importData')) {
+					if (!isEmpty(get(mutationResult, 'data.importData.unalteredData'))) {
+						const remoteData = get(mutationResult, 'data.importData.unalteredData');
 						let isMergeConflict = false;
 						const dataId = this.dataIdFromObject(sentData);
 						const localCache = this.localClient.cache.readFragment({

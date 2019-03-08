@@ -1,4 +1,3 @@
-import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { getClient, localForageInstance, throwMergeConflict } from '../setupClient';
 import { GeniePersitence } from '../../src/genie-persistence';
@@ -195,7 +194,7 @@ describe('onlineTests', () => {
 
 	test('online - create User to test query updating local data', async () => {
 		goOnline();
-		const user = await client.mutate({
+		await client.mutate({
 			mutation: createUser,
 			variables: {
 				input: {
@@ -230,7 +229,7 @@ describe('onlineTests', () => {
 describe('offlineTests', () => {
 	test('offline - create User to test query updating local data', async () => {
 		goOffline();
-		const user = await client.mutate({
+		await client.mutate({
 			mutation: createUser,
 			variables: {
 				input: {
@@ -261,7 +260,7 @@ describe('offlineTests', () => {
 
 	test('offline - update user synchs when online', async () => {
 		goOffline();
-		const user = await client.mutate({
+		await client.mutate({
 			mutation: updateUser,
 			variables: {
 				input: {
@@ -293,7 +292,7 @@ describe('offlineTests', () => {
 
 	test('offline - update user throws merge conflict', async () => {
 		goOffline();
-		let user = await client.mutate({
+		await client.mutate({
 			mutation: updateUser,
 			variables: {
 				input: {
@@ -313,7 +312,7 @@ describe('offlineTests', () => {
 		expect(await localForageInstance.length()).toBe(1);
 		expect(client.remoteQueue.size).toBe(1);
 
-		user = await client.remoteClient.mutate({
+		await client.remoteClient.mutate({
 			mutation: updateUser,
 			variables: {
 				input: {
@@ -342,7 +341,7 @@ describe('offlineTests', () => {
 		const email = 'hera@example.com';
 		const title = 'Hera post title';
 		const text = 'Hera post text';
-		const user = await client.mutate({
+		await client.mutate({
 			mutation: createUser,
 			variables: {
 				input: {
@@ -403,7 +402,7 @@ describe('offlineTests', () => {
 		expect(posts.data['posts'][0].text).toBe(text);
 		expect(posts.data['posts'][0].author.username).toBe('tyr');
 
-		const postUpdate = await client.mutate({
+		await client.mutate({
 			mutation: updatePost,
 			variables: {
 				input: {
