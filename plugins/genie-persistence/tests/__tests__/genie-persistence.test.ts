@@ -148,7 +148,7 @@ describe('onlineTests', () => {
 		expect(localPosts.data['posts'][0].text).toBe(text);
 	});
 
-	test.only('online - createPost with user', async () => {
+	test('online - createPost with user', async () => {
 		goOnline();
 		const title = 'Advanced';
 		const text = 'This is the graphql genie persistance example with nested creating a user as well';
@@ -363,13 +363,14 @@ describe('offlineTests', () => {
 		await client.localQueue.onIdle();
 
 		const localUsers = await client.query({query: usersQ});
+		console.log('localUsers :', localUsers.data['users']);
 		expect(localUsers.data['users'][0].username).toBe(username);
 		expect(localUsers.data['users'][0].email).toBe(email);
 		expect(localUsers.data['users'][0].posts[0].title).toBe(title);
 		expect(localUsers.data['users'][0].posts[0].text).toBe(text);
 	});
 
-	test.only('offline - createPost with user relation cache', async () => {
+	test('offline - createPost with user relation cache', async () => {
 		goOffline();
 		const title = 'Relation';
 		const text = 'This is the graphql genie persistance example with nested creating a user as well';

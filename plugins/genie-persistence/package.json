@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc -p .",
     "browser": "rollup -c rollup.browser.js",
-    "prepublishOnly": "yarn install && npm run test && npm run build && npm run browser",
+    "prepublishOnly": "npm install && npm run test && npm run build && npm run browser",
     "test": "jest"
   },
   "jest": {
@@ -32,7 +32,7 @@
   "peerDependencies": {
     "apollo-client": "^2.5.1",
     "apollo-link": "^1.2.9",
-    "graphql-genie": "^0.4.0",
+    "graphql-genie": ">=0.4.0",
     "graphql-tools": "^4.0.4",
     "lodash": ">=4.17.11"
   },

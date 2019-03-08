@@ -4,7 +4,7 @@ import pkg from './package.json';
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/subscriptions.ts',
+		input: 'src/genie-persistence.ts',
 		output: {
 			name: 'graphql-genie',
 			file: pkg.browser,
