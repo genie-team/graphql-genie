@@ -361,9 +361,7 @@ describe('offlineTests', () => {
 		});
 		await client.localQueue.onEmpty();
 		await client.localQueue.onIdle();
-
-		const localUsers = await client.query({query: usersQ});
-		console.log('localUsers :', localUsers.data['users']);
+		const localUsers = await client.query({query: usersQ, fetchPolicy: 'network-only'});
 		expect(localUsers.data['users'][0].username).toBe(username);
 		expect(localUsers.data['users'][0].email).toBe(email);
 		expect(localUsers.data['users'][0].posts[0].title).toBe(title);

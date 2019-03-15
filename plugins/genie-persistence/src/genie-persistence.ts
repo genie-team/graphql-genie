@@ -178,7 +178,7 @@ export class GeniePersitence {
 				const localCache = this.localClient.cache.readFragment({
 					id: this.dataIdFromObject(idObj),
 					fragment: gql`
-						fragment cacheData on ${link} {
+						fragment cacheOfInverseData on ${link} {
 							${inverse} {
 								id
 							}
@@ -615,7 +615,7 @@ export class GeniePersitence {
 						const localCache = this.localClient.cache.readFragment({
 							id: dataId,
 							fragment: gql`
-								fragment cacheData on ${sentData.__typename} {
+								fragment cacheOfSentData on ${sentData.__typename} {
 									${Object.keys(sentData)}
 								}
 							`
