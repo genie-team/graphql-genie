@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
 		"allowSyntheticDefaultImports": true,
+		"inlineSourceMap":true,
 		"esModuleInterop": true,
 		"allowUnreachableCode": false,
-		"sourceMap": false,
+		"sourceMap": true,
 		"declaration": true,
 		"declarationMap": true,
     "experimentalDecorators": true,
@@ -21,7 +22,5 @@
     "jsxFactory": "h",
     "rootDir": "./src",
     "outDir": "lib"
-  },
-  "include": ["src/*.ts"],
-  "exclude": ["tests/*.ts"]
+  }
 }

@@ -157,10 +157,10 @@ export const computeRelations = (schemaInfo: IntrospectionType[], typeNameResolv
 			const relation = get(field, 'metadata.relation');
 			const fieldTypeName = getReturnType(field.type);
 			const reslovedTypeName = typeNameResolver(fieldTypeName);
-			if (typeName === fieldTypeName) {
-				relations.setSelfRelation(`${field.name}On${typeName}`, reslovedTypeName, field.name, typeIsList(field.type));
-			} else if (relation) {
+			if (relation) {
 				relations.setRelation(relation.name, reslovedTypeName, field.name, typeIsList(field.type));
+			} else if (typeName === fieldTypeName) {
+				relations.setSelfRelation(`${field.name}On${typeName}`, reslovedTypeName, field.name, typeIsList(field.type));
 			} else {
 				const fieldTypeInfo = schemaInfo[fieldTypeName];
 				if (type && fieldTypeInfo) {
