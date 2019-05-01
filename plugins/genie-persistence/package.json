@@ -27,10 +27,7 @@
       "jsx",
       "json",
       "node"
-    ],
-    "ts-jest": {
-      "tsConfig": "../../tsconfig.test.json"
-    }
+    ]
   },
   "peerDependencies": {
     "apollo-client": "^2.5.1",

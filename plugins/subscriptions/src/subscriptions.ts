@@ -54,10 +54,10 @@ export default (pubsub: PubSub): GeniePlugin => {
 };
 
 const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType, dataResolver: DataResolver): IResolverObject => {
+	const asyncIterator = pubsub.asyncIterator(name);
 	return {
 		[name]: {
 			resolve: ({ context, record }, _args) => {
-				// console.log('subscribe resolve', name, context, record, _args);
 				const mutation = context.request.method.toUpperCase() + 'D';
 				let previousValues;
 				if (mutation === 'UPDATED') {
@@ -75,32 +75,33 @@ const getResolver = (name: string, pubsub: PubSub, schemaType: GraphQLObjectType
 					previousValues
 				};
 			},
-			subscribe: withFilter(() => pubsub.asyncIterator(name), async ({ context, record }, args): Promise<boolean> => {
-				let resolve = true;
-				if (args) {
-					resolve = await subscribeFilter(args, context, record, schemaType, dataResolver);
-					const and = get(args, 'where.AND');
-					const or = get(args, 'where.OR');
-					if (resolve && !isEmpty(and)) {
-						const andResults = await Promise.all(and.map(async (arg): Promise<boolean> => {
-							return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
-						}));
-						resolve = andResults.every((val: boolean) => val);
-					}
+			subscribe:
+				withFilter(
+					() => {
+						return asyncIterator;
+					},
+					async ({ context, record }, args): Promise<boolean> => {
+						let resolve = true;
+						if (args) {
+							resolve = await subscribeFilter(args, context, record, schemaType, dataResolver);
+							const and = get(args, 'where.AND');
+							const or = get(args, 'where.OR');
+							if (resolve && !isEmpty(and)) {
+								const andResults = await Promise.all(and.map(async (arg): Promise<boolean> => {
+									return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
+								}));
+								resolve = andResults.every((val: boolean) => val);
+							}
 
-					if (resolve && !isEmpty(or)) {
-						const andResults = await Promise.all(or.map(async (arg): Promise<boolean> => {
-							return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
-						}));
-						resolve = andResults.some((val: boolean) => val);
-					}
-				}
-				// console.log('filter');
-				// console.log(context, record);
-				// console.log(args);
-				// console.log('resolve?', resolve);
-				return resolve;
-			}),
+							if (resolve && !isEmpty(or)) {
+								const andResults = await Promise.all(or.map(async (arg): Promise<boolean> => {
+									return await subscribeFilter({ where: arg }, context, record, schemaType, dataResolver);
+								}));
+								resolve = andResults.some((val: boolean) => val);
+							}
+						}
+						return resolve;
+					}),
 		}
 	};
 };

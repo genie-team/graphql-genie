@@ -13,6 +13,7 @@ beforeAll(() => {
 	schema = genie.getSchema();
 });
 beforeEach(() => {
+	jest.setTimeout(4000);
 	client.cache['data'].data = {};
 });
 const testData = {users: [],
@@ -140,7 +141,7 @@ describe('subscriptionsTest', () => {
 			}
 			`
 		);
-
+		const subNextProm = sub.next();
 		const post = await execute(schema, gql`mutation {
 			createPost(input: {data:{title:"bam"}}) {
 				data {
@@ -149,14 +150,12 @@ describe('subscriptionsTest', () => {
 				}
 			}
 		}`);
-
+		const subNext = await subNextProm;
 		testData.posts.push(post.data.createPost.data);
-		const subNext = await sub.next();
 		expect(subNext.value.data.post.mutation).toBe('CREATED');
 		expect(subNext.value.data.post.node.title).toBe('bam');
 		expect(subNext.value.data.post.previousValues).toBeNull();
 		expect(subNext.value.data.post.updatedFields).toBeNull();
-
 	});
 
 	test('subscription - updating liked by', async () => {
@@ -186,7 +185,7 @@ describe('subscriptionsTest', () => {
 			}
 			`
 		);
-
+		const subNextProm = sub.next();
 		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
@@ -194,13 +193,12 @@ describe('subscriptionsTest', () => {
 				where: { id: testData.posts[0].id}
 			}}
 		});
-		const subNext = await sub.next();
+		const subNext = await subNextProm;
 		expect(subNext.value.data.post.mutation).toBe('UPDATED');
 		expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 		expect(subNext.value.data.post.node.likedBy.edges[0].node.name).toBe(testData.users[0].name);
 		expect(subNext.value.data.post.previousValues.likedBy_ids).toBeNull();
 		expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
-
 	});
 
 	test('subscription - update AND match which will not fire the first time', async () => {
@@ -251,7 +249,7 @@ describe('subscriptionsTest', () => {
 				where: { id: testData.posts[testData.posts.length - 1].id}
 			}}
 		});
-
+		const subNextProm = sub.next();
 		await client.mutate({
 			mutation: updatePost,
 			variables: { input: {
@@ -261,7 +259,7 @@ describe('subscriptionsTest', () => {
 		});
 
 		return new Promise((resolve) => {
-			sub.next().then(subNext => {
+			subNextProm.then(subNext => {
 				expect(subNext.value.data.post.mutation).toBe('UPDATED');
 				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
@@ -339,6 +337,8 @@ describe('subscriptionsTest', () => {
 		} catch (e) {
 			console.error('error subscribing', e);
 		}
+		let subNextProm = sub.next();
+
 		try {
 			await execute(schema, gql`mutation {
 				createPost(input: {data:{title:"bam"}}) {
@@ -362,18 +362,26 @@ describe('subscriptionsTest', () => {
 		});
 		return new Promise((resolve) => {
 			expect.assertions(8);
-			sub.next().then(subNext => {
-				expect(subNext.value.data.post.mutation).toBe('CREATED');
-				expect(subNext.value.data.post.node.title).toBe('bam');
-				expect(subNext.value.data.post.node.author).toBeNull();
-				expect(subNext.value.data.post.updatedFields).toBeNull();
-			}).catch();
-			sub.next().then(subNext => {
+
+			subNextProm.then(subNext => {
+				console.log('subNext.done 1:', subNext.done);
+				console.log('subNext.value.data.post 1 :', subNext.value.data.post);
 				expect(subNext.value.data.post.mutation).toBe('UPDATED');
 				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
 				expect(subNext.value.data.post.updatedFields[0]).toBe('likedBy');
-				resolve();
+
+				subNextProm = sub.next();
+				subNextProm.then(subNext => {
+					console.log('subNext.done 2:', subNext.done);
+
+					console.log('subNext.value.data.post 2 :', subNext.value.data.post);
+					expect(subNext.value.data.post.mutation).toBe('CREATED');
+					expect(subNext.value.data.post.node.title).toBe('bam');
+					expect(subNext.value.data.post.node.author).toBeNull();
+					expect(subNext.value.data.post.updatedFields).toBeNull();
+					resolve();
+				}).catch();
 			}).catch();
 		});
 	});

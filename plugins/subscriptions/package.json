@@ -42,7 +42,7 @@
     "@types/node": "^11.10.5",
     "fortune": "^5.5.17",
     "graphql-genie": "^0.4.20",
-    "graphql-subscriptions": "^1.0.0",
+    "graphql-subscriptions": "^1.1.0",
     "graphql-tools": "^4.0.4",
     "jest": "^24.3.0",
     "lodash": "^4.17.11",
