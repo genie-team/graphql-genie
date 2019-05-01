@@ -364,8 +364,6 @@ describe('subscriptionsTest', () => {
 			expect.assertions(8);
 
 			subNextProm.then(subNext => {
-				console.log('subNext.done 1:', subNext.done);
-				console.log('subNext.value.data.post 1 :', subNext.value.data.post);
 				expect(subNext.value.data.post.mutation).toBe('UPDATED');
 				expect(subNext.value.data.post.node.title).toBe(testData.posts[0].title);
 				expect(subNext.value.data.post.node.author.email).toBe(testData.users[3].email);
@@ -373,9 +371,6 @@ describe('subscriptionsTest', () => {
 
 				subNextProm = sub.next();
 				subNextProm.then(subNext => {
-					console.log('subNext.done 2:', subNext.done);
-
-					console.log('subNext.value.data.post 2 :', subNext.value.data.post);
 					expect(subNext.value.data.post.mutation).toBe('CREATED');
 					expect(subNext.value.data.post.node.title).toBe('bam');
 					expect(subNext.value.data.post.node.author).toBeNull();

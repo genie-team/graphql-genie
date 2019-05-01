@@ -121,7 +121,6 @@ describe('mutationTests', () => {
 			}
 			`
 		});
-		console.log('post :', post);
 		testData.posts.push(post.data.createPost.data);
 		expect(post.data.createPost.data.title).toBe('Genie is great');
 		expect(post.data.createPost.data.text).toBe('Look how fast I can create an executable schema');

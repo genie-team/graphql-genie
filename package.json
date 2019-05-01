@@ -41,7 +41,7 @@
 		"lint": "tslint -c tslint.json -p linttsconfig.json --fix",
 		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
 		"tag": "git tag -a v`npm v graphql-genie version` && git push origin --tags",
-		"installPluginDevDependencies": "cd plugins/genie-persistence && npm install"
+		"installPluginDevDependencies": "cd plugins/genie-persistence && npm install && cd ../authentication && npm install && cd ../subscriptions && npm install"
 	},
 	"jest": {
 		"testURL": "http://localhost",
