@@ -1,7 +1,7 @@
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { genie, getClient } from '../setupTests';
-import { GraphQLScalarType } from '../../../plugins/genie-persistence/node_modules/@types/graphql';
+import { GraphQLScalarType } from 'graphql';
 import { GraphQLGenie } from '../..';
 let client: ApolloClient<any>;
 beforeAll(async () => {

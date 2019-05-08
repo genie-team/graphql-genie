@@ -23,8 +23,8 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
 
-      - run: yarn install
-      - run: yarn installPluginDevDependencies
+      - run: npm install
+      - run: npm run installPluginDevDependencies
 
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -32,5 +32,5 @@ jobs:
             - node_modules
         
       # run tests!
-      - run: yarn test
-      - run: yarn lint-no-fix
+      - run: npm run test
+      - run: npm run lint-no-fix
