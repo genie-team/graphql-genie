@@ -1,5 +1,5 @@
 
-import { DocumentNode, GraphQLFieldResolver, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isEnumType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
+import { DocumentNode, GraphQLArgument, GraphQLFieldResolver, GraphQLInputType, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLType, getNamedType, isEnumType, isInputObjectType, isInputType, isInterfaceType, isListType, isNonNullType, isObjectType, isScalarType, isSpecifiedDirective, isUnionType, print } from 'graphql';
 import { GraphQLDate, GraphQLDateTime, GraphQLTime } from 'graphql-iso-date';
 import { IResolvers, SchemaDirectiveVisitor, addResolveFunctionsToSchema, buildSchemaFromTypeDefinitions, makeExecutableSchema } from 'graphql-tools';
 import GraphQLJSON from 'graphql-type-json';
@@ -215,9 +215,9 @@ export class GraphQLSchemaBuilder {
 					const returnType = getNamedType(graphQLfield.type);
 					if (!isScalarType(returnType) && !isEnumType(returnType)) { // scalars don't have filters
 						if (isInterfaceType(returnType) || isUnionType(returnType)) { // can't grab args from existing query type
-							const where = this.schema.getType(returnType.name + 'WhereInput');
+							const where = <GraphQLInputType> this.schema.getType(returnType.name + 'WhereInput');
 							if (typeIsList(graphQLfield.type)) {
-								const orderBy = this.schema.getType(returnType.name + 'OrderByInput');
+								const orderBy = <GraphQLInputType> this.schema.getType(returnType.name + 'OrderByInput');
 								const queryField = queryTypeFields[Object.keys(queryTypeFields)[0]];
 								const fullArgs = queryField ? queryField.args : [];
 								if (!isEmpty(fullArgs)) {
@@ -229,11 +229,11 @@ export class GraphQLSchemaBuilder {
 									}
 								}
 								if (orderBy && isInputType(orderBy)) {
-									graphQLfield.args.push({ name: 'orderBy', type: orderBy });
+									graphQLfield.args.push(<GraphQLArgument>{ name: 'orderBy', type: orderBy});
 								}
 							}
 							if (where && isInputObjectType(where)) {
-								graphQLfield.args.push({ name: 'where', type: where });
+								graphQLfield.args.push(<GraphQLArgument>{ name: 'where', type: where });
 								const matchField = where.getFields()['match'];
 								if (matchField && isInputObjectType(matchField.type)) {
 									const rootMatchFields = getRootMatchFields(matchField.type);

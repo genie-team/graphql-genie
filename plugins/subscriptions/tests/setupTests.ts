@@ -86,7 +86,6 @@ export const getClient = (overRideGenie?: GraphQLGenie) => {
 				watchQuery: {fetchPolicy: 'no-cache'}
 			}
 		});
-		client.initQueryManager();
 		if (!overRideGenie) {
 			process['testSetup']['client'] = client;
 		}

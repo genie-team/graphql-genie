@@ -75,7 +75,6 @@ const getLocalClient = (): ApolloClient<any> => {
 			cache: new InMemoryCache({fragmentMatcher}),
 			connectToDevTools: false
 		});
-		localClient.initQueryManager();
 	}
 	return localClient;
 };
@@ -94,7 +93,6 @@ const getRemoteClient = (): ApolloClient<any> => {
 			cache: new InMemoryCache({fragmentMatcher}),
 			connectToDevTools: false
 		});
-		remoteClient.initQueryManager();
 	}
 
 	return remoteClient;

@@ -1,6 +1,6 @@
 {
 	"name": "graphql-genie",
-	"version": "0.4.22",
+	"version": "0.4.23",
 	"description": "GraphQL Genie",
 	"browser": "./lib/browser.umd.js",
 	"jsnext:main": "./lib/module.js",
@@ -42,7 +42,8 @@
 		"lint": "tslint -c tslint.json -p linttsconfig.json --fix",
 		"lint-no-fix": "tslint -c tslint.json -p linttsconfig.json",
 		"tag": "git tag -a v`npm v graphql-genie version` && git push origin --tags",
-		"installPluginDevDependencies": "cd plugins/genie-persistence && npm install && cd ../authentication && npm install && cd ../subscriptions && npm install"
+		"installPluginDevDependencies": "cd plugins/genie-persistence && npm install && cd ../authentication && npm install && cd ../subscriptions && npm install",
+		"npmUpgradePlugins": "cd plugins/genie-persistence && npm upgrade && cd ../authentication && npm upgrade && cd ../subscriptions && npm upgrade"
 	},
 	"jest": {
 		"testURL": "http://localhost",
@@ -60,36 +61,35 @@
 		]
 	},
 	"devDependencies": {
-		"@types/graphql": "^14.2.0",
-		"@types/jest": "^24.0.9",
-		"@types/lodash": "^4.14.121",
-		"@types/node": "^11.9.5",
-		"apollo-cache-inmemory": "^1.5.0",
-		"apollo-client": "^2.5.0",
-		"apollo-link-schema": "^1.1.6",
+		"@types/jest": "^24.0.18",
+		"@types/lodash": "^4.14.141",
+		"@types/node": "^11.13.21",
+		"apollo-cache-inmemory": "^1.6.3",
+		"apollo-client": "^2.6.4",
+		"apollo-link-schema": "^1.2.4",
 		"eslint": "^5.14.1",
 		"eslint-config-google": "^0.12.0",
 		"fortune": "^5.5.17",
-		"graphql": "^14.2.0",
+		"graphql": "^14.5.8",
 		"graphql-fields": "^2.0.1",
 		"graphql-subscriptions": "^1.0.0",
 		"graphql-tag": "^2.10.1",
-		"graphql-tools": "^4.0.0",
-		"jest": "^24.1.0",
-		"lodash": "^4.17.11",
-		"rollup": "^1.3.0",
+		"graphql-tools": "^4.0.5",
+		"jest": "^24.9.0",
+		"lodash": "^4.17.15",
+		"rollup": "^1.22.0",
 		"rollup-plugin-commonjs": "^9.2.1",
 		"rollup-plugin-json": "^3.1.0",
 		"rollup-plugin-node-builtins": "^2.1.2",
 		"rollup-plugin-node-globals": "^1.4.0",
-		"rollup-plugin-node-resolve": "^4.0.0",
+		"rollup-plugin-node-resolve": "^4.2.4",
 		"rollup-plugin-replace": "^2.1.0",
-		"rollup-plugin-typescript2": "^0.21.0",
-		"ts-jest": "^24.0.0",
-		"ts-node": "^8.0.0",
-		"tslint": "^5.13.0",
+		"rollup-plugin-typescript2": "^0.21.2",
+		"ts-jest": "^24.1.0",
+		"ts-node": "^8.4.1",
+		"tslint": "^5.20.0",
 		"tslint-genie-rules": "^1.3.0",
-		"typescript": "^3.3.0"
+		"typescript": "^3.6.3"
 	},
 	"peerDependencies": {
 		"fortune": "^5.0.0",
@@ -98,7 +98,7 @@
 		"lodash": "^4.0.0"
 	},
 	"dependencies": {
-		"abab": "^2.0.0",
+		"abab": "^2.0.2",
 		"graphql-iso-date": "^3.6.1",
 		"graphql-type-json": "^0.2.1",
 		"pluralize": "^7.0.0"

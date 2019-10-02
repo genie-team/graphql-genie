@@ -1,6 +1,6 @@
 {
   "name": "genie-persistence",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Combine Grapqhl Genie and Apollo Client to enable offline persistence",
   "browser": "./lib/browser.umd.js",
   "jsnext:main": "./lib/genie-persistence.js",
@@ -37,26 +37,26 @@
     "lodash": ">=4.17.11"
   },
   "dependencies": {
-    "p-queue": "^3.2.0"
+    "p-queue": "^6.1.1"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.9",
-    "apollo-client": "^2.5.1",
-    "apollo-link": "^1.2.9",
-    "apollo-link-http": "^1.5.12",
+    "@types/jest": "^24.0.18",
+    "apollo-client": "^2.6.4",
+    "apollo-link": "^1.2.13",
+    "apollo-link-http": "^1.5.16",
     "fortune": "^5.5.17",
     "fortune-localforage": "^1.3.0",
-    "graphql-genie": "^0.4.19",
-    "graphql-tools": "^4.0.4",
-    "jest": "^24.3.0",
+    "graphql-genie": "^0.4.23",
+    "graphql-tools": "^4.0.5",
+    "jest": "^24.9.0",
     "localforage": "^1.7.3",
-    "lodash": ">=4.17.11",
-    "rollup": "^1.5.0",
-    "rollup-plugin-typescript2": "^0.21.0",
-    "ts-jest": "^24.0.2",
-    "tslint": "^5.13.1",
+    "lodash": "^4.17.15",
+    "rollup": "^1.22.0",
+    "rollup-plugin-typescript2": "^0.21.2",
+    "ts-jest": "^24.1.0",
+    "tslint": "^5.20.0",
     "tslint-genie-rules": "^1.3.0",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.6.3"
   },
   "author": "Genie Team",
   "license": "MIT",
