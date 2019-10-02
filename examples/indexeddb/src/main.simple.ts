@@ -52,7 +52,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		cache: new InMemoryCache({fragmentMatcher}),
 		connectToDevTools: true
 	});
-	client.initQueryManager();
 	window['genie'] = genie;
 	window['fortune'] = genie.getDataResolver();
 	window['store'] = window['fortune'].getStore();

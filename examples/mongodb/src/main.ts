@@ -95,7 +95,6 @@ const buildClient = async (genie: GraphQLGenie) => {
 		cache: new InMemoryCache({fragmentMatcher}),
 		connectToDevTools: true
 	});
-	client.initQueryManager();
 	console.log('built client');
 	let hasData;
 	try {
