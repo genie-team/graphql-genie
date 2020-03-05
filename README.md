@@ -77,8 +77,9 @@ Or for a server demo see the [server examples](#server).
    2. call genie.getSchema() to get the GraphQLSchema
 
 ```typescript
+import indexedDBAdapter from 'fortune-mongodb';
+import { GraphQLSchema } from 'graphql';
 import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
-import mongodbAdapter from 'fortune-mongodb';
 
 //adapter: configuration array for the data store. The default type is the memory adapter. See below for other adapter options
 const fortuneOptions: FortuneOptions = {
