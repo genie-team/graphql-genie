@@ -38,6 +38,6 @@
     "graphql-tools": "^4.0.4",
     "graphql-yoga": "^1.14.12",
     "ioredis-mock": "^4.8.2",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.19"
   }
 }
