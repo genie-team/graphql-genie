@@ -22,7 +22,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
-    "apollo-server": "^2.9.4",
+    "apollo-server": "^2.14.2",
     "bcryptjs": "^2.4.3",
     "fortune": "^5.4.2",
     "fortune-redis": "^2.1.0",
